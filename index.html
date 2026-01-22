@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>SISTEMA CAI 2026 - GESTIÓN POR GRADOS</title>
+    <title>SISTEMA CAI 2026 - CONTROL TOTAL</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -12,19 +12,21 @@
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; }
         .container { max-width: 1300px; margin: 20px auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         .uppercase { text-transform: uppercase; }
-        input, select { width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        input, select, textarea { width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
         .btn { background: var(--p); color: white; border: none; padding: 10px; cursor: pointer; border-radius: 4px; font-weight: bold; margin: 2px; }
         .hidden { display: none !important; }
         
-        /* Tabla y Filas Docente */
-        .tabla-docente { width: 100%; margin-top: 10px; border-collapse: collapse; }
-        .header-docente { display: grid; grid-template-columns: 100px 1fr 80px 80px 70px 70px 70px; gap: 10px; background: var(--p); color: white; padding: 12px; font-weight: bold; border-radius: 5px 5px 0 0; }
-        .row-docente { display: grid; grid-template-columns: 100px 1fr 80px 80px 70px 70px 70px; gap: 10px; padding: 8px; border-bottom: 1px solid #eee; align-items: center; }
-        .row-docente:hover { background: #f9f9f9; }
+        /* Modal de Edición de Notas */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .modal-content { background: white; padding: 25px; border-radius: 8px; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; }
 
-        /* Boleta */
+        /* Tablas */
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+        .row-docente { display: grid; grid-template-columns: 100px 1fr 80px 80px 60px 60px 60px; gap: 10px; padding: 10px; border-bottom: 1px solid #eee; align-items: center; }
+
         #boleta-impresion { width: 21cm; height: 13.5cm; padding: 1cm; background: white; border: 1px dashed #ccc; margin: 0 auto; }
-        @media print { .no-print { display: none !important; } #container-boleta { display: block !important; } @page { size: letter landscape; margin: 0; } }
+        @media print { .no-print { display: none !important; } #container-boleta { display: block !important; } }
     </style>
 </head>
 <body>
@@ -41,16 +43,16 @@
             <option value="Sociales">Sociales</option>
             <option value="Ingles">Inglés</option>
         </select>
-        <button class="btn" style="width:100%" onclick="login()">INGRESAR AL PANEL</button>
+        <button class="btn" style="width:100%" onclick="login()">INGRESAR</button>
     </div>
 
     <div id="app" class="hidden">
         <div class="container no-print">
             <button onclick="location.reload()" style="float:right; background:var(--red);" class="btn">SALIR</button>
-            <h3>Panel de Control: <span id="user-tag" style="color:var(--orange)"></span></h3>
+            <h3>Panel: <span id="user-tag" style="color:var(--orange)"></span></h3>
 
             <div id="admin-panel" class="hidden" style="background:#e8f8f5; padding:15px; border-radius:8px; border:1px solid #a3e4d7; margin-bottom: 20px;">
-                <b>Registrar Alumno:</b>
+                <b>Registrar/Editar Alumno:</b>
                 <div style="display:grid; grid-template-columns: 1fr 2fr 1.5fr 1fr; gap:10px; margin-top:10px;">
                     <input type="text" id="nc" placeholder="CÓDIGO" class="uppercase">
                     <input type="text" id="nn" placeholder="Nombre Completo">
@@ -69,9 +71,9 @@
             </div>
 
             <div style="display:grid; grid-template-columns: 2fr 1fr; gap:15px; margin-bottom: 10px;">
-                <input type="text" id="search" placeholder="🔍 Buscar por nombre o código..." onkeyup="draw()" class="uppercase">
+                <input type="text" id="search" placeholder="🔍 Buscar..." onkeyup="draw()" class="uppercase">
                 <select id="filter-grado" onchange="draw()">
-                    <option value="TODOS">--- Ver Todos los Grados ---</option>
+                    <option value="TODOS">Todos los Grados</option>
                     <option value="Kinder">Kinder</option><option value="Parvularia">Parvularia</option>
                     <option value="1 Grado">1° Grado</option><option value="2 Grado">2° Grado</option>
                     <option value="3 Grado">3° Grado</option><option value="4 Grado">4° Grado</option>
@@ -83,17 +85,27 @@
             </div>
             
             <div id="view-admin" class="hidden">
-                <table style="width:100%; border-collapse: collapse;">
+                <table>
                     <thead><tr style="background:#eee"><th>CÓDIGO</th><th>ALUMNO</th><th>GRADO</th><th>ACCIONES</th></tr></thead>
-                    <tbody id="list-admin" style="text-align:center"></tbody>
+                    <tbody id="list-admin"></tbody>
                 </table>
             </div>
 
             <div id="view-docente" class="hidden">
-                <div class="header-docente">
+                <div class="row-docente" style="background:var(--p); color:white; font-weight:bold;">
                     <span>CÓDIGO</span><span>ALUMNO</span><span>60%</span><span>40%</span><span>ASIS</span><span>INAS</span><span>PERM</span>
                 </div>
                 <div id="list-docente"></div>
+            </div>
+        </div>
+
+        <div id="modal-notas" class="modal hidden">
+            <div class="modal-content">
+                <h3 id="modal-title" style="color:var(--p); margin-top:0;">Editar Notas del Alumno</h3>
+                <div id="modal-body"></div>
+                <div style="text-align:right; margin-top:20px;">
+                    <button class="btn" style="background:var(--green)" onclick="closeModal()">FINALIZAR EDICIÓN</button>
+                </div>
             </div>
         </div>
 
@@ -106,9 +118,9 @@
             <div id="boleta-impresion">
                 <div style="text-align:center; border-bottom:2px solid var(--p);">
                     <h2 style="margin:0">COLEGIO ACADÉMICO INTEGRAL (CAI)</h2>
-                    <p style="margin:5px">REPORTE DE CALIFICACIONES 2026</p>
+                    <p>REPORTE 2026</p>
                 </div>
-                <div id="boleta-content" style="margin-top:15px"></div>
+                <div id="boleta-content"></div>
             </div>
         </div>
     </div>
@@ -134,7 +146,7 @@
             if(role === "Admin") { document.getElementById('admin-panel').classList.remove('hidden'); document.getElementById('view-admin').classList.remove('hidden'); }
             else { document.getElementById('view-docente').classList.remove('hidden'); }
             db.ref('alumnos').on('value', s => { const val = s.val(); data = val ? Object.keys(val).map(k=>({id:k,...val[k]})) : []; draw(); });
-        } else alert("Credenciales Incorrectas");
+        } else alert("Acceso Incorrecto");
     }
 
     function saveAlumno() {
@@ -150,72 +162,76 @@
         document.getElementById('edit-id').value=""; document.getElementById('nc').value=""; document.getElementById('nn').value="";
     }
 
-    function updateNota(id, campo, val) { db.ref(`alumnos/${id}/notas/${role}/${campo}`).set(parseFloat(val) || 0); }
-    function updateAsist(id, campo, val) { db.ref(`alumnos/${id}/asist/${role}/${campo}`).set(parseInt(val) || 0); }
+    function adminUpdate(id, path, val) { db.ref(`alumnos/${id}/${path}`).set(val); }
 
     function draw() {
         const s = document.getElementById('search').value.toUpperCase();
         const g = document.getElementById('filter-grado').value;
-        
-        const filtered = data.filter(a => {
-            const matchesSearch = a.name.toUpperCase().includes(s) || a.code.includes(s);
-            const matchesGrade = (g === "TODOS" || a.grade === g);
-            return matchesSearch && matchesGrade;
-        });
+        const filtered = data.filter(a => (a.name.toUpperCase().includes(s) || a.code.includes(s)) && (g === "TODOS" || a.grade === g));
 
         if(role === "Admin") {
             const list = document.getElementById('list-admin'); list.innerHTML = "";
             filtered.forEach(al => {
-                list.innerHTML += `<tr style="border-bottom:1px solid #eee"><td>${al.code}</td><td>${al.name}</td><td>${al.grade}</td>
-                <td><button class="btn" style="padding:5px" onclick="generateBoleta('${al.id}')">📄</button>
-                <button class="btn" style="padding:5px; background:var(--orange)" onclick="editAl('${al.id}')">✏️</button></td></tr>`;
+                list.innerHTML += `<tr><td>${al.code}</td><td>${al.name}</td><td>${al.grade}</td>
+                <td>
+                    <button class="btn" style="padding:5px; background:var(--green)" onclick="openModal('${al.id}')">📝 NOTAS</button>
+                    <button class="btn" style="padding:5px" onclick="generateBoleta('${al.id}')">📄</button>
+                    <button class="btn" style="padding:5px; background:var(--orange)" onclick="editAl('${al.id}')">✏️</button>
+                </td></tr>`;
             });
         } else {
             const list = document.getElementById('list-docente'); list.innerHTML = "";
             filtered.forEach(al => {
                 const n = al.notas[role] || {a:0,e:0}; const as = al.asist[role] || {as:0,in:0,pe:0};
                 list.innerHTML += `<div class="row-docente">
-                    <span style="font-weight:bold">${al.code}</span><span style="font-size:13px">${al.name}</span>
-                    <input type="number" value="${n.a}" onchange="updateNota('${al.id}','a',this.value)">
-                    <input type="number" value="${n.e}" onchange="updateNota('${al.id}','e',this.value)">
-                    <input type="number" value="${as.as}" onchange="updateAsist('${al.id}','as',this.value)">
-                    <input type="number" value="${as.in}" onchange="updateAsist('${al.id}','in',this.value)">
-                    <input type="number" value="${as.pe}" onchange="updateAsist('${al.id}','pe',this.value)">
+                    <span>${al.code}</span><span>${al.name}</span>
+                    <input type="number" value="${n.a}" onchange="db.ref('alumnos/${al.id}/notas/${role}/a').set(parseFloat(this.value)||0)">
+                    <input type="number" value="${n.e}" onchange="db.ref('alumnos/${al.id}/notas/${role}/e').set(parseFloat(this.value)||0)">
+                    <input type="number" value="${as.as}" onchange="db.ref('alumnos/${al.id}/asist/${role}/as').set(parseInt(this.value)||0)">
+                    <input type="number" value="${as.in}" onchange="db.ref('alumnos/${al.id}/asist/${role}/in').set(parseInt(this.value)||0)">
+                    <input type="number" value="${as.pe}" onchange="db.ref('alumnos/${al.id}/asist/${role}/pe').set(parseInt(this.value)||0)">
                 </div>`;
             });
         }
     }
 
+    function openModal(id) {
+        const al = data.find(x => x.id === id);
+        document.getElementById('modal-title').innerText = `EDITAR: ${al.name}`;
+        let html = `<h4>Calificaciones y Asistencia</h4>`;
+        ["Matematica","Lenguaje","Ciencias","Sociales","Ingles"].forEach(m => {
+            const n = al.notas[m]; const as = al.asist[m];
+            html += `<div style="border:1px solid #ddd; padding:10px; margin-bottom:10px; border-radius:5px;">
+                <b style="color:var(--p)">${m.toUpperCase()}</b>
+                <div style="display:flex; gap:5px; margin-top:5px;">
+                    <div><small>60%</small><input type="number" value="${n.a}" onchange="adminUpdate('${id}','notas/${m}/a', parseFloat(this.value))"></div>
+                    <div><small>40%</small><input type="number" value="${n.e}" onchange="adminUpdate('${id}','notas/${m}/e', parseFloat(this.value))"></div>
+                    <div><small>Asis</small><input type="number" value="${as.as}" onchange="adminUpdate('${id}','asist/${m}/as', parseInt(this.value))"></div>
+                </div>
+            </div>`;
+        });
+        html += `<h4>Conducta / Faltas</h4><textarea onchange="adminUpdate('${id}','faltas', this.value)">${al.faltas || ''}</textarea>`;
+        document.getElementById('modal-body').innerHTML = html;
+        document.getElementById('modal-notas').classList.remove('hidden');
+    }
+
+    function closeModal() { document.getElementById('modal-notas').classList.add('hidden'); }
     function generateBoleta(id) {
         const al = data.find(x => x.id === id); let total = 0; let rows = "";
         ["Matematica","Lenguaje","Ciencias","Sociales","Ingles"].forEach(m => {
             const n = al.notas[m]; const p = (n.a*0.6+n.e*0.4); total += p;
             rows += `<tr><td>${m}</td><td>${n.a}</td><td>${n.e}</td><td>${p.toFixed(1)}</td></tr>`;
         });
-        document.getElementById('boleta-content').innerHTML = `
-            <p><b>ALUMNO:</b> ${al.name} &nbsp;&nbsp; <b>GRADO:</b> ${al.grade}</p>
-            <table style="width:100%; border-collapse:collapse; text-align:center;" border="1">
-                <tr style="background:#f2f2f2"><th>MATERIA</th><th>60%</th><th>40%</th><th>PROM</th></tr>${rows}
-                <tr style="background:#eee"><td colspan="3"><b>PROMEDIO FINAL</b></td><td><b>${(total/5).toFixed(2)}</b></td></tr>
-            </table><p><b>OBSERVACIONES:</b> ${al.faltas || 'Ninguna'}</p>`;
+        document.getElementById('boleta-content').innerHTML = `<p><b>${al.name}</b> | ${al.grade}</p>
+            <table border="1"><tr><th>MATERIA</th><th>60%</th><th>40%</th><th>PROM</th></tr>${rows}
+            <tr style="background:#eee"><td><b>FINAL</b></td><td colspan="3"><b>${(total/5).toFixed(2)}</b></td></tr></table>
+            <p><small>OBS: ${al.faltas || 'Ninguna'}</small></p>`;
         document.getElementById('container-boleta').classList.remove('hidden');
         document.querySelector('.no-print').classList.add('hidden');
     }
-
-    function downloadImg() {
-        html2canvas(document.querySelector("#boleta-impresion")).then(canvas => {
-            const link = document.createElement('a'); link.download = `Boleta_CAI.png`; link.href = canvas.toDataURL(); link.click();
-        });
-    }
-
+    function downloadImg() { html2canvas(document.querySelector("#boleta-impresion")).then(canvas => { const link = document.createElement('a'); link.download = `Boleta.png`; link.href = canvas.toDataURL(); link.click(); }); }
     function closeBoleta() { document.getElementById('container-boleta').classList.add('hidden'); document.querySelector('.no-print').classList.remove('hidden'); }
-    function editAl(id) {
-        const al = data.find(x => x.id === id);
-        document.getElementById('edit-id').value = id;
-        document.getElementById('nc').value = al.code;
-        document.getElementById('nn').value = al.name;
-        document.getElementById('ng').value = al.grade;
-    }
+    function editAl(id) { const al = data.find(x => x.id === id); document.getElementById('edit-id').value = id; document.getElementById('nc').value = al.code; document.getElementById('nn').value = al.name; document.getElementById('ng').value = al.grade; }
 </script>
 </body>
 </html>
