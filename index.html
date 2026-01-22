@@ -9,7 +9,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
     <style>
-        :root { --p: #1a5276; --bg: #f4f6f7; --red: #c0392b; --green: #27ae60; }
+        :root { --p: #1a5276; --bg: #f4f6f7; --red: #c0392b; --green: #27ae60; --orange: #e67e22; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; }
         .no-print { display: block; }
         .container { max-width: 1300px; margin: 20px auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
@@ -18,27 +18,20 @@
         .btn { background: var(--p); color: white; border: none; padding: 10px; cursor: pointer; border-radius: 4px; font-weight: bold; margin: 2px; }
         .hidden { display: none !important; }
         
-        /* Estilos de tabla */
+        /* Estilos de tabla y filas */
         table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
         th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
         th { background: #f2f2f2; }
+        .row-docente { display: grid; grid-template-columns: 100px 250px 100px 80px 80px 80px 80px 80px; gap: 10px; padding: 10px; border-bottom: 1px solid #eee; align-items: center; }
 
-        /* FORMATO MEDIA HOJA (Para impresión y captura) */
-        #boleta-impresion { 
-            width: 21cm; 
-            height: 13.5cm; 
-            padding: 1cm; 
-            background: white; 
-            border: 1px dashed #ccc;
-            position: relative;
-            margin: 0 auto;
-        }
+        /* FORMATO MEDIA HOJA */
+        #boleta-impresion { width: 21cm; height: 13.5cm; padding: 1cm; background: white; border: 1px dashed #ccc; margin: 0 auto; }
         .header-boleta { text-align: center; border-bottom: 2px solid var(--p); margin-bottom: 10px; }
         
         @media print {
             .no-print { display: none !important; }
-            body { background: white; }
-            #boleta-impresion { border: none; width: 100%; height: auto; }
+            #container-boleta { display: block !important; }
+            #boleta-impresion { border: none; width: 100%; }
             @page { size: letter landscape; margin: 0; }
         }
     </style>
@@ -80,25 +73,26 @@
                         <option value="9 Grado">9° Grado</option><option value="1 Año">1° Año Bach</option>
                         <option value="2 Año">2° Año Bach</option>
                     </select>
-                    <button class="btn" style="background:var(--green);" onclick="saveAlumno()">GUARDAR CAMBIOS</button>
+                    <button class="btn" style="background:var(--green);" onclick="saveAlumno()">GUARDAR</button>
                 </div>
                 <input type="hidden" id="edit-id">
             </div>
 
-            <input type="text" id="search" placeholder="🔍 BUSCAR..." onkeyup="draw()" class="uppercase" style="margin-top:15px;">
+            <input type="text" id="search" placeholder="🔍 BUSCAR POR NOMBRE O CÓDIGO..." onkeyup="draw()" class="uppercase" style="margin-top:15px; height:40px;">
             
             <div id="view-admin" class="hidden">
                 <table>
                     <thead>
-                        <tr>
-                            <th>CÓDIGO</th><th>ALUMNO</th><th>GRADO</th><th>PROM</th><th>ACCIONES</th>
-                        </tr>
+                        <tr><th>CÓDIGO</th><th>ALUMNO</th><th>GRADO</th><th>PROM</th><th>ACCIONES</th></tr>
                     </thead>
                     <tbody id="list-admin"></tbody>
                 </table>
             </div>
 
             <div id="view-docente" class="hidden">
+                <div style="font-weight:bold; background:var(--p); color:white; margin-top:10px;" class="row-docente">
+                    <span>CÓDIGO</span><span>ALUMNO</span><span>GRADO</span><span>ACT(60%)</span><span>EXA(40%)</span><span>ASIS</span><span>INAS</span><span>PERM</span>
+                </div>
                 <div id="list-docente"></div>
             </div>
         </div>
@@ -106,13 +100,13 @@
         <div id="container-boleta" class="hidden">
             <div class="no-print" style="text-align:center; padding:10px;">
                 <button class="btn" style="background:var(--green)" onclick="downloadImg()">⬇️ DESCARGAR IMAGEN</button>
-                <button class="btn" onclick="window.print()">🖨️ IMPRIMIR AHORA</button>
+                <button class="btn" onclick="window.print()">🖨️ IMPRIMIR</button>
                 <button class="btn" style="background:var(--red)" onclick="closeBoleta()">CERRAR</button>
             </div>
             <div id="boleta-impresion">
                 <div class="header-boleta">
                     <h2>COLEGIO ACADÉMICO INTEGRAL (CAI)</h2>
-                    <p>REPORTE DE RENDIMIENTO ACADÉMICO - 2026</p>
+                    <p>REPORTE DE NOTAS 2026</p>
                 </div>
                 <div id="boleta-content"></div>
             </div>
@@ -140,12 +134,12 @@
             if(role === "Admin") { document.getElementById('admin-panel').classList.remove('hidden'); document.getElementById('view-admin').classList.remove('hidden'); }
             else { document.getElementById('view-docente').classList.remove('hidden'); }
             db.ref('alumnos').on('value', s => { const val = s.val(); data = val ? Object.keys(val).map(k=>({id:k,...val[k]})) : []; draw(); });
-        } else alert("Error de acceso");
+        } else alert("Credenciales incorrectas");
     }
 
     function saveAlumno() {
         const id = document.getElementById('edit-id').value;
-        const al = { code: document.getElementById('nc').value, name: document.getElementById('nn').value, grade: document.getElementById('ng').value };
+        const al = { code: document.getElementById('nc').value.toUpperCase(), name: document.getElementById('nn').value, grade: document.getElementById('ng').value };
         if(!al.code || !al.name) return;
         if(id) db.ref('alumnos/'+id).update(al);
         else {
@@ -156,13 +150,41 @@
         document.getElementById('edit-id').value=""; document.getElementById('nc').value=""; document.getElementById('nn').value="";
     }
 
-    function editAl(id) {
-        const al = data.find(x => x.id === id);
-        document.getElementById('edit-id').value = id;
-        document.getElementById('nc').value = al.code;
-        document.getElementById('nn').value = al.name;
-        document.getElementById('ng').value = al.grade;
-        window.scrollTo(0,0);
+    function updateNota(id, campo, val) {
+        if(role === "Admin") return;
+        db.ref(`alumnos/${id}/notas/${role}/${campo}`).set(parseFloat(val) || 0);
+    }
+
+    function updateAsist(id, campo, val) {
+        if(role === "Admin") return;
+        db.ref(`alumnos/${id}/asist/${role}/${campo}`).set(parseInt(val) || 0);
+    }
+
+    function draw() {
+        const s = document.getElementById('search').value.toUpperCase();
+        const filtered = data.filter(a => a.name.toUpperCase().includes(s) || a.code.includes(s));
+        
+        if(role === "Admin") {
+            const list = document.getElementById('list-admin'); list.innerHTML = "";
+            filtered.forEach(al => {
+                list.innerHTML += `<tr><td>${al.code}</td><td>${al.name}</td><td>${al.grade}</td>
+                <td><button class="btn btn-small" onclick="generateBoleta('${al.id}')">📄</button>
+                <button class="btn btn-small" style="background:var(--orange)" onclick="editAl('${al.id}')">✏️</button></td></tr>`;
+            });
+        } else {
+            const list = document.getElementById('list-docente'); list.innerHTML = "";
+            filtered.forEach(al => {
+                const n = al.notas[role] || {a:0,e:0}; const as = al.asist[role] || {as:0,in:0,pe:0};
+                list.innerHTML += `<div class="row-docente">
+                    <span>${al.code}</span><span>${al.name}</span><span>${al.grade}</span>
+                    <input type="number" value="${n.a}" onchange="updateNota('${al.id}','a',this.value)" step="0.1">
+                    <input type="number" value="${n.e}" onchange="updateNota('${al.id}','e',this.value)" step="0.1">
+                    <input type="number" value="${as.as}" onchange="updateAsist('${al.id}','as',this.value)">
+                    <input type="number" value="${as.in}" onchange="updateAsist('${al.id}','in',this.value)">
+                    <input type="number" value="${as.pe}" onchange="updateAsist('${al.id}','pe',this.value)">
+                </div>`;
+            });
+        }
     }
 
     function generateBoleta(id) {
@@ -173,44 +195,31 @@
             rows += `<tr><td>${m}</td><td>${n.a}</td><td>${n.e}</td><td>${p.toFixed(1)}</td></tr>`;
         });
         document.getElementById('boleta-content').innerHTML = `
-            <p><b>Alumno:</b> ${al.name} &nbsp;&nbsp; <b>Código:</b> ${al.code} &nbsp;&nbsp; <b>Grado:</b> ${al.grade}</p>
-            <table><tr><th>Materia</th><th>Actividad (60%)</th><th>Examen (40%)</th><th>Promedio</th></tr>${rows}
-            <tr><td colspan="3"><b>PROMEDIO GENERAL</b></td><td><b>${(total/5).toFixed(2)}</b></td></tr></table>
-            <p><b>Observaciones de Conducta:</b> ${al.faltas || 'Sin reporte'}</p>
-            <div style="margin-top:40px; display:flex; justify-content:space-around;">
-                <div style="border-top:1px solid black; width:200px; text-align:center;">Firma Director</div>
-                <div style="border-top:1px solid black; width:200px; text-align:center;">Sello Institucional</div>
-            </div>`;
+            <p><b>Alumno:</b> ${al.name} | <b>Grado:</b> ${al.grade}</p>
+            <table><tr><th>Materia</th><th>60%</th><th>40%</th><th>PROM</th></tr>${rows}
+            <tr><td colspan="3"><b>PROMEDIO FINAL</b></td><td><b>${(total/5).toFixed(2)}</b></td></tr></table>
+            <p><b>Conducta:</b> ${al.faltas || 'Excelente'}</p>`;
         document.getElementById('container-boleta').classList.remove('hidden');
         document.querySelector('.no-print').classList.add('hidden');
     }
 
-    function closeBoleta() {
-        document.getElementById('container-boleta').classList.add('hidden');
-        document.querySelector('.no-print').classList.remove('hidden');
-    }
+    function closeBoleta() { document.getElementById('container-boleta').classList.add('hidden'); document.querySelector('.no-print').classList.remove('hidden'); }
 
     function downloadImg() {
-        const alName = document.querySelector('#boleta-content b').nextSibling.textContent.trim();
         html2canvas(document.querySelector("#boleta-impresion")).then(canvas => {
             const link = document.createElement('a');
-            link.download = `Boleta_${alName}_2026.png`;
+            link.download = `Boleta_CAI.png`;
             link.href = canvas.toDataURL();
             link.click();
         });
     }
 
-    function draw() {
-        const s = document.getElementById('search').value.toUpperCase();
-        const filtered = data.filter(a => a.name.toUpperCase().includes(s) || a.code.includes(s));
-        if(role === "Admin") {
-            const list = document.getElementById('list-admin'); list.innerHTML = "";
-            filtered.forEach(al => {
-                list.innerHTML += `<tr><td>${al.code}</td><td>${al.name}</td><td>${al.grade}</td>
-                <td><button class="btn btn-small" onclick="generateBoleta('${al.id}')">📄 BOLETA</button>
-                <button class="btn btn-small" style="background:#e67e22" onclick="editAl('${al.id}')">✏️</button></td></tr>`;
-            });
-        }
+    function editAl(id) {
+        const al = data.find(x => x.id === id);
+        document.getElementById('edit-id').value = id;
+        document.getElementById('nc').value = al.code;
+        document.getElementById('nn').value = al.name;
+        document.getElementById('ng').value = al.grade;
     }
 </script>
 </body>
