@@ -2,64 +2,108 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>SISTEMA CAI - Oficial</title>
+    <title>SISTEMA INTEGRAL CAI - 2026</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        :root { --p: #1a5276; --bg: #f4f6f7; }
-        body { font-family: sans-serif; background: var(--bg); margin: 0; }
+        :root { --p: #1a5276; --bg: #f4f6f7; --red: #c0392b; --green: #27ae60; --orange: #e67e22; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; font-size: 14px; }
         .login-screen { height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--p); }
-        .card { background: white; padding: 25px; border-radius: 8px; width: 300px; text-align: center; }
-        .container { max-width: 900px; margin: 20px auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        input, select { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        .row { display: grid; grid-template-columns: 80px 1fr 100px 80px 80px 80px; gap: 10px; padding: 10px; border-bottom: 1px solid #eee; align-items: center; }
-        .btn { background: var(--p); color: white; border: none; padding: 10px; cursor: pointer; border-radius: 4px; width: 100%; font-weight: bold; }
+        .card { background: white; padding: 25px; border-radius: 8px; width: 350px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        .container { max-width: 1300px; margin: 20px auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        input, select, textarea { width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .uppercase { text-transform: uppercase; }
+        .btn { background: var(--p); color: white; border: none; padding: 10px; cursor: pointer; border-radius: 4px; font-weight: bold; }
+        .btn-small { padding: 4px 8px; font-size: 11px; margin: 2px; }
+        .row-header { display: grid; grid-template-columns: 100px 200px 120px repeat(5, 65px) 160px; gap: 5px; background: var(--p); color: white; padding: 10px; font-size: 11px; position: sticky; top: 0; }
+        .row-data { display: grid; grid-template-columns: 100px 200px 120px repeat(5, 65px) 160px; gap: 5px; padding: 10px; border-bottom: 1px solid #eee; align-items: center; }
         .hidden { display: none; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 12px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+        th { background: #f2f2f2; position: sticky; top: 0; }
     </style>
 </head>
 <body>
 
     <div id="login-box" class="login-screen">
         <div class="card">
-            <h2 style="color:var(--p)">ACADÉMICA CAI</h2>
+            <h2 style="text-align:center; color:var(--p);">ACADÉMICA CAI</h2>
             <input type="text" id="u" placeholder="Usuario">
             <input type="password" id="p" placeholder="Contraseña">
             <select id="r">
-                <option value="Admin">Administrador</option>
+                <option value="Admin">Administrador (Control Total)</option>
                 <option value="Matematica">Docente Matemática</option>
                 <option value="Lenguaje">Docente Lenguaje</option>
                 <option value="Ciencias">Docente Ciencias</option>
                 <option value="Sociales">Docente Sociales</option>
+                <option value="Ingles">Docente Inglés</option>
             </select>
-            <button class="btn" onclick="login()">ENTRAR</button>
+            <button class="btn" style="width:100%; margin-top:10px;" onclick="login()">INGRESAR AL SISTEMA</button>
         </div>
     </div>
 
     <div id="app" class="hidden">
         <div class="container">
-            <button onclick="location.reload()" style="float:right; width:80px;" class="btn">SALIR</button>
-            <h3>Panel: <span id="user-tag"></span></h3>
+            <button onclick="location.reload()" style="float:right;" class="btn btn-red">CERRAR SESIÓN</button>
+            <h3>SISTEMA CAI 2026 - <span id="user-tag"></span></h3>
 
-            <div id="admin-panel" class="hidden" style="background:#e8f6f3; padding:15px; border-radius:8px; margin-bottom:20px;">
-                <b>Registrar Alumno:</b>
-                <div style="display:flex; gap:10px; margin-top:10px;">
-                    <input type="text" id="nc" placeholder="Código">
-                    <input type="text" id="nn" placeholder="Nombre">
-                    <input type="text" id="ng" placeholder="Grado">
-                    <button class="btn" onclick="add()">AÑADIR</button>
+            <div id="admin-panel" class="hidden" style="background:#e8f8f5; padding:20px; border-radius:8px; margin-bottom:20px; border: 1px solid #a3e4d7;">
+                <h4 style="margin-top:0;">Registro y Edición de Alumnos</h4>
+                <div style="display:grid; grid-template-columns: 1fr 2fr 1.5fr 1fr; gap:10px;">
+                    <input type="text" id="nc" placeholder="CÓDIGO" class="uppercase" oninput="this.value = this.value.toUpperCase()">
+                    <input type="text" id="nn" placeholder="Nombre Completo">
+                    <select id="ng">
+                        <option value="">Seleccionar Grado...</option>
+                        <option value="Kinder">Kinder</option>
+                        <option value="Parvularia">Parvularia</option>
+                        <optgroup label="Básica">
+                            <option value="1 Grado">1° Grado</option><option value="2 Grado">2° Grado</option>
+                            <option value="3 Grado">3° Grado</option><option value="4 Grado">4° Grado</option>
+                            <option value="5 Grado">5° Grado</option><option value="6 Grado">6° Grado</option>
+                            <option value="7 Grado">7° Grado</option><option value="8 Grado">8° Grado</option>
+                            <option value="9 Grado">9° Grado</option>
+                        </optgroup>
+                        <optgroup label="Bachillerato">
+                            <option value="1 Año">1° Año de Bachillerato</option>
+                            <option value="2 Año">2° Año de Bachillerato</option>
+                        </optgroup>
+                    </select>
+                    <button class="btn" style="background:var(--green);" onclick="add()">REGISTRAR / ACTUALIZAR</button>
                 </div>
+                <input type="hidden" id="editing-id">
             </div>
 
-            <input type="text" id="search" placeholder="🔍 BUSCAR POR NOMBRE O CÓDIGO..." onkeyup="draw()" style="font-size:18px; border:2px solid var(--p);">
+            <input type="text" id="search" placeholder="🔍 BUSCAR POR NOMBRE, CÓDIGO (EN MAYÚSCULAS) O GRADO..." onkeyup="draw()" class="uppercase" oninput="this.value = this.value.toUpperCase()" style="font-size:16px; border:2px solid var(--p); height:45px;">
 
-            <div style="font-weight:bold; background:var(--p); color:white; margin-top:20px;" class="row">
-                <span>CÓDIGO</span><span>ALUMNO</span><span>GRADO</span><span>ACT(60)</span><span>EXA(40)</span><span>PROM</span>
+            <div id="view-docente" class="hidden">
+                <div class="row-header">
+                    <span>CÓDIGO</span><span>ALUMNO</span><span>GRADO</span><span>ACT(60)</span><span>EXA(40)</span><span>ASIST</span><span>INASIS</span><span>PERM</span><span>CONDUCTA / OBSERVACIONES</span>
+                </div>
+                <div id="list-docente"></div>
             </div>
-            <div id="list"></div>
+
+            <div id="view-admin" class="hidden">
+                <h4>Consolidado Maestro y Gestión de Datos</h4>
+                <div style="overflow-x: auto;">
+                    <table id="table-consolidado">
+                        <thead>
+                            <tr>
+                                <th>ACCIONES</th><th>CÓDIGO</th><th>ALUMNO</th><th>GRADO</th>
+                                <th>MATE</th><th>LENG</th><th>CIEN</th><th>SOCI</th><th>INGL</th>
+                                <th>PROM</th><th>CONDUCTA/FALTAS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="list-admin"></tbody>
+                    </table>
+                </div>
+                <button class="btn" style="background:var(--green); margin-top:20px;" onclick="exportExcel()">📊 DESCARGAR EXCEL COMPLETO</button>
+            </div>
         </div>
     </div>
 
 <script>
+    // Tu configuración de Firebase se mantiene igual
     const firebaseConfig = {
         apiKey: "AIzaSyBmw9CdeBr1Z11v0ye4af-WACBeCL5FDc4",
         authDomain: "academica-bcb50.firebaseapp.com",
@@ -77,71 +121,142 @@
         const user = document.getElementById('u').value;
         const pass = document.getElementById('p').value;
         const sel = document.getElementById('r').value;
-
-        // Credenciales institucionales
         const creds = { 
-            "Admin": ["Registro","Admin"], 
-            "Matematica": ["prof_mate","cai2026"],
-            "Lenguaje": ["prof_lenguaje","cai2026"],
-            "Ciencias": ["prof_ciencias","cai2026"],
-            "Sociales": ["prof_sociales","cai2026"]
+            "Admin": ["Registro","Admin"], "Matematica": ["prof_mate","cai2026"],
+            "Lenguaje": ["prof_lenguaje","cai2026"], "Ciencias": ["prof_ciencias","cai2026"],
+            "Sociales": ["prof_sociales","cai2026"], "Ingles": ["prof_ingles","cai2026"]
         };
 
         if(creds[sel] && user === creds[sel][0] && pass === creds[sel][1]) {
             role = sel;
             document.getElementById('login-box').classList.add('hidden');
             document.getElementById('app').classList.remove('hidden');
-            document.getElementById('user-tag').innerText = sel;
-            if(role === "Admin") document.getElementById('admin-panel').classList.remove('hidden');
+            document.getElementById('user-tag').innerText = (role === "Admin") ? "ADMINISTRADOR" : "DOCENTE DE " + role.toUpperCase();
+            
+            if(role === "Admin") {
+                document.getElementById('admin-panel').classList.remove('hidden');
+                document.getElementById('view-admin').classList.remove('hidden');
+            } else {
+                document.getElementById('view-docente').classList.remove('hidden');
+            }
             
             db.ref('alumnos').on('value', (s) => {
                 const val = s.val();
                 data = val ? Object.keys(val).map(k => ({id:k, ...val[k]})) : [];
                 draw();
             });
-        } else { alert("Datos incorrectos"); }
+        } else { alert("Acceso denegado"); }
     }
 
     function add() {
-        const c = document.getElementById('nc').value;
+        const id = document.getElementById('editing-id').value;
+        const c = document.getElementById('nc').value.toUpperCase();
         const n = document.getElementById('nn').value;
         const g = document.getElementById('ng').value;
-        if(!c || !n) return;
-        db.ref('alumnos').push({
-            code: c, name: n, grade: g,
-            notas: { Matematica:{a:0,e:0}, Lenguaje:{a:0,e:0}, Ciencias:{a:0,e:0}, Sociales:{a:0,e:0} }
-        });
-        document.getElementById('nc').value=""; document.getElementById('nn').value="";
+        if(!c || !n || !g) return alert("Complete los datos");
+
+        const payload = {
+            code: c, name: n, grade: g
+        };
+
+        if(id) {
+            db.ref('alumnos/' + id).update(payload);
+            document.getElementById('editing-id').value = "";
+            alert("Alumno actualizado");
+        } else {
+            payload.notas = { Matematica:{a:0,e:0}, Lenguaje:{a:0,e:0}, Ciencias:{a:0,e:0}, Sociales:{a:0,e:0}, Ingles:{a:0,e:0} };
+            payload.asist = { Matematica:{as:0,in:0,pe:0}, Lenguaje:{as:0,in:0,pe:0}, Ciencias:{as:0,in:0,pe:0}, Sociales:{as:0,in:0,pe:0}, Ingles:{as:0,in:0,pe:0} };
+            payload.faltas = "";
+            db.ref('alumnos').push(payload);
+            alert("Alumno registrado");
+        }
+        document.getElementById('nc').value=""; document.getElementById('nn').value=""; document.getElementById('ng').value="";
     }
 
-    function update(id, mat, field, val) {
-        db.ref(`alumnos/${id}/notas/${mat}/${field}`).set(parseFloat(val) || 0);
+    function editAl(id) {
+        const al = data.find(x => x.id === id);
+        document.getElementById('editing-id').value = id;
+        document.getElementById('nc').value = al.code;
+        document.getElementById('nn').value = al.name;
+        document.getElementById('ng').value = al.grade;
+        window.scrollTo(0,0);
+    }
+
+    function deleteAl(id) {
+        if(confirm("¿Seguro que desea eliminar este alumno? Se borrarán todas sus notas.")) {
+            db.ref('alumnos/' + id).remove();
+        }
+    }
+
+    function updateNested(id, mat, folder, field, val) {
+        db.ref(`alumnos/${id}/${folder}/${mat}/${field}`).set(val);
     }
 
     function draw() {
-        const s = document.getElementById('search').value.toLowerCase();
-        const list = document.getElementById('list');
-        list.innerHTML = "";
+        const s = document.getElementById('search').value.toUpperCase();
+        const filtered = data.filter(a => a.name.toUpperCase().includes(s) || a.code.includes(s) || a.grade.toUpperCase().includes(s));
 
-        data.filter(a => a.name.toLowerCase().includes(s) || a.code.toLowerCase().includes(s)).forEach(al => {
-            // Si es Admin, mostramos el promedio general. Si es Profe, mostramos su materia.
-            const m = (role === "Admin") ? "Matematica" : role; 
-            const n = al.notas[m] || {a:0, e:0};
-            const p = (n.a * 0.6 + n.e * 0.4).toFixed(2);
-            
-            // Solo se habilita si es Admin o si es el profesor de esa materia
-            const canEdit = (role === "Admin" || role === m) ? "" : "disabled";
-
-            list.innerHTML += `
-                <div class="row">
-                    <span>${al.code}</span>
-                    <span>${al.name}</span>
-                    <span style="font-size:12px; color:#777;">${al.grade}</span>
-                    <input type="number" value="${n.a}" onchange="update('${al.id}','${m}','a',this.value)" ${canEdit}>
-                    <input type="number" value="${n.e}" onchange="update('${al.id}','${m}','e',this.value)" ${canEdit}>
-                    <b style="color:${p >= 7 ? 'green':'red'}">${p}</b>
+        if(role === "Admin") {
+            const list = document.getElementById('list-admin');
+            list.innerHTML = "";
+            filtered.forEach(al => {
+                let total = 0;
+                let htmlNotas = "";
+                ["Matematica","Lenguaje","Ciencias","Sociales","Ingles"].forEach(m => {
+                    const n = al.notas[m] || {a:0,e:0};
+                    const p = (n.a * 0.6 + n.e * 0.4);
+                    total += p;
+                    htmlNotas += `<td>${p.toFixed(1)}</td>`;
+                });
+                const promG = (total / 5).toFixed(2);
+                list.innerHTML += `<tr>
+                    <td>
+                        <button class="btn btn-small" style="background:var(--orange)" onclick="editAl('${al.id}')">EDIT</button>
+                        <button class="btn btn-small" style="background:var(--red)" onclick="deleteAl('${al.id}')">X</button>
+                    </td>
+                    <td class="uppercase"><b>${al.code}</b></td><td style="text-align:left">${al.name}</td><td>${al.grade}</td>
+                    ${htmlNotas}
+                    <td style="font-weight:bold; color:${promG >= 7 ? 'green':'red'}">${promG}</td>
+                    <td><textarea style="font-size:10px;" onchange="db.ref('alumnos/${al.id}/faltas').set(this.value)">${al.faltas || ''}</textarea></td>
+                </tr>`;
+            });
+        } else {
+            const list = document.getElementById('list-docente');
+            list.innerHTML = "";
+            filtered.forEach(al => {
+                const n = al.notas[role] || {a:0,e:0};
+                const asis = al.asist[role] || {as:0,in:0,pe:0};
+                const p = (n.a * 0.6 + n.e * 0.4).toFixed(1);
+                list.innerHTML += `<div class="row-data">
+                    <span class="uppercase"><b>${al.code}</b></span><span style="font-size:12px">${al.name}</span><span style="font-size:10px">${al.grade}</span>
+                    <input type="number" value="${n.a}" onchange="updateNested('${al.id}','${role}','notas','a',this.value)" step="0.1">
+                    <input type="number" value="${n.e}" onchange="updateNested('${al.id}','${role}','notas','e',this.value)" step="0.1">
+                    <input type="number" value="${asis.as}" onchange="updateNested('${al.id}','${role}','asist','as',this.value)">
+                    <input type="number" value="${asis.in}" onchange="updateNested('${al.id}','${role}','asist','in',this.value)">
+                    <input type="number" value="${asis.pe}" onchange="updateNested('${al.id}','${role}','asist','pe',this.value)">
+                    <span style="font-size:10px; color:red; font-weight:bold;">${al.faltas || '-'}</span>
                 </div>`;
+            });
+        }
+    }
+
+    function exportExcel() {
+        const rows = data.map(al => {
+            let item = { "CÓDIGO": al.code, "ALUMNO": al.name, "GRADO": al.grade };
+            let promTotal = 0;
+            ["Matematica", "Lenguaje", "Ciencias", "Sociales", "Ingles"].forEach(m => {
+                const p = (al.notas[m].a * 0.6 + al.notas[m].e * 0.4);
+                item[m] = p.toFixed(2);
+                promTotal += p;
+            });
+            item["PROMEDIO FINAL"] = (promTotal / 5).toFixed(2);
+            item["OBSERVACIONES"] = al.faltas || "";
+            return item;
         });
+        const ws = XLSX.utils.json_to_sheet(rows);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "CAI_2026");
+        XLSX.writeFile(wb, "Consolidado_Final_CAI.xlsx");
     }
 </script>
 </body>
