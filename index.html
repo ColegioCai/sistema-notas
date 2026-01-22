@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema CAI - Académica Cloud</title>
+    <title>ACADÉMICA CAI - Control de Notas</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -23,6 +23,7 @@
         .card { border: 1px solid #e5e8e8; padding: 15px; border-radius: 8px; margin-bottom: 10px; }
         .grid-notas { display: grid; grid-template-columns: 1fr 2fr 1.5fr 1fr 1fr 1fr; gap: 10px; align-items: center; }
         input { padding: 8px; border: 1px solid #bdc3c7; border-radius: 4px; width: 100%; }
+        input:disabled { background-color: #f9f9f9; color: #7f8c8d; border: 1px dashed #d5dbdb; cursor: not-allowed; }
         button { cursor: pointer; font-weight: bold; border: none; border-radius: 4px; }
         .btn-logout { background: #e74c3c; color: white; padding: 5px 15px; float: right; }
         .label-grado { font-weight: bold; color: #566573; font-size: 11px; text-transform: uppercase; }
@@ -34,7 +35,7 @@
 
     <div id="login-screen">
         <div class="login-card">
-            <h2 style="color:var(--primary)">ACADÉMICA BCB</h2>
+            <h2 style="color:var(--primary)">ACADÉMICA CAI</h2>
             <input type="text" id="user-input" placeholder="Usuario"><br><br>
             <input type="password" id="pass-input" placeholder="Contraseña"><br><br>
             <select id="materia-select" style="width:100%; padding:10px;">
@@ -44,7 +45,7 @@
                 <option value="Ciencias">Materia: Ciencias</option>
                 <option value="Sociales">Materia: Sociales</option>
             </select><br><br>
-            <button onclick="intentarLogin()" style="width:100%; padding:12px; background:var(--primary); color:white;">ENTRAR</button>
+            <button onclick="intentarLogin()" style="width:100%; padding:12px; background:var(--primary); color:white;">INGRESAR</button>
             <p id="error-msg" style="color:red; display:none; font-size:12px;">Credenciales incorrectas</p>
         </div>
     </div>
@@ -52,23 +53,23 @@
     <div id="main-app" style="display:none;">
         <div style="max-width:950px; margin: 10px auto; padding: 0 20px;">
             <button onclick="location.reload()" class="btn-logout">SALIR</button>
-            <p>Usuario: <b id="display-user"></b> | <span style="color:green">● Sincronizado</span></p>
+            <p>Sistema: <b>ACADÉMICA CAI</b> | Usuario: <b id="display-user"></b></p>
         </div>
 
         <div class="tabs" id="tab-bar"></div>
 
         <div id="content-area">
             <div id="tab-registro" class="container tab-content">
-                <h3>Registro Académico Central</h3>
+                <h3>Consolidado Final de Notas</h3>
                 <div id="admin-form" class="card" style="display:none; background:#f0f4f7;">
                     <div style="display:grid; grid-template-columns: 1fr 2fr 1fr auto; gap:10px;">
                         <input type="text" id="reg-code" placeholder="CÓDIGO" oninput="this.value = this.value.toUpperCase()">
                         <input type="text" id="reg-name" placeholder="Nombre Completo">
-                        <input type="text" id="reg-grade" placeholder="Grado (Ej: 9-B)">
+                        <input type="text" id="reg-grade" placeholder="Grado">
                         <button onclick="registrarAlumno()" style="background:var(--primary); color:white;">+ AÑADIR</button>
                     </div>
                 </div>
-                <button onclick="exportarExcel()" style="background:var(--success); color:white; padding:10px; margin:10px 0;">📊 EXPORTAR REPORTE EXCEL</button>
+                <button onclick="exportarExcel()" style="background:var(--success); color:white; padding:10px; margin:10px 0;">📊 DESCARGAR EXCEL</button>
                 <input type="text" id="search-main" placeholder="🔍 Buscar por código o nombre..." onkeyup="renderData()" style="padding:10px; border:2px solid var(--primary);">
                 <div id="lista-alumnos-final"></div>
             </div>
@@ -77,12 +78,12 @@
     </div>
 
 <script>
-    // CONFIGURACIÓN USANDO TUS CREDENCIALES
+    // CONFIGURACIÓN DE TU FIREBASE
     const firebaseConfig = {
         apiKey: "AIzaSyBmw9CdeBr1Z11v0ye4af-WACBeCL5FDc4",
         authDomain: "academica-bcb50.firebaseapp.com",
         projectId: "academica-bcb50",
-        databaseURL: "https://academica-bcb50-default-rtdb.firebaseio.com/", // Ajustada según tu ID
+        databaseURL: "https://academica-bcb50-default-rtdb.firebaseio.com/",
         storageBucket: "academica-bcb50.firebasestorage.app"
     };
     
@@ -101,7 +102,6 @@
 
     let alumnosData = [];
 
-    // Carga de datos en tiempo real
     database.ref('alumnos').on('value', (snapshot) => {
         const data = snapshot.val();
         alumnosData = data ? Object.keys(data).map(key => ({id: key, ...data[key]})) : [];
@@ -139,7 +139,7 @@
 
             subCont.innerHTML += `
                 <div id="tab-${m}" class="container tab-content">
-                    <h3>Calificaciones: ${m}</h3>
+                    <h3>Panel de Notas: ${m}</h3>
                     <div class="grid-notas" style="font-weight:bold; background:#eee; padding:10px; border-radius:5px;">
                         <span>CÓDIGO</span><span>ALUMNO</span><span>GRADO</span><span>ACT(60%)</span><span>EXA(40%)</span><span>PROM</span>
                     </div>
@@ -173,13 +173,18 @@
     }
 
     function actualizarNotaCloud(alId, materia, campo, valor) {
+        // Validación extra de seguridad en el código
+        if(sessionRole !== "Admin") {
+            alert("Solo el Administrador puede modificar notas.");
+            renderData();
+            return;
+        }
         database.ref(`alumnos/${alId}/notas/${materia}/${campo}`).set(parseFloat(valor) || 0);
     }
 
     function renderData() {
         const search = document.getElementById('search-main').value.toLowerCase();
         
-        // Render Resultados (Admin / General)
         const resCont = document.getElementById('lista-alumnos-final');
         if(resCont) {
             resCont.innerHTML = "";
@@ -198,7 +203,6 @@
             });
         }
 
-        // Render Materias (Profesores)
         materias.forEach(m => {
             const container = document.getElementById(`lista-${m}`);
             if(!container) return;
@@ -206,14 +210,18 @@
             alumnosData.forEach(al => {
                 const n = al.notas && al.notas[m] ? al.notas[m] : {act:0, exa:0};
                 const prom = (n.act * 0.6 + n.exa * 0.4).toFixed(2);
+                
+                // Solo habilitar el input si el usuario es Admin
+                const isDisabled = sessionRole === "Admin" ? "" : "disabled";
+
                 container.innerHTML += `
                     <div class="grid-notas card">
                         <span style="font-weight:bold; color:var(--primary);">${al.code}</span>
                         <span>${al.name}</span>
                         <span class="label-grado">GRADO: ${al.grade}</span>
-                        <input type="number" value="${n.act}" onchange="actualizarNotaCloud('${al.id}', '${m}', 'act', this.value)" step="0.1">
-                        <input type="number" value="${n.exa}" onchange="actualizarNotaCloud('${al.id}', '${m}', 'exa', this.value)" step="0.1">
-                        <span style="font-weight:bold; color:${prom >= 7 ? 'green':'red'}">${prom}</span>
+                        <input type="number" value="${n.act}" onchange="actualizarNotaCloud('${al.id}', '${m}', 'act', this.value)" step="0.1" ${isDisabled}>
+                        <input type="number" value="${n.exa}" onchange="actualizarNotaCloud('${al.id}', '${m}', 'exa', this.value)" step="0.1" ${isDisabled}>
+                        <span style="font-weight:bold; text-align:center; color:${prom >= 7 ? 'green':'red'}">${prom}</span>
                     </div>`;
             });
         });
@@ -235,9 +243,10 @@
         }));
         const ws = XLSX.utils.json_to_sheet(data);
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Notas_BCB");
-        XLSX.writeFile(wb, "Reporte_Academica_BCB.xlsx");
+        XLSX.utils.book_append_sheet(wb, ws, "Notas_CAI");
+        XLSX.writeFile(wb, "Reporte_Academica_CAI.xlsx");
     }
 </script>
 </body>
 </html>
+
