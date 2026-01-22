@@ -2,39 +2,32 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ACADÉMICA CAI - Sistema Oficial</title>
+    <title>SISTEMA CAI - Oficial</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        :root { --primary: #1a5276; --bg: #f4f6f7; }
-        body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 0; }
-        .login-box { height: 100vh; display: flex; align-items: center; justify-content: center; background: #1a5276; }
-        .card { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); width: 300px; }
-        .app-container { max-width: 1000px; margin: 20px auto; background: white; padding: 20px; border-radius: 8px; }
-        .nav-tabs { display: flex; border-bottom: 2px solid #ddd; margin-bottom: 20px; gap: 5px; }
-        .tab { padding: 10px 20px; cursor: pointer; background: #e5e7e9; border-radius: 5px 5px 0 0; font-weight: bold; }
-        .tab.active { background: #1a5276; color: white; }
+        :root { --p: #1a5276; --bg: #f4f6f7; }
+        body { font-family: sans-serif; background: var(--bg); margin: 0; }
+        .login-screen { height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--p); }
+        .card { background: white; padding: 25px; border-radius: 8px; width: 300px; text-align: center; }
+        .container { max-width: 900px; margin: 20px auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        input, select { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .row { display: grid; grid-template-columns: 80px 1fr 100px 80px 80px 80px; gap: 10px; padding: 10px; border-bottom: 1px solid #eee; align-items: center; }
+        .btn { background: var(--p); color: white; border: none; padding: 10px; cursor: pointer; border-radius: 4px; width: 100%; font-weight: bold; }
         .hidden { display: none; }
-        input, select { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        .alumno-row { display: grid; grid-template-columns: 100px 1fr 100px 80px 80px 80px; gap: 10px; padding: 10px; border-bottom: 1px solid #eee; align-items: center; }
-        .btn { background: #1a5276; color: white; border: none; padding: 10px; cursor: pointer; border-radius: 4px; width: 100%; }
-        .btn-red { background: #c0392b; }
-        .search-bar { font-size: 18px; border: 2px solid #1a5276; margin-bottom: 20px; }
     </style>
 </head>
 <body>
 
-    <div id="login-screen" class="login-box">
+    <div id="login-box" class="login-screen">
         <div class="card">
-            <h2 style="text-align:center; color:#1a5276;">CAI LOGIN</h2>
-            <input type="text" id="user" placeholder="Usuario">
-            <input type="password" id="pass" placeholder="Clave">
-            <select id="role">
+            <h2 style="color:var(--p)">ACADÉMICA CAI</h2>
+            <input type="text" id="u" placeholder="Usuario">
+            <input type="password" id="p" placeholder="Contraseña">
+            <select id="r">
                 <option value="Admin">Administrador</option>
-                <option value="Lenguaje">Docente Lenguaje</option>
                 <option value="Matematica">Docente Matemática</option>
+                <option value="Lenguaje">Docente Lenguaje</option>
                 <option value="Ciencias">Docente Ciencias</option>
                 <option value="Sociales">Docente Sociales</option>
             </select>
@@ -42,40 +35,27 @@
         </div>
     </div>
 
-    <div id="main-app" class="hidden">
-        <div class="app-container">
-            <button class="btn btn-red" style="width:100px; float:right;" onclick="location.reload()">SALIR</button>
-            <h3>SISTEMA CAI - <span id="user-title"></span></h3>
-            
-            <div class="nav-tabs" id="tabs-header">
-                <div class="tab active" onclick="showTab('general')">GENERAL</div>
+    <div id="app" class="hidden">
+        <div class="container">
+            <button onclick="location.reload()" style="float:right; width:80px;" class="btn">SALIR</button>
+            <h3>Panel: <span id="user-tag"></span></h3>
+
+            <div id="admin-panel" class="hidden" style="background:#e8f6f3; padding:15px; border-radius:8px; margin-bottom:20px;">
+                <b>Registrar Alumno:</b>
+                <div style="display:flex; gap:10px; margin-top:10px;">
+                    <input type="text" id="nc" placeholder="Código">
+                    <input type="text" id="nn" placeholder="Nombre">
+                    <input type="text" id="ng" placeholder="Grado">
+                    <button class="btn" onclick="add()">AÑADIR</button>
+                </div>
             </div>
 
-            <div id="tab-general">
-                <div id="admin-only" class="hidden" style="background:#ebf5fb; padding:15px; border-radius:8px; margin-bottom:20px;">
-                    <h4>Registrar Nuevo Alumno</h4>
-                    <div style="display:flex; gap:10px;">
-                        <input type="text" id="new-code" placeholder="Código (Ej: A01)">
-                        <input type="text" id="new-name" placeholder="Nombre Completo">
-                        <input type="text" id="new-grade" placeholder="Grado">
-                        <button class="btn" style="width:150px;" onclick="addAlumno()">AÑADIR</button>
-                    </div>
-                </div>
-                
-                <input type="text" id="main-search" class="search-bar" placeholder="🔍 BUSCAR POR NOMBRE O CÓDIGO..." onkeyup="refreshUI()">
-                
-                <div id="lista-general"></div>
-                <button class="btn" style="background:#27ae60; margin-top:20px;" onclick="exportExcel()">DESCARGAR REPORTE EXCEL</button>
-            </div>
+            <input type="text" id="search" placeholder="🔍 BUSCAR POR NOMBRE O CÓDIGO..." onkeyup="draw()" style="font-size:18px; border:2px solid var(--p);">
 
-            <div id="tab-materia" class="hidden">
-                <h4 id="materia-name"></h4>
-                <input type="text" id="sub-search" class="search-bar" placeholder="🔍 BUSCAR EN ESTA MATERIA..." onkeyup="refreshUI()">
-                <div style="font-weight:bold; background:#1a5276; color:white;" class="alumno-row">
-                    <span>CÓDIGO</span><span>NOMBRE</span><span>GRADO</span><span>ACT(60%)</span><span>EXA(40%)</span><span>PROM</span>
-                </div>
-                <div id="lista-materia"></div>
+            <div style="font-weight:bold; background:var(--p); color:white; margin-top:20px;" class="row">
+                <span>CÓDIGO</span><span>ALUMNO</span><span>GRADO</span><span>ACT(60)</span><span>EXA(40)</span><span>PROM</span>
             </div>
+            <div id="list"></div>
         </div>
     </div>
 
@@ -90,139 +70,78 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    let currentUser = "";
-    let localData = [];
+    let role = "";
+    let data = [];
 
     function login() {
-        const u = document.getElementById('user').value;
-        const p = document.getElementById('pass').value;
-        const r = document.getElementById('role').value;
+        const user = document.getElementById('u').value;
+        const pass = document.getElementById('p').value;
+        const sel = document.getElementById('r').value;
 
-        const valid = {
-            "Admin": ["Registro", "Admin"],
-            "Lenguaje": ["prof_lenguaje", "cai2026"],
-            "Matematica": ["prof_mate", "cai2026"],
-            "Ciencias": ["prof_ciencias", "cai2026"],
-            "Sociales": ["prof_sociales", "cai2026"]
+        // Credenciales institucionales
+        const creds = { 
+            "Admin": ["Registro","Admin"], 
+            "Matematica": ["prof_mate","cai2026"],
+            "Lenguaje": ["prof_lenguaje","cai2026"],
+            "Ciencias": ["prof_ciencias","cai2026"],
+            "Sociales": ["prof_sociales","cai2026"]
         };
 
-        if(valid[r] && u === valid[r][0] && p === valid[r][1]) {
-            currentUser = r;
-            document.getElementById('login-screen').classList.add('hidden');
-            document.getElementById('main-app').classList.remove('hidden');
-            document.getElementById('user-title').innerText = r;
+        if(creds[sel] && user === creds[sel][0] && pass === creds[sel][1]) {
+            role = sel;
+            document.getElementById('login-box').classList.add('hidden');
+            document.getElementById('app').classList.remove('hidden');
+            document.getElementById('user-tag').innerText = sel;
+            if(role === "Admin") document.getElementById('admin-panel').classList.remove('hidden');
             
-            if(r === "Admin") {
-                document.getElementById('admin-only').classList.remove('hidden');
-            } else {
-                const tabsHeader = document.getElementById('tabs-header');
-                tabsHeader.innerHTML += `<div class="tab" onclick="showTab('materia')">${r.toUpperCase()}</div>`;
-            }
-            initData();
-        } else {
-            alert("Datos incorrectos");
-        }
-    }
-
-    function showTab(type) {
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        if(type === 'general') {
-            document.getElementById('tab-general').classList.remove('hidden');
-            document.getElementById('tab-materia').classList.add('hidden');
-            event.target.classList.add('active');
-        } else {
-            document.getElementById('tab-general').classList.add('hidden');
-            document.getElementById('tab-materia').classList.remove('hidden');
-            document.getElementById('materia-name').innerText = "CALIFICACIONES DE " + currentUser.toUpperCase();
-            event.target.classList.add('active');
-        }
-        refreshUI();
-    }
-
-    function initData() {
-        db.ref('alumnos').on('value', (snap) => {
-            const data = snap.val();
-            localData = data ? Object.keys(data).map(id => ({id, ...data[id]})) : [];
-            refreshUI();
-        });
-    }
-
-    function addAlumno() {
-        const code = document.getElementById('new-code').value.toUpperCase();
-        const name = document.getElementById('new-name').value;
-        const grade = document.getElementById('new-grade').value;
-        if(!code || !name) return alert("Faltan datos");
-
-        db.ref('alumnos').push({
-            code, name, grade,
-            notas: { Lenguaje:{act:0, exa:0}, Matematica:{act:0, exa:0}, Ciencias:{act:0, exa:0}, Sociales:{act:0, exa:0} }
-        });
-        document.getElementById('new-code').value = "";
-        document.getElementById('new-name').value = "";
-    }
-
-    function saveNota(id, campo, val) {
-        if(currentUser !== "Admin") return;
-        db.ref(`alumnos/${id}/notas/${currentUser}/${campo}`).set(parseFloat(val) || 0);
-    }
-
-    function refreshUI() {
-        const isAdm = (currentUser === "Admin");
-        
-        // Buscador General
-        const sGen = document.getElementById('main-search').value.toLowerCase();
-        const listGen = document.getElementById('lista-general');
-        listGen.innerHTML = "";
-        
-        localData.filter(a => a.name.toLowerCase().includes(sGen) || a.code.toLowerCase().includes(sGen)).forEach(al => {
-            let total = 0;
-            ["Lenguaje", "Matematica", "Ciencias", "Sociales"].forEach(m => {
-                const n = al.notas[m];
-                total += (n.act * 0.6 + n.exa * 0.4);
+            db.ref('alumnos').on('value', (s) => {
+                const val = s.val();
+                data = val ? Object.keys(val).map(k => ({id:k, ...val[k]})) : [];
+                draw();
             });
-            const pF = (total / 4).toFixed(2);
-            listGen.innerHTML += `
-                <div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #ddd;">
-                    <span><b>[${al.code}]</b> ${al.name} (Grado: ${al.grade})</span>
-                    <b style="color:${pF >= 7 ? 'green' : 'red'}">${pF}</b>
+        } else { alert("Datos incorrectos"); }
+    }
+
+    function add() {
+        const c = document.getElementById('nc').value;
+        const n = document.getElementById('nn').value;
+        const g = document.getElementById('ng').value;
+        if(!c || !n) return;
+        db.ref('alumnos').push({
+            code: c, name: n, grade: g,
+            notas: { Matematica:{a:0,e:0}, Lenguaje:{a:0,e:0}, Ciencias:{a:0,e:0}, Sociales:{a:0,e:0} }
+        });
+        document.getElementById('nc').value=""; document.getElementById('nn').value="";
+    }
+
+    function update(id, mat, field, val) {
+        db.ref(`alumnos/${id}/notas/${mat}/${field}`).set(parseFloat(val) || 0);
+    }
+
+    function draw() {
+        const s = document.getElementById('search').value.toLowerCase();
+        const list = document.getElementById('list');
+        list.innerHTML = "";
+
+        data.filter(a => a.name.toLowerCase().includes(s) || a.code.toLowerCase().includes(s)).forEach(al => {
+            // Si es Admin, mostramos el promedio general. Si es Profe, mostramos su materia.
+            const m = (role === "Admin") ? "Matematica" : role; 
+            const n = al.notas[m] || {a:0, e:0};
+            const p = (n.a * 0.6 + n.e * 0.4).toFixed(2);
+            
+            // Solo se habilita si es Admin o si es el profesor de esa materia
+            const canEdit = (role === "Admin" || role === m) ? "" : "disabled";
+
+            list.innerHTML += `
+                <div class="row">
+                    <span>${al.code}</span>
+                    <span>${al.name}</span>
+                    <span style="font-size:12px; color:#777;">${al.grade}</span>
+                    <input type="number" value="${n.a}" onchange="update('${al.id}','${m}','a',this.value)" ${canEdit}>
+                    <input type="number" value="${n.e}" onchange="update('${al.id}','${m}','e',this.value)" ${canEdit}>
+                    <b style="color:${p >= 7 ? 'green':'red'}">${p}</b>
                 </div>`;
         });
-
-        // Buscador Materia
-        const listMat = document.getElementById('lista-materia');
-        if(listMat && !isAdm) {
-            const sSub = document.getElementById('sub-search').value.toLowerCase();
-            listMat.innerHTML = "";
-            localData.filter(a => a.name.toLowerCase().includes(sSub) || a.code.toLowerCase().includes(sSub)).forEach(al => {
-                const n = al.notas[currentUser];
-                const p = (n.act * 0.6 + n.exa * 0.4).toFixed(2);
-                listMat.innerHTML += `
-                    <div class="alumno-row">
-                        <span>${al.code}</span><span>${al.name}</span><span>${al.grade}</span>
-                        <input type="number" value="${n.act}" onchange="saveNota('${al.id}','act',this.value)" ${isAdm ? '' : 'disabled'}>
-                        <input type="number" value="${n.exa}" onchange="saveNota('${al.id}','exa',this.value)" ${isAdm ? '' : 'disabled'}>
-                        <b style="color:${p >= 7 ? 'green' : 'red'}">${p}</b>
-                    </div>`;
-            });
-        }
-    }
-
-    function exportExcel() {
-        const rows = localData.map(al => {
-            let item = { "CÓDIGO": al.code, "ALUMNO": al.name, "GRADO": al.grade };
-            let promTotal = 0;
-            ["Lenguaje", "Matematica", "Ciencias", "Sociales"].forEach(m => {
-                const p = (al.notas[m].act * 0.6 + al.notas[m].exa * 0.4);
-                item[m] = p.toFixed(2);
-                promTotal += p;
-            });
-            item["FINAL"] = (promTotal / 4).toFixed(2);
-            return item;
-        });
-        const ws = XLSX.utils.json_to_sheet(rows);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Notas");
-        XLSX.writeFile(wb, "Reporte_CAI.xlsx");
     }
 </script>
 </body>
