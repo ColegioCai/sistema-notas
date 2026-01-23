@@ -2,254 +2,283 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>SISTEMA CAI - Colegio Amigos de Israel</title>
+    <title>SISTEMA CAI - Versión Final 2026</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    
     <style>
-        :root { --p: #1a5276; --bg: #f4f6f7; --red: #c0392b; --green: #27ae60; --orange: #e67e22; }
+        :root { --p: #1a5276; --bg: #f4f6f7; --red: #c0392b; --orange: #a04000; --dark: #1b2631; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; }
-        .container { max-width: 1300px; margin: 20px auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .uppercase { text-transform: uppercase; }
-        input, select, textarea { width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        .btn { background: var(--p); color: white; border: none; padding: 10px; cursor: pointer; border-radius: 4px; font-weight: bold; margin: 2px; }
+        
+        /* Login */
+        #login-box { max-width: 350px; margin: 80px auto; background: white; padding: 30px; border-radius: 8px; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
+        #login-box input, #login-box select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        
+        .container { max-width: 98%; margin: 15px auto; background: white; padding: 20px; border-radius: 8px; }
+        .btn { background: var(--p); color: white; border: none; padding: 8px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; }
+        .btn-del { background: var(--red); font-size: 10px; margin-left: 5px; }
         .hidden { display: none !important; }
         
-        /* Modal Admin */
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-        .modal-content { background: white; padding: 25px; border-radius: 8px; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; }
-
-        /* Estilos Boleta con Logo */
-        #boleta-impresion { width: 21cm; height: 13.5cm; padding: 1cm; background: white; border: 1px dashed #ccc; margin: 0 auto; box-sizing: border-box; }
-        .header-boleta { display: flex; align-items: center; justify-content: center; border-bottom: 3px solid var(--p); margin-bottom: 15px; padding-bottom: 10px; gap: 20px; }
-        .logo-cai { height: 80px; width: auto; }
-        .header-text { text-align: center; }
-
-        table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 10px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
-        th { background: #f2f2f2; }
+        /* Tablas de Control */
+        table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 10px; }
+        th { background: var(--dark); color: white; padding: 10px; }
+        td { border: 1px solid #ccc; padding: 5px; text-align: center; font-weight: bold; }
         
-        .row-docente { display: grid; grid-template-columns: 100px 1fr 80px 80px 60px 60px 60px; gap: 10px; padding: 10px; border-bottom: 1px solid #eee; align-items: center; }
+        /* Colores de Promedios con Máximo Contraste */
+        .bg-70 { background: #0e6655 !important; color: white !important; } 
+        .bg-30 { background: #935116 !important; color: white !important; } 
+        .bg-total { background: #154360 !important; color: white !important; } 
+        .bg-28 { background: #512e5f !important; color: white !important; } 
+        
+        input[type="number"] { width: 45px; padding: 5px; text-align: center; border: 2px solid #2e86c1; border-radius: 3px; font-weight: bold; }
+        input:read-only { background-color: #ebedef; border: 1px solid #bdc3c7; color: #7f8c8d; cursor: not-allowed; }
 
+        /* Boleta de Impresión */
+        .media-hoja { width: 19cm; height: 12.5cm; padding: 0.8cm; margin: 0 auto; background: white; border: 1px dashed #666; color: #000; }
+        .header-bol { display: flex; align-items: center; justify-content: space-between; border-bottom: 3px solid var(--p); padding-bottom: 5px; margin-bottom: 10px; }
+        .logo-bol { width: 80px; height: 80px; object-fit: contain; }
+        
         @media print { 
             .no-print { display: none !important; } 
-            #container-boleta { display: block !important; }
-            #boleta-impresion { border: none; width: 100%; }
-            @page { size: letter landscape; margin: 0; }
+            body { background: white; }
+            .media-hoja { border: none; width: 100%; height: auto; padding: 0; }
         }
     </style>
 </head>
 <body>
 
-    <div id="login-box" class="container" style="max-width:350px; margin-top:80px; text-align:center;">
-        <h2 style="color:var(--p);">COLEGIO AMIGOS DE ISRAEL</h2>
+    <div id="login-box">
+        <h2 style="color:var(--p);">SISTEMA CAI</h2>
+        <p style="font-weight: bold; color: #555;">CONTROL DE NOTAS 2026</p>
         <input type="text" id="u" placeholder="Usuario">
         <input type="password" id="p" placeholder="Contraseña">
         <select id="r">
-            <option value="Admin">Administrador</option>
-            <option value="Matematica">Docente Matemática</option>
-            <option value="Lenguaje">Docente Lenguaje</option>
-            <option value="Ciencias">Docente Ciencias</option>
-            <option value="Sociales">Docente Sociales</option>
-            <option value="Ingles">Docente Inglés</option>
+            <option value="Admin">ADMINISTRADOR</option>
+            <option value="Matematica">PROF. MATEMÁTICA</option>
+            <option value="Lenguaje">PROF. LENGUAJE</option>
+            <option value="Ciencias">PROF. CIENCIAS</option>
+            <option value="Sociales">PROF. SOCIALES</option>
+            <option value="Ingles">PROF. INGLÉS</option>
         </select>
-        <button class="btn" style="width:100%" onclick="login()">INGRESAR</button>
+        <button class="btn" style="width:100%; margin-top:10px; padding:15px;" onclick="login()">ACCEDER</button>
     </div>
 
     <div id="app" class="hidden">
         <div class="container no-print">
-            <button onclick="location.reload()" style="float:right; background:var(--red);" class="btn">SALIR</button>
-            <h3>Panel Administrativo - <span id="user-tag"></span></h3>
+            <button onclick="location.reload()" style="float:right;" class="btn btn-del">CERRAR SESIÓN</button>
+            <h3>Panel: <span id="user-tag" style="color:var(--orange)"></span></h3>
 
-            <div id="admin-panel" class="hidden" style="background:#e8f8f5; padding:15px; border-radius:8px; border:1px solid #a3e4d7; margin-bottom: 20px;">
-                <b>Gestión de Estudiantes:</b>
-                <div style="display:grid; grid-template-columns: 1fr 2fr 1.5fr 1fr; gap:10px; margin-top:10px;">
-                    <input type="text" id="nc" placeholder="CÓDIGO" class="uppercase" oninput="this.value=this.value.toUpperCase()">
-                    <input type="text" id="nn" placeholder="Nombre Completo">
-                    <select id="ng">
-                        <option value="Kinder">Kinder</option><option value="Parvularia">Parvularia</option>
-                        <option value="1 Grado">1° Grado</option><option value="2 Grado">2° Grado</option>
-                        <option value="3 Grado">3° Grado</option><option value="4 Grado">4° Grado</option>
-                        <option value="5 Grado">5° Grado</option><option value="6 Grado">6° Grado</option>
-                        <option value="7 Grado">7° Grado</option><option value="8 Grado">8° Grado</option>
-                        <option value="9 Grado">9° Grado</option><option value="1 Año">1° Año Bach</option>
-                        <option value="2 Año">2° Año Bach</option>
+            <div id="admin-panel" class="hidden" style="background:#fdf2e9; padding:15px; border: 2px solid var(--orange); border-radius: 8px; margin-bottom: 20px;">
+                <h4 style="margin:0 0 10px 0;">REGISTRAR ALUMNO</h4>
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap:8px;">
+                    <input type="text" id="a1" placeholder="1er Apellido" oninput="this.value = this.value.toUpperCase()">
+                    <input type="text" id="a2" placeholder="2do Apellido" oninput="this.value = this.value.toUpperCase()">
+                    <input type="text" id="n1" placeholder="1er Nombre" oninput="this.value = this.value.toUpperCase()">
+                    <input type="text" id="n2" placeholder="2do Nombre" oninput="this.value = this.value.toUpperCase()">
+                    <input type="text" id="new-code" placeholder="Código" oninput="this.value = this.value.toUpperCase()">
+                    <select id="new-grado">
+                        <option value="1° GRADO">1° GRADO</option><option value="2° GRADO">2° GRADO</option>
+                        <option value="3° GRADO">3° GRADO</option><option value="4° GRADO">4° GRADO</option>
+                        <option value="5° GRADO">5° GRADO</option><option value="6° GRADO">6° GRADO</option>
+                        <option value="7° GRADO">7° GRADO</option><option value="8° GRADO">8° GRADO</option>
+                        <option value="9° GRADO">9° GRADO</option>
+                        <option value="1° AÑO BACH.">1° AÑO BACH.</option><option value="2° AÑO BACH.">2° AÑO BACH.</option>
                     </select>
-                    <button class="btn" style="background:var(--green);" onclick="saveAlumno()">GUARDAR / ACTUALIZAR</button>
+                    <button class="btn" style="background:var(--orange)" onclick="inscribir()">GUARDAR</button>
                 </div>
-                <input type="hidden" id="edit-id">
             </div>
 
-            <div style="display:grid; grid-template-columns: 2fr 1fr; gap:15px; margin-bottom: 10px;">
-                <input type="text" id="search" placeholder="🔍 Buscar..." onkeyup="draw()" class="uppercase">
-                <select id="filter-grado" onchange="draw()">
-                    <option value="TODOS">Todos los Grados</option>
-                    <option value="Kinder">Kinder</option><option value="Parvularia">Parvularia</option>
-                    <option value="1 Grado">1° Grado</option><option value="2 Grado">2° Grado</option>
-                    <option value="3 Grado">3° Grado</option><option value="4 Grado">4° Grado</option>
-                    <option value="5 Grado">5° Grado</option><option value="6 Grado">6° Grado</option>
-                    <option value="7 Grado">7° Grado</option><option value="8 Grado">8° Grado</option>
-                    <option value="9 Grado">9° Grado</option><option value="1 Año">1° Año Bach</option>
-                    <option value="2 Año">2° Año Bach</option>
+            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:15px; margin-bottom:15px; background:#d5dbdb; padding:15px; border-radius:5px;">
+                <select id="sel-mes" onchange="draw()">
+                    <option value="Enero">ENERO</option><option value="Febrero">FEBRERO</option>
+                    <option value="Marzo">MARZO</option><option value="Abril">ABRIL</option>
+                    <option value="Mayo">MAYO</option><option value="Junio">JUNIO</option>
+                    <option value="Julio">JULIO</option><option value="Agosto">AGOSTO</option>
+                    <option value="Septiembre">SEPTIEMBRE</option><option value="Octubre">OCTUBRE</option>
                 </select>
-            </div>
-            
-            <div id="view-admin" class="hidden">
-                <table>
-                    <thead><tr><th>CÓDIGO</th><th>ALUMNO</th><th>GRADO</th><th>ACCIONES ADMINISTRATIVAS</th></tr></thead>
-                    <tbody id="list-admin"></tbody>
-                </table>
-            </div>
-
-            <div id="view-docente" class="hidden">
-                <div class="row-docente" style="background:var(--p); color:white; font-weight:bold;">
-                    <span>CÓDIGO</span><span>ALUMNO</span><span>60%</span><span>40%</span><span>ASIS</span><span>INAS</span><span>PERM</span>
+                <select id="sel-grado" onchange="draw()">
+                    <option value="1° GRADO">1° GRADO</option><option value="2° GRADO">2° GRADO</option>
+                    <option value="3° GRADO">3° GRADO</option><option value="4° GRADO">4° GRADO</option>
+                    <option value="5° GRADO">5° GRADO</option><option value="6° GRADO">6° GRADO</option>
+                    <option value="7° GRADO">7° GRADO</option><option value="8° GRADO">8° GRADO</option>
+                    <option value="9° GRADO">9° GRADO</option>
+                    <option value="1° AÑO BACH.">1° AÑO BACH.</option><option value="2° AÑO BACH.">2° AÑO BACH.</option>
+                </select>
+                <div id="materia-admin-box" class="hidden">
+                    <select id="sel-materia-admin" onchange="draw()" style="border: 2px solid var(--p);">
+                        <option value="Matematica">MATEMÁTICA</option><option value="Lenguaje">LENGUAJE</option>
+                        <option value="Ciencias">CIENCIAS</option><option value="Sociales">SOCIALES</option>
+                        <option value="Ingles">INGLÉS</option>
+                    </select>
                 </div>
-                <div id="list-docente"></div>
             </div>
-        </div>
 
-        <div id="modal-notas" class="modal hidden">
-            <div class="modal-content">
-                <h3 id="modal-title" style="color:var(--p);">Edición de Expediente</h3>
-                <div id="modal-body"></div>
-                <button class="btn" style="background:var(--green); width:100%; margin-top:20px;" onclick="closeModal()">CERRAR Y GUARDAR</button>
-            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>CÓDIGO</th><th>ALUMNO</th><th>T1(15%)</th><th>CUAD(15%)</th><th>T2(15%)</th><th>LAB(25%)</th>
+                        <th class="bg-70">70%</th><th>EXAM(30%)</th><th class="bg-30">30%</th><th>NOTA FINAL</th>
+                        <th class="bg-28">CONV. 28%</th><th>ACCIONES</th>
+                    </tr>
+                </thead>
+                <tbody id="list-main"></tbody>
+            </table>
         </div>
 
         <div id="container-boleta" class="hidden">
-            <div class="no-print" style="text-align:center; padding:15px; background:#f0f0f0;">
-                <button class="btn" style="background:var(--green)" onclick="downloadImg()">DESCARGAR IMAGEN</button>
-                <button class="btn" onclick="window.print()">IMPRIMIR</button>
-                <button class="btn" style="background:var(--red)" onclick="closeBoleta()">VOLVER</button>
-            </div>
-            <div id="boleta-impresion">
-                <div class="header-boleta">
-                    <img src="https://i.ibb.co/HDJTpq6p/tu-logo.png" class="logo-cai" onerror="this.src='https://via.placeholder.com/80?text=CAI'">
-                    <div class="header-text">
-                        <h2 style="margin:0; font-size: 24px;">COLEGIO AMIGOS DE ISRAEL (CAI)</h2>
-                        <p style="margin:5px; font-weight:bold;">REPORTE ACADÉMICO CICLO 2026</p>
-                    </div>
-                </div>
-                <div id="boleta-content"></div>
+            <div id="boleta-impresion"></div>
+            <div class="no-print" style="text-align:center; padding:20px;">
+                <button class="btn" onclick="window.print()">IMPRIMIR AHORA</button>
+                <button class="btn" style="background:var(--red)" onclick="closeBoleta()">VOLVER AL SISTEMA</button>
             </div>
         </div>
     </div>
 
 <script>
+    const LOGO_URL = "https://i.ibb.co/L6v9R53h/Whats-App-Image-2025-01-23-at-12-32-53-PM.jpg";
+    
+    const USUARIOS = {
+        "Admin": { user: "Registro", pass: "Academica" },
+        "Matematica": { user: "docentematematica", pass: "cai2026" },
+        "Lenguaje": { user: "docentelenguaje", pass: "cai2026" },
+        "Ciencias": { user: "docenteciencias", pass: "cai2026" },
+        "Sociales": { user: "docentesociales", pass: "cai2026" },
+        "Ingles": { user: "docenteingles", pass: "cai2026" }
+    };
+
     const firebaseConfig = {
         apiKey: "AIzaSyBmw9CdeBr1Z11v0ye4af-WACBeCL5FDc4",
         authDomain: "academica-bcb50.firebaseapp.com",
         projectId: "academica-bcb50",
-        databaseURL: "https://academica-bcb50-default-rtdb.firebaseio.com/",
-        storageBucket: "academica-bcb50.firebasestorage.app"
+        databaseURL: "https://academica-bcb50-default-rtdb.firebaseio.com/"
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     let role = ""; let data = [];
 
     function login() {
-        const creds = { "Admin":["Registro","Admin"], "Matematica":["prof_mate","cai2026"], "Lenguaje":["prof_lenguaje","cai2026"], "Ciencias":["prof_ciencias","cai2026"], "Sociales":["prof_sociales","cai2026"], "Ingles":["prof_ingles","cai2026"] };
-        const u = document.getElementById('u').value; const p = document.getElementById('p').value; const r = document.getElementById('r').value;
-        if(creds[r] && u === creds[r][0] && p === creds[r][1]) {
-            role = r; document.getElementById('login-box').classList.add('hidden'); document.getElementById('app').classList.remove('hidden');
-            document.getElementById('user-tag').innerText = role.toUpperCase();
-            if(role === "Admin") { document.getElementById('admin-panel').classList.remove('hidden'); document.getElementById('view-admin').classList.remove('hidden'); }
-            else { document.getElementById('view-docente').classList.remove('hidden'); }
-            db.ref('alumnos').on('value', s => { const val = s.val(); data = val ? Object.keys(val).map(k=>({id:k,...val[k]})) : []; draw(); });
-        } else alert("Acceso denegado");
+        const u = document.getElementById('u').value.toLowerCase();
+        const p = document.getElementById('p').value;
+        const r = document.getElementById('r').value;
+
+        if(u === USUARIOS[r].user.toLowerCase() && p === USUARIOS[r].pass) {
+            role = r;
+            document.getElementById('login-box').classList.add('hidden');
+            document.getElementById('app').classList.remove('hidden');
+            document.getElementById('user-tag').innerText = role === "Admin" ? "MODO ADMINISTRADOR" : "DOCENTE: " + role.toUpperCase();
+            
+            if(role === "Admin") {
+                document.getElementById('admin-panel').classList.remove('hidden');
+                document.getElementById('materia-admin-box').classList.remove('hidden');
+            }
+            db.ref('alumnos').on('value', s => {
+                const val = s.val();
+                data = val ? Object.keys(val).map(k=>({id:k,...val[k]})) : [];
+                draw();
+            });
+        } else {
+            alert("Credenciales incorrectas");
+        }
     }
 
-    function saveAlumno() {
-        const id = document.getElementById('edit-id').value;
-        const al = { code: document.getElementById('nc').value.toUpperCase(), name: document.getElementById('nn').value, grade: document.getElementById('ng').value };
-        if(!al.code || !al.name) return;
-        if(id) db.ref('alumnos/'+id).update(al);
-        else {
-            al.notas = { Matematica:{a:0,e:0}, Lenguaje:{a:0,e:0}, Ciencias:{a:0,e:0}, Sociales:{a:0,e:0}, Ingles:{a:0,e:0} };
-            al.asist = { Matematica:{as:0,in:0,pe:0}, Lenguaje:{as:0,in:0,pe:0}, Ciencias:{as:0,in:0,pe:0}, Sociales:{as:0,in:0,pe:0}, Ingles:{as:0,in:0,pe:0} };
-            al.faltas = ""; db.ref('alumnos').push(al);
-        }
-        document.getElementById('edit-id').value=""; document.getElementById('nc').value=""; document.getElementById('nn').value="";
+    function inscribir() {
+        if(role !== "Admin") return;
+        const a1 = document.getElementById('a1').value.trim();
+        const n1 = document.getElementById('n1').value.trim();
+        const code = document.getElementById('new-code').value.trim();
+        if(!a1 || !n1 || !code) return alert("Faltan datos");
+
+        const fullName = `${a1} ${document.getElementById('a2').value.trim()}, ${n1} ${document.getElementById('n2').value.trim()}`.trim().toUpperCase();
+        db.ref('alumnos').push({ name: fullName, code: code.toUpperCase(), grado: document.getElementById('new-grado').value });
+        alert("Alumno registrado");
+        ["a1","a2","n1","n2","new-code"].forEach(id => document.getElementById(id).value = "");
     }
 
-    function deleteAlumno(id) {
-        if(confirm("¿ESTÁ SEGURO? Esta acción eliminará al alumno y todas sus notas de forma permanente.")) {
-            db.ref('alumnos/' + id).remove();
+    function eliminarAlumno(id, nombre) {
+        if(confirm(`¿Está seguro de eliminar a ${nombre}? Esta acción no se puede deshacer.`)) {
+            db.ref(`alumnos/${id}`).remove();
         }
+    }
+
+    function saveNota(alId, mes, campo, val) {
+        val = parseFloat(val);
+        if(isNaN(val) || val < 0 || val > 10) return alert("Nota inválida");
+        let mat = (role === "Admin") ? document.getElementById('sel-materia-admin').value : role;
+        db.ref(`alumnos/${alId}/notas/${mes}/${mat}/${campo}`).set(val);
     }
 
     function draw() {
-        const s = document.getElementById('search').value.toUpperCase();
-        const g = document.getElementById('filter-grado').value;
-        const filtered = data.filter(a => (a.name.toUpperCase().includes(s) || a.code.includes(s)) && (g === "TODOS" || a.grade === g));
+        const mes = document.getElementById('sel-mes').value;
+        const grado = document.getElementById('sel-grado').value;
+        const list = document.getElementById('list-main'); 
+        list.innerHTML = "";
+        let mat = (role === "Admin") ? document.getElementById('sel-materia-admin').value : role;
+        
+        data.filter(a => a.grado === grado).sort((a,b) => a.name.localeCompare(b.name)).forEach(al => {
+            const n = (al.notas && al.notas[mes] && al.notas[mes][mat]) ? al.notas[mes][mat] : {t1:0, cu:0, t2:0, lab:0, ex:0};
+            const s70 = (n.t1*0.15) + (n.cu*0.15) + (n.t2*0.15) + (n.lab*0.25);
+            const nf = s70 + (n.ex*0.30);
+            const p28 = nf >= 7 ? (nf * 0.28) : 0;
+            const isLock = (val) => (val > 0 && role !== "Admin") ? "readonly" : "";
 
-        if(role === "Admin") {
-            const list = document.getElementById('list-admin'); list.innerHTML = "";
-            filtered.forEach(al => {
-                list.innerHTML += `<tr><td><b>${al.code}</b></td><td>${al.name}</td><td>${al.grade}</td>
-                <td>
-                    <button class="btn" style="background:var(--green); font-size:10px;" onclick="openModal('${al.id}')">NOTAS</button>
-                    <button class="btn" style="background:#444; font-size:10px;" onclick="generateBoleta('${al.id}')">BOLETA</button>
-                    <button class="btn" style="background:var(--orange); font-size:10px;" onclick="editAl('${al.id}')">EDITAR</button>
-                    <button class="btn" style="background:var(--red); font-size:10px;" onclick="deleteAlumno('${al.id}')">ELIMINAR</button>
-                </td></tr>`;
-            });
-        } else {
-            const list = document.getElementById('list-docente'); list.innerHTML = "";
-            filtered.forEach(al => {
-                const n = al.notas[role] || {a:0,e:0}; const as = al.asist[role] || {as:0,in:0,pe:0};
-                list.innerHTML += `<div class="row-docente">
-                    <span>${al.code}</span><span>${al.name}</span>
-                    <input type="number" value="${n.a}" onchange="db.ref('alumnos/${al.id}/notas/${role}/a').set(parseFloat(this.value)||0)">
-                    <input type="number" value="${n.e}" onchange="db.ref('alumnos/${al.id}/notas/${role}/e').set(parseFloat(this.value)||0)">
-                    <input type="number" value="${as.as}" onchange="db.ref('alumnos/${al.id}/asist/${role}/as').set(parseInt(this.value)||0)">
-                    <input type="number" value="${as.in}" onchange="db.ref('alumnos/${al.id}/asist/${role}/in').set(parseInt(this.value)||0)">
-                    <input type="number" value="${as.pe}" onchange="db.ref('alumnos/${al.id}/asist/${role}/pe').set(parseInt(this.value)||0)">
-                </div>`;
-            });
-        }
+            let row = `<tr><td>${al.code}</td><td style="text-align:left">${al.name}</td>
+                <td><input type="number" step="0.1" value="${n.t1}" ${isLock(n.t1)} onchange="saveNota('${al.id}','${mes}','t1',this.value)"></td>
+                <td><input type="number" step="0.1" value="${n.cu}" ${isLock(n.cu)} onchange="saveNota('${al.id}','${mes}','cu',this.value)"></td>
+                <td><input type="number" step="0.1" value="${n.t2}" ${isLock(n.t2)} onchange="saveNota('${al.id}','${mes}','t2',this.value)"></td>
+                <td><input type="number" step="0.1" value="${n.lab}" ${isLock(n.lab)} onchange="saveNota('${al.id}','${mes}','lab',this.value)"></td>
+                <td class="bg-70">${s70.toFixed(2)}</td>
+                <td><input type="number" step="0.1" value="${n.ex}" ${isLock(n.ex)} onchange="saveNota('${al.id}','${mes}','ex',this.value)"></td>
+                <td class="bg-30">${(n.ex*0.30).toFixed(2)}</td><td class="bg-total">${nf.toFixed(2)}</td><td class="bg-28">${p28.toFixed(2)}</td>
+                <td>`;
+            if(role === "Admin") {
+                row += `<button class="btn" onclick="verBoleta('${al.id}')">BOLETA</button>`;
+                row += `<button class="btn btn-del" onclick="eliminarAlumno('${al.id}','${al.name}')">ELIMINAR</button>`;
+            } else {
+                row += `<span style="color:#888; font-size:9px;">BLOQUEADO</span>`;
+            }
+            list.innerHTML += row + `</td></tr>`;
+        });
     }
 
-    function openModal(id) {
+    function verBoleta(id) {
         const al = data.find(x => x.id === id);
-        document.getElementById('modal-title').innerText = al.name;
-        let html = "";
+        const mes = document.getElementById('sel-mes').value;
+        let matHtml = "";
         ["Matematica","Lenguaje","Ciencias","Sociales","Ingles"].forEach(m => {
-            const n = al.notas[m]; const as = al.asist[m];
-            html += `<div style="border-bottom:1px solid #ddd; padding:5px 0;">
-                <b>${m}</b>
-                <div style="display:flex; gap:10px;">
-                    <input type="number" value="${n.a}" onchange="db.ref('alumnos/${id}/notas/${m}/a').set(parseFloat(this.value))" placeholder="60%">
-                    <input type="number" value="${n.e}" onchange="db.ref('alumnos/${id}/notas/${m}/e').set(parseFloat(this.value))" placeholder="40%">
+            const n = (al.notas && al.notas[mes] && al.notas[mes][m]) ? al.notas[mes][m] : {t1:0, cu:0, t2:0, lab:0, ex:0};
+            const s70 = (n.t1*0.15) + (n.cu*0.15) + (n.t2*0.15) + (n.lab*0.25);
+            matHtml += `<tr><td style="text-align:left; padding-left:10px;">${m.toUpperCase()}</td><td>${s70.toFixed(2)}</td><td>${(n.ex*0.30).toFixed(2)}</td><td>${(s70 + (n.ex*0.30)).toFixed(2)}</td></tr>`;
+        });
+
+        document.getElementById('boleta-impresion').innerHTML = `
+            <div class="media-hoja">
+                <div class="header-bol">
+                    <img src="${LOGO_URL}" class="logo-bol" onerror="this.src='https://via.placeholder.com/80?text=LOGO'">
+                    <div style="text-align:right">
+                        <h2 style="margin:0; color:var(--p);">COLEGIO AMIGOS DE ISRAEL</h2>
+                        <p style="margin:0; font-weight:bold;">BOLETA DE NOTAS - MES: ${mes.toUpperCase()}</p>
+                    </div>
+                </div>
+                <div style="margin-bottom:15px; border:1px solid #000; padding:10px; font-size:12px;">
+                    <b>ALUMNO:</b> ${al.name} <br>
+                    <b>GRADO:</b> ${al.grado} &nbsp;&nbsp; | &nbsp;&nbsp; <b>CÓDIGO:</b> ${al.code}
+                </div>
+                <table>
+                    <thead><tr><th>ASIGNATURA</th><th>70% ACTIV.</th><th>30% EXAMEN</th><th>PROMEDIO</th></tr></thead>
+                    <tbody>${matHtml}</tbody>
+                </table>
+                <div style="margin-top:40px; display:flex; justify-content:space-around; font-size:11px;">
+                    <div style="border-top:1px solid #000; width:200px; text-align:center; padding-top:5px;">Firma de Dirección / Sello</div>
+                    <div style="border-top:1px solid #000; width:200px; text-align:center; padding-top:5px;">Firma de Padre o Tutor</div>
                 </div>
             </div>`;
-        });
-        html += `<p>Conducta:</p><textarea onchange="db.ref('alumnos/${id}/faltas').set(this.value)">${al.faltas || ''}</textarea>`;
-        document.getElementById('modal-body').innerHTML = html;
-        document.getElementById('modal-notas').classList.remove('hidden');
-    }
-
-    function generateBoleta(id) {
-        const al = data.find(x => x.id === id); let total = 0; let rows = "";
-        ["Matematica","Lenguaje","Ciencias","Sociales","Ingles"].forEach(m => {
-            const n = al.notas[m]; const p = (n.a*0.6+n.e*0.4); total += p;
-            rows += `<tr><td>${m.toUpperCase()}</td><td>${n.a.toFixed(1)}</td><td>${n.e.toFixed(1)}</td><td>${p.toFixed(1)}</td></tr>`;
-        });
-        document.getElementById('boleta-content').innerHTML = `
-            <div style="margin-bottom:10px;"><b>ALUMNO:</b> ${al.name} | <b>GRADO:</b> ${al.grade} | <b>CÓDIGO:</b> ${al.code}</div>
-            <table border="1"><tr><th>MATERIA</th><th>60%</th><th>40%</th><th>PROM</th></tr>${rows}
-            <tr style="background:#eee"><td><b>PROMEDIO FINAL</b></td><td colspan="3"><b>${(total/5).toFixed(2)}</b></td></tr></table>
-            <div style="margin-top:10px; border:1px solid #ccc; padding:5px;"><b>OBSERVACIONES:</b> ${al.faltas || 'Excelente conducta.'}</div>`;
         document.getElementById('container-boleta').classList.remove('hidden');
-        document.querySelector('.no-print').classList.add('hidden');
+        document.querySelector('.container').classList.add('hidden');
     }
 
-    function closeModal() { document.getElementById('modal-notas').classList.add('hidden'); }
-    function closeBoleta() { document.getElementById('container-boleta').classList.add('hidden'); document.querySelector('.no-print').classList.remove('hidden'); }
-    function downloadImg() { html2canvas(document.querySelector("#boleta-impresion")).then(canvas => { const link = document.createElement('a'); link.download = `Boleta_CAI.png`; link.href = canvas.toDataURL(); link.click(); }); }
-    function editAl(id) { const al = data.find(x => x.id === id); document.getElementById('edit-id').value = id; document.getElementById('nc').value = al.code; document.getElementById('nn').value = al.name; document.getElementById('ng').value = al.grade; }
+    function closeBoleta() {
+        document.getElementById('container-boleta').classList.add('hidden');
+        document.querySelector('.container').classList.remove('hidden');
+    }
 </script>
 </body>
 </html>
