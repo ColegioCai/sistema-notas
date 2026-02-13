@@ -9,35 +9,30 @@
     <style>
         :root { --p: #1a5276; --bg: #f4f6f7; --orange: #e67e22; --dark: #2c3e50; --green: #27ae60; --red: #e74c3c; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; font-size: 11px; }
-        
         .header-app { display: flex; justify-content: space-between; align-items: center; background: white; padding: 10px 20px; border-bottom: 4px solid var(--orange); position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .tabs { display: flex; background: #1c2833; padding: 10px 10px 0; gap: 4px; overflow-x: auto; }
         .tab { padding: 10px 15px; color: #bdc3c7; cursor: pointer; border-radius: 6px 6px 0 0; background: rgba(255,255,255,0.05); border: none; font-size: 10px; white-space: nowrap; }
         .tab.active { background: var(--bg); color: var(--p); font-weight: bold; }
-        
         .container { max-width: 1400px; margin: 15px auto; padding: 0 15px; }
-        .table-card { background: white; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); overflow-x: auto; padding: 15px; }
-        table { width: 100%; border-collapse: collapse; min-width: 1000px; }
+        .table-card { background: white; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); overflow-x: auto; padding: 10px; }
+        table { width: 100%; border-collapse: collapse; min-width: 1100px; }
         th { background: #f8f9fa; padding: 12px 5px; border-bottom: 2px solid #dee2e6; color: var(--p); font-size: 9px; text-transform: uppercase; }
         td { padding: 8px 5px; border-bottom: 1px solid #eee; text-align: center; }
-        
-        .nota-input { width: 45px; padding: 6px; text-align: center; border: 1.5px solid #dcdde1; border-radius: 6px; font-weight: bold; }
-        .btn { padding: 10px 20px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .nota-input { width: 40px; padding: 6px; text-align: center; border: 1.5px solid #dcdde1; border-radius: 6px; font-weight: bold; }
+        .panel-registro { background: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #e0e6ed; }
+        .btn { padding: 8px 15px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 10px; }
         .btn-add { background: var(--p); color: white; }
-        .btn-del { background: none; color: var(--red); border: 1px solid var(--red); padding: 4px 8px; font-size: 14px; border-radius: 4px; }
-        .btn-del:hover { background: var(--red); color: white; }
-        
-        .panel-registro { background: #fff; padding: 20px; border-radius: 12px; margin-bottom: 20px; border-left: 5px solid var(--p); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .btn-edit { background: #f1c40f; color: #333; margin-right: 5px; }
+        .btn-del { background: var(--red); color: white; }
+        .btn-print { background: var(--green); color: white; margin-left: 10px; }
         .hidden { display: none !important; }
+        .login-box { background: white; padding: 40px; border-radius: 20px; width: 320px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
         input, select { padding: 10px; border-radius: 8px; border: 1px solid #ccc; width: 100%; box-sizing: border-box; margin-bottom: 10px; }
-        
-        #login-screen { height:100vh; display:flex; align-items:center; justify-content:center; background:var(--dark); }
-        .login-box { background: white; padding: 40px; border-radius: 20px; width: 320px; text-align: center; }
     </style>
 </head>
 <body>
 
-    <div id="login-screen">
+    <div id="login-screen" style="height:100vh; display:flex; align-items:center; justify-content:center; background:var(--dark);">
         <div class="login-box">
             <img src="https://i.ibb.co/Mkf051St/Logo-CAI.png" width="80">
             <h2 style="color:var(--p);">SISTEMA CAI 2026</h2>
@@ -56,8 +51,8 @@
                 <span id="txt-rol" style="color:var(--orange); font-weight:700; font-size:10px;">ROL: ---</span></div>
             </div>
             <div style="display:flex; gap:10px; align-items:center;">
-                <select id="sel-grado" onchange="cambiarGrado()" style="margin:0; width:200px;"></select>
-                <button onclick="generarBoletas()" class="btn" style="background:var(--green); color:white;">📑 BOLETAS</button>
+                <select id="sel-grado" onchange="cambiarGrado()" style="margin-bottom:0; width:180px;"></select>
+                <button onclick="generarBoletas()" class="btn btn-print">📑 BOLETAS</button>
                 <button onclick="location.reload()" class="btn" style="background:var(--red); color:white;">SALIR</button>
             </div>
         </div>
@@ -66,20 +61,17 @@
 
         <div class="container">
             <div id="panel-admin" class="panel-registro hidden">
-                <b style="color:var(--p)">MATRICULAR NUEVO ALUMNO EN ESTE GRADO:</b>
-                <div style="display:grid; grid-template-columns: 1fr 2fr 2fr auto; gap:10px; margin-top:12px;">
-                    <input type="text" id="reg-nie" placeholder="NIE" style="margin:0">
+                <b style="color:var(--p)">NUEVA MATRÍCULA:</b>
+                <div style="display:flex; gap:10px; margin-top:10px;">
+                    <input type="text" id="reg-nie" placeholder="Código (Ej: CAI-XX-001)" style="margin:0">
                     <input type="text" id="reg-ape" placeholder="Apellidos" style="margin:0">
                     <input type="text" id="reg-nom" placeholder="Nombres" style="margin:0">
-                    <button onclick="matricular()" class="btn btn-add">AGREGAR ALUMNO</button>
+                    <button onclick="matricular()" class="btn btn-add">REGISTRAR ALUMNO</button>
                 </div>
             </div>
 
             <div class="table-card">
-                <table>
-                    <thead><tr id="table-head"></tr></thead>
-                    <tbody id="table-body"></tbody>
-                </table>
+                <table><thead><tr id="table-head"></tr></thead><tbody id="table-body"></tbody></table>
             </div>
         </div>
     </div>
@@ -98,7 +90,7 @@
         "K4": ["Taller de inglés", "Taller globalizador", "Taller de matemática", "Taller de expresión gráfica", "Taller de informática", "Taller de lectoescritura", "Taller de deporte", "Taller de Biblia"],
         "K5": ["Taller de inglés", "Taller de Biblia", "Taller globalizador", "Taller de expresión gráfica", "Taller de matemática", "Taller de informática", "Taller de lectoescritura", "Taller de deporte"],
         "K6": ["Taller de inglés", "Taller de conversación", "Taller de lectoescritura", "Taller de matemáticas", "Taller de informática", "Taller de desarrollo", "Educación emocional", "Taller de Biblia", "Taller de deporte", "Taller de arte", "Taller de expresión gráfica"],
-        "1G": ["Taller de números", "Taller de Biblia", "Taller de Finanzas", "Taller de cuerpo y mente", "Taller de lectoescritura", "Cultura", "Exploración", "Escuela y sociedad", "Lectura"],
+        "1G": ["Taller de números", "Taller de Biblia", "Taller de Finanzas", "Cuerpo y personalidad", "Taller de lectoescritura", "Cultura", "Educación y experiencia", "Escuela y sociedad", "Lectura"],
         "C1": ["Comunicacion", "Numeros y formas", "Ciencia y tecnologia", "Ciudadania y valores", "Artes", "Desarrollo corporal"],
         "C2": ["Comunicacion y literatura", "Aritmetica y Finanzas", "Ciencia y tecnologia", "Ciudadania y valores", "Artes", "Desarrollo corporal"],
         "C3": ["Lenguaje y Literatura", "Ingles", "Matematica y datos", "Ciencia y tecnologia", "Ciudadania y valores", "Educacion fisica"],
@@ -110,20 +102,16 @@
 
     const GRADOS_DATA = [
         {val:"K4", t:"Kinder 4 Años", cat:"infancia"}, {val:"K5", t:"Kinder 5 Años", cat:"infancia"}, {val:"K6", t:"Kinder 6 Años", cat:"infancia"}, {val:"1G", t:"1° Grado", cat:"infancia"},
-        {val:"2G", t:"2° Grado", cat:"docente"}, {val:"3G", t:"3° Grado", cat:"docente"},
-        {val:"4G", t:"4° Grado", cat:"docente"}, {val:"5G", t:"5° Grado", cat:"docente"}, {val:"6G", t:"6° Grado", cat:"docente"},
-        {val:"7G", t:"7° Grado", cat:"docente"}, {val:"8G", t:"8° Grado", cat:"docente"}, {val:"9G", t:"9° Grado", cat:"docente"},
+        {val:"2G", t:"2° Grado", cat:"docente"}, {val:"3G", t:"3° Grado", cat:"docente"}, {val:"4G", t:"4° Grado", cat:"docente"},
+        {val:"5G", t:"5° Grado", cat:"docente"}, {val:"6G", t:"6° Grado", cat:"docente"}, {val:"7G", t:"7° Grado", cat:"docente"},
+        {val:"8G", t:"8° Grado", cat:"docente"}, {val:"9G", t:"9° Grado", cat:"docente"},
         {val:"1B", t:"1° Bachillerato", cat:"bachillerato"}, {val:"2B", t:"2° Bachillerato", cat:"bachillerato"}
     ];
 
-    let currentRol = "";
-    let dataAlumnos = [];
-    let periodoActual = "Febrero";
-    let materiaVisualizada = "";
+    let currentRol = "", dataAlumnos = [], periodoActual = "Febrero", materiaVisualizada = "";
 
     function login() {
-        const u = document.getElementById('user').value.toLowerCase();
-        const p = document.getElementById('pass').value;
+        const u = document.getElementById('user').value.toLowerCase(), p = document.getElementById('pass').value;
         let valid = false;
         if(u==='admin' && p==='admin2026') { currentRol='admin'; valid=true; }
         else if(u==='infancia' && p==='cai1') { currentRol='infancia'; valid=true; }
@@ -135,7 +123,7 @@
             document.getElementById('txt-rol').innerText = "ROL: " + currentRol.toUpperCase();
             if(currentRol==='admin') document.getElementById('panel-admin').classList.remove('hidden');
             cargarSelect();
-        } else { document.getElementById('error').innerText = "Usuario o clave incorrectos"; }
+        } else { document.getElementById('error').innerText = "Acceso Denegado"; }
     }
 
     function cargarSelect() {
@@ -152,6 +140,23 @@
         cambiarGrado(); escucharDB();
     }
 
+    function matricular() {
+        const nie = document.getElementById('reg-nie').value, ape = document.getElementById('reg-ape').value.toUpperCase(), nom = document.getElementById('reg-nom').value.toUpperCase();
+        const grado = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text;
+        if(!nie || !ape || !nom) return alert("Complete todos los campos");
+        db.ref('alumnos').push({ nie, ape, nom, grado });
+        document.getElementById('reg-nie').value=""; document.getElementById('reg-ape').value=""; document.getElementById('reg-nom').value="";
+    }
+
+    function editarAlumno(id, n, a, nm) {
+        const nuevoN = prompt("Nuevo Código:", n), nuevoA = prompt("Nuevos Apellidos:", a), nuevoNm = prompt("Nuevos Nombres:", nm);
+        if(nuevoN && nuevoA && nuevoNm) db.ref('alumnos/'+id).update({ nie: nuevoN, ape: nuevoA.toUpperCase(), nom: nuevoNm.toUpperCase() });
+    }
+
+    function eliminarAlumno(id) {
+        if(confirm("¿Seguro que desea eliminar este alumno y sus notas permanentemente?")) db.ref('alumnos/'+id).remove();
+    }
+
     function getCiclo(g) {
         if(["K4","K5","K6","1G"].includes(g)) return g;
         if(["2G","3G"].includes(g)) return "C1";
@@ -161,140 +166,91 @@
     }
 
     function cambiarGrado() {
-        const g = document.getElementById('sel-grado').value;
-        const ciclo = getCiclo(g);
-        const lista = (ciclo === "Bach") ? MESES_B : MESES;
-        periodoActual = lista[0];
-        materiaVisualizada = MATERIAS[ciclo][0];
+        const g = document.getElementById('sel-grado').value, ciclo = getCiclo(g), lista = (ciclo === "Bach") ? MESES_B : MESES;
+        periodoActual = lista[0]; materiaVisualizada = MATERIAS[ciclo][0];
         document.getElementById('txt-grado').innerText = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text;
         document.getElementById('nav-tabs').innerHTML = lista.map(p => `<button class="tab ${p===periodoActual?'active':''}" onclick="setPeriodo('${p}', this)">${p}</button>`).join('');
         dibujar();
     }
 
     function setPeriodo(p, btn) {
-        periodoActual = p;
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        periodoActual = p; document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         btn.classList.add('active'); dibujar();
-    }
-
-    function matricular() {
-        const nie = document.getElementById('reg-nie').value;
-        const ape = document.getElementById('reg-ape').value.toUpperCase();
-        const nom = document.getElementById('reg-nom').value.toUpperCase();
-        const gTxt = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text;
-        if(!nie || !ape || !nom) return alert("Faltan datos");
-        db.ref('alumnos').push({ nie, ape, nom, grado: gTxt });
-        document.getElementById('reg-nie').value=""; document.getElementById('reg-ape').value=""; document.getElementById('reg-nom').value="";
-    }
-
-    function eliminarAlumno(id, nombre) {
-        if(confirm(`¿Está seguro de eliminar a ${nombre}? Esta acción no se puede deshacer.`)) {
-            db.ref(`alumnos/${id}`).remove();
-        }
     }
 
     function calcular(n, p, g) {
         const v = { t:parseFloat(n.t)||0, l:parseFloat(n.l)||0, lc:parseFloat(n.lc)||0, int:parseFloat(n.int)||0, ex:parseFloat(n.ex)||0 };
         const c = getCiclo(g);
-        if(["K4","K5","K6","1G"].includes(c)) {
-            return (p==="Trimestre 2") ? (v.t*0.15 + v.int*0.35 + v.ex*0.5).toFixed(1) : (v.t*0.5 + v.ex*0.5).toFixed(1);
-        }
+        if(["K4","K5","K6","1G"].includes(c)) return (p==="Trimestre 2") ? (v.t*0.15 + v.int*0.35 + v.ex*0.5).toFixed(1) : (v.t*0.5 + v.ex*0.5).toFixed(1);
         const trim = p.includes("Trimestre") || p.includes("Periodo");
         return trim ? (v.t*0.1 + v.l*0.05 + v.lc*0.1 + v.int*0.35 + v.ex*0.4).toFixed(1) : (v.t*0.25 + v.l*0.2 + v.lc*0.15 + v.ex*0.4).toFixed(1);
     }
 
     function dibujar() {
-        const g = document.getElementById('sel-grado').value;
-        const ciclo = getCiclo(g);
-        const gTxt = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text;
-        const esp = ["K4","K5","K6","1G"].includes(ciclo);
-        const trim = periodoActual.includes("Trimestre") || periodoActual.includes("Periodo");
+        const g = document.getElementById('sel-grado').value, ciclo = getCiclo(g), gTxt = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text;
+        const esp = ["K4","K5","K6","1G"].includes(ciclo), trim = periodoActual.includes("Trimestre") || periodoActual.includes("Periodo");
         
-        let h = `<th>Acción</th><th>Estudiante</th><th style="width:200px">Materia</th>`;
+        let h = `<th>Acciones</th><th>Código</th><th>Estudiante</th><th style="width:180px">Materia</th>`;
         if(esp) h += (periodoActual === "Trimestre 2") ? `<th>T(15%)</th><th>I(35%)</th><th>E(50%)</th>` : `<th>T(50%)</th><th>E(50%)</th>`;
         else h += trim ? `<th>T(10%)</th><th>L(5%)</th><th>LC(10%)</th><th>I(35%)</th><th>E(40%)</th>` : `<th>T(25%)</th><th>L(20%)</th><th>LC(15%)</th><th>P(40%)</th>`;
         h += `<th>PROM</th>`;
         document.getElementById('table-head').innerHTML = h;
 
-        let fil = dataAlumnos.filter(a => a.grado === gTxt).sort((a,b) => a.ape.localeCompare(b.ape));
-        let b = "";
+        let fil = dataAlumnos.filter(a => a.grado === gTxt).sort((a,b) => a.ape.localeCompare(b.ape)), b = "";
         fil.forEach(al => {
             const n = al.notas?.[periodoActual]?.[materiaVisualizada] || {};
             b += `<tr>
-                <td><button class="btn-del" onclick="eliminarAlumno('${al.id}', '${al.ape} ${al.nom}')">🗑️</button></td>
+                <td>
+                    <button class="btn btn-edit" onclick="editarAlumno('${al.id}','${al.nie}','${al.ape}','${al.nom}')">✎</button>
+                    <button class="btn btn-del" onclick="eliminarAlumno('${al.id}')">✖</button>
+                </td>
+                <td style="color:#7f8c8d">${al.nie}</td>
                 <td style="text-align:left"><b>${al.ape}</b>, ${al.nom}</td>
                 <td><select onchange="materiaVisualizada=this.value; dibujar()">${MATERIAS[ciclo].map(m=>`<option ${m===materiaVisualizada?'selected':''}>${m}</option>`).join('')}</select></td>
                 <td><input type="text" class="nota-input" value="${n.t||0}" onchange="save('${al.id}','t',this.value)"></td>`;
             if(!esp) b += `<td><input type="text" class="nota-input" value="${n.l||0}" onchange="save('${al.id}','l',this.value)"></td><td><input type="text" class="nota-input" value="${n.lc||0}" onchange="save('${al.id}','lc',this.value)"></td>`;
             if(trim || (esp && periodoActual === "Trimestre 2")) b += `<td><input type="text" class="nota-input" value="${n.int||0}" onchange="save('${al.id}','int',this.value)"></td>`;
-            b += `<td><input type="text" class="nota-input" value="${n.ex||0}" onchange="save('${al.id}','ex',this.value)"></td>
-                <td style="font-weight:bold; color:var(--p);">${calcular(n,periodoActual,g)}</td></tr>`;
+            b += `<td><input type="text" class="nota-input" value="${n.ex||0}" onchange="save('${al.id}','ex',this.value)"></td><td style="font-weight:bold; color:var(--p);">${calcular(n,periodoActual,g)}</td></tr>`;
         });
         document.getElementById('table-body').innerHTML = b;
     }
 
-    function save(id, c, v) { 
-        let n = parseFloat(v.replace(',','.')) || 0;
-        if(n > 10) n = 10;
-        db.ref(`alumnos/${id}/notas/${periodoActual}/${materiaVisualizada}/${c}`).set(n); 
-    }
-    
-    function escucharDB() { 
-        db.ref('alumnos').on('value', snap => { 
-            const v = snap.val(); 
-            dataAlumnos = v ? Object.keys(v).map(k=>({id:k, ...v[k]})) : []; 
-            dibujar(); 
-        }); 
-    }
+    function save(id, c, v) { db.ref(`alumnos/${id}/notas/${periodoActual}/${materiaVisualizada}/${c}`).set(parseFloat(v.replace(',','.')) || 0); }
+    function escucharDB() { db.ref('alumnos').on('value', snap => { const v = snap.val(); dataAlumnos = v ? Object.keys(v).map(k=>({id:k, ...v[k]})) : []; dibujar(); }); }
 
     function generarBoletas() {
-        const val = document.getElementById('sel-grado').value;
-        const gTxt = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text;
-        const ciclo = getCiclo(val);
-        const alumnos = dataAlumnos.filter(a => a.grado === gTxt);
-        if(alumnos.length === 0) return alert("No hay alumnos");
+        const val = document.getElementById('sel-grado').value, gTxt = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text;
+        const ciclo = getCiclo(val), alumnos = dataAlumnos.filter(a => a.grado === gTxt);
+        if(alumnos.length === 0) return alert("No hay alumnos en este grado");
         
         let win = window.open('', '_blank');
-        let h = `<html><head><title>Boletas - ${gTxt}</title><style>
+        let h = `<html><head><title>Boletas CAI</title><style>
             @page { size: letter; margin: 0; }
             body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; }
             .boleta { height: 50vh; padding: 10mm; border-bottom: 1px dashed #000; box-sizing: border-box; position: relative; page-break-inside: avoid; }
-            .header { display: flex; align-items: center; border-bottom: 2px solid #1a5276; padding-bottom: 10px; }
+            .header { display: flex; align-items: center; border-bottom: 2px solid #1a5276; padding-bottom: 10px; margin-bottom: 10px; }
             .logo { height: 60px; margin-right: 20px; }
-            table { width: 100%; border-collapse: collapse; font-size: 10px; margin-top: 10px; }
-            th { background: #1a5276; color: white; padding: 6px; }
-            td { border: 1px solid #ccc; padding: 5px; text-align: center; }
-            .firma-area { display: flex; justify-content: space-around; margin-top: 40px; }
-            .firma { border-top: 1px solid #000; width: 220px; text-align: center; font-size: 10px; }
+            .info { display: grid; grid-template-columns: 2fr 1fr 1fr; font-size: 11px; margin-bottom: 10px; }
+            table { width: 100%; border-collapse: collapse; font-size: 10px; }
+            th { background: #1a5276; color: white; padding: 5px; }
+            td { border: 1px solid #ccc; padding: 4px; text-align: center; }
+            .firma-area { display: flex; justify-content: space-around; margin-top: 30px; position: absolute; bottom: 15mm; width: 100%; }
+            .firma { border-top: 1px solid #000; width: 200px; text-align: center; font-size: 9px; font-weight: bold; }
         </style></head><body>`;
 
         alumnos.forEach((al, idx) => {
-            const esp = ["K4","K5","K6","1G"].includes(ciclo);
-            const trim = periodoActual.includes("Trimestre") || periodoActual.includes("Periodo");
             h += `<div class="boleta">
                 <div class="header">
                     <img src="https://i.ibb.co/Mkf051St/Logo-CAI.png" class="logo">
-                    <div><h2 style="margin:0; color:#1a5276;">COLEGIO AMIGOS DE ISRAEL</h2>
-                    <b>REPORTE: ${periodoActual.toUpperCase()}</b></div>
+                    <div><h2 style="margin:0; color:#1a5276;">COLEGIO AMIGOS DE ISRAEL</h2><small>REPORTE DE EVALUACIÓN - ${periodoActual.toUpperCase()}</small></div>
                 </div>
-                <p><b>ALUMNO:</b> ${al.ape} ${al.nom} | <b>GRADO:</b> ${gTxt} | <b>NIE:</b> ${al.nie}</p>
-                <table><thead><tr><th style="text-align:left">MATERIA</th>`;
-            
-            if(esp) h += (periodoActual === "Trimestre 2") ? `<th>T(15%)</th><th>I(35%)</th><th>E(50%)</th>` : `<th>T(50%)</th><th>E(50%)</th>`;
-            else h += trim ? `<th>T(10%)</th><th>L(5%)</th><th>LC(10%)</th><th>I(35%)</th><th>E(40%)</th>` : `<th>T(25%)</th><th>L(20%)</th><th>LC(15%)</th><th>P(40%)</th>`;
-            h += `<th>PROM</th></tr></thead><tbody>`;
-
+                <div class="info"><div><b>ALUMNO:</b> ${al.ape} ${al.nom}</div><div><b>GRADO:</b> ${gTxt}</div><div><b>CÓDIGO:</b> ${al.nie}</div></div>
+                <table><thead><tr><th style="text-align:left">MATERIA</th><th>T</th><th>L</th><th>E</th><th>PROM</th></tr></thead><tbody>`;
             MATERIAS[ciclo].forEach(m => {
                 const n = al.notas?.[periodoActual]?.[m] || {};
-                h += `<tr><td style="text-align:left">${m}</td><td>${n.t||0}</td>`;
-                if(!esp) h += `<td>${n.l||0}</td><td>${n.lc||0}</td>`;
-                if(trim || (esp && periodoActual === "Trimestre 2")) h += `<td>${n.int||0}</td>`;
-                h += `<td>${n.ex||0}</td><td><b>${calcular(n, periodoActual, val)}</b></td></tr>`;
+                h += `<tr><td style="text-align:left"><b>${m.toUpperCase()}</b></td><td>${n.t||0}</td><td>${n.lc||0}</td><td>${n.ex||0}</td><td>${calcular(n, periodoActual, val)}</td></tr>`;
             });
-
-            h += `</tbody></table>
-                <div class="firma-area"><div class="firma">DIRECCIÓN</div><div class="firma">SELLO</div></div>
-            </div>`;
+            h += `</tbody></table><div class="firma-area"><div class="firma">FIRMA DE LA DIRECCIÓN</div><div class="firma">SELLO CAI</div></div></div>`;
             if((idx + 1) % 2 === 0) h += `<div style="page-break-after: always;"></div>`;
         });
         win.document.write(h + "</body></html>"); win.document.close();
