@@ -20,6 +20,7 @@
         td { padding: 8px 5px; border-bottom: 1px solid #eee; text-align: center; }
         .nota-input { width: 35px; padding: 5px; text-align: center; border: 1.5px solid #dcdde1; border-radius: 6px; font-weight: bold; }
         .asist-input { width: 30px; padding: 4px; text-align: center; border: 1px solid #ccc; border-radius: 4px; background: #fffde7; }
+        .cond-input { width: 50px; padding: 4px; border-radius: 4px; border: 1px solid #ccc; font-weight: bold; background: #e8f6f3; }
         .obs-input { width: 150px; padding: 5px; border-radius: 4px; border: 1px solid #ccc; font-size: 9px; }
         .btn { padding: 8px 15px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 10px; }
         .btn-add { background: var(--p); color: white; }
@@ -189,13 +190,14 @@
         if(esp) h += (periodoActual === "Trimestre 2") ? `<th>T15</th><th>I35</th><th>E50</th>` : `<th>T50</th><th>E50</th>`;
         else h += trim ? `<th>T10</th><th>L5</th><th>LC10</th><th>I35</th><th>E40</th>` : `<th>T25</th><th>L20</th><th>LC15</th><th>E40</th>`;
         
-        h += `<th>PROM (Interno)</th><th>Tardes</th><th>Inasist.</th><th>Perm.</th><th>Sin Perm.</th><th>Observaciones (Docente)</th>`;
+        h += `<th>PROM (Int.)</th><th>Cond.</th><th>Tardes</th><th>Inasist.</th><th>Perm.</th><th>Sin P.</th><th>Observaciones</th>`;
         document.getElementById('table-head').innerHTML = h;
 
         let fil = dataAlumnos.filter(a => a.grado === gTxt).sort((a,b) => a.ape.localeCompare(b.ape)), b = "";
         fil.forEach(al => {
             const n = al.notas?.[periodoActual]?.[materiaVisualizada] || {};
             const as = al.asistencia?.[periodoActual] || { t:0, i:0, ap:0, sp:0 };
+            const cond = al.conducta?.[periodoActual] || "MB";
             const obs = al.observaciones?.[periodoActual] || "";
             const prom = calcular(n, periodoActual, g);
             const claseStatus = prom >= notaMinima ? 'status-aprobado' : 'status-reprobado';
@@ -213,11 +215,16 @@
             if(trim || (esp && periodoActual === "Trimestre 2")) b += `<td><input type="text" class="nota-input" value="${n.int||0}" onchange="save('${al.id}','int',this.value)"></td>`;
             b += `<td><input type="text" class="nota-input" value="${n.ex||0}" onchange="save('${al.id}','ex',this.value)"></td>
                 <td><span class="${claseStatus}">${prom}</span></td>
+                <td><select class="cond-input" onchange="saveCond('${al.id}',this.value)">
+                    <option value="B" ${cond==='B'?'selected':''}>B</option>
+                    <option value="MB" ${cond==='MB'?'selected':''}>MB</option>
+                    <option value="E" ${cond==='E'?'selected':''}>E</option>
+                </select></td>
                 <td><input type="number" class="asist-input" value="${as.t||0}" onchange="saveAsist('${al.id}','t',this.value)"></td>
                 <td><input type="number" class="asist-input" value="${as.i||0}" onchange="saveAsist('${al.id}','i',this.value)"></td>
                 <td><input type="number" class="asist-input" value="${as.ap||0}" onchange="saveAsist('${al.id}','ap',this.value)"></td>
                 <td><input type="number" class="asist-input" value="${as.sp||0}" onchange="saveAsist('${al.id}','sp',this.value)"></td>
-                <td><input type="text" class="obs-input" placeholder="Nota del docente..." value="${obs}" onchange="saveObs('${al.id}',this.value)"></td>
+                <td><input type="text" class="obs-input" placeholder="..." value="${obs}" onchange="saveObs('${al.id}',this.value)"></td>
             </tr>`;
         });
         document.getElementById('table-body').innerHTML = b;
@@ -225,6 +232,7 @@
 
     function save(id, c, v) { db.ref(`alumnos/${id}/notas/${periodoActual}/${materiaVisualizada}/${c}`).set(parseFloat(v.replace(',','.')) || 0); }
     function saveAsist(id, c, v) { db.ref(`alumnos/${id}/asistencia/${periodoActual}/${c}`).set(parseInt(v) || 0); }
+    function saveCond(id, v) { db.ref(`alumnos/${id}/conducta/${periodoActual}`).set(v); }
     function saveObs(id, v) { db.ref(`alumnos/${id}/observaciones/${periodoActual}`).set(v); }
     function matricular() {
         const nie = document.getElementById('reg-nie').value, ape = document.getElementById('reg-ape').value.toUpperCase(), nom = document.getElementById('reg-nom').value.toUpperCase();
@@ -258,15 +266,16 @@
             table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
             th { background: #1a5276; color: white; padding: 3px; font-size: 8px; }
             td { border: 1px solid #ddd; padding: 2px; text-align: center; }
-            .asist-box { display: flex; gap: 10px; font-size: 8px; background: #f9f9f9; padding: 4px; border: 1px solid #eee; margin-bottom: 5px; }
+            .asist-box { display: flex; justify-content: space-between; font-size: 8px; background: #f9f9f9; padding: 4px; border: 1px solid #eee; margin-bottom: 5px; }
             .obs-box { border: 1px solid #1a5276; padding: 5px; min-height: 25px; margin-bottom: 10px; font-style: italic; }
-            .footer-area { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 15px; position: absolute; bottom: 8mm; width: 93%; }
-            .firma-directora { border-top: 1.5px solid #000; width: 220px; text-align: center; padding-top: 4px; font-weight: bold; font-size: 9px; }
-            .sello-area { width: 80px; height: 80px; border: 1px solid #ccc; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 7px; color: #ccc; text-align: center; }
+            .footer-area { display: flex; justify-content: center; align-items: flex-end; margin-top: 30px; position: absolute; bottom: 8mm; width: 93%; gap: 100px; }
+            .firma-directora { border-top: 1.5px solid #000; width: 280px; text-align: center; padding-top: 5px; font-weight: bold; font-size: 10px; }
+            .sello-area { width: 85px; height: 85px; border: 1.5px solid #1a5276; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 8px; color: #1a5276; text-align: center; font-weight: bold; opacity: 0.5; }
         </style></head><body>`;
 
         alumnos.forEach((al, idx) => {
             const as = al.asistencia?.[periodoActual] || { t:0, i:0, ap:0, sp:0 };
+            const cond = al.conducta?.[periodoActual] || "MB";
             const obs = al.observaciones?.[periodoActual] || "Sin observaciones particulares.";
 
             h += `<div class="boleta">
@@ -301,17 +310,17 @@
 
             h += `</tbody></table>
                 <div class="asist-box">
-                    <b>CONTROL DE ASISTENCIA:</b> Tardes: ${as.t} | Inasistencias: ${as.i} | Con Permiso: ${as.ap} | Sin Permiso: ${as.sp}
+                    <div><b>CONDUCTA:</b> <span style="font-size:11px; color:#e67e22">${cond}</span></div>
+                    <div><b>ASISTENCIA:</b> Tardes: ${as.t} | Inasistencias: ${as.i} | C/P: ${as.ap} | S/P: ${as.sp}</div>
                 </div>
                 <div class="obs-box"><b>OBSERVACIONES PEDAGÓGICAS:</b><br>${obs}</div>
                 
                 <div class="footer-area">
-                    <div class="sello-area">ESPACIO PARA<br>SELLO CAI</div>
+                    <div class="sello-area">SELLO CAI</div>
                     <div class="firma-directora">
                         Rhina Elena Linares de Barahona<br>
                         DIRECTORA
                     </div>
-                    <div class="firma-directora" style="width:180px;">PADRE O MADRE DE FAMILIA</div>
                 </div>
             </div>`;
             if((idx + 1) % 2 === 0) h += `<div style="page-break-after: always;"></div>`;
