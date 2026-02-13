@@ -97,11 +97,12 @@
         "K4": ["Inglés", "Biblia", "Informática", "Taller globalizador", "Taller de matemática", "Taller de expresión gráfica", "Taller de lectoescritura", "Taller de deporte"],
         "K5": ["Inglés", "Biblia", "Informática", "Taller globalizador", "Taller de expresión gráfica", "Taller de matemática", "Taller de lectoescritura", "Taller de deporte"],
         "K6": ["Inglés", "Biblia", "Informática", "Taller de conversación", "Taller de lectoescritura", "Taller de matemáticas", "Taller de desarrollo", "Educación emocional", "Taller de deporte", "Taller de arte", "Taller de expresión gráfica"],
-        "1G": ["Inglés", "Biblia", "Informática", "Finanzas", "Taller de números", "Cuerpo y personalidad", "Taller de lectoescritura", "Cultura", "Educación y experiencia", "Escuela y sociedad", "Lectura"],
+        "1G": ["Inglés", "Biblia", "Informática", "Finanzas y economía", "Taller de números", "Cuerpo y personalidad", "Taller de lectoescritura", "Cultura", "Educación y experiencia", "Escuela y sociedad", "Lectura"],
         "C1": ["Inglés", "Biblia", "Informática", "Finanzas", "Comunicación", "Números y formas", "Ciencia y tecnología", "Ciudadanía y valores", "Artes", "Desarrollo corporal"],
         "C2": ["Inglés", "Biblia", "Informática", "Finanzas", "Comunicación y literatura", "Aritmética y Finanzas", "Ciencia y tecnología", "Ciudadanía y valores", "Artes", "Desarrollo corporal"],
         "C3": ["Inglés", "Biblia", "Informática", "Finanzas", "Lenguaje y Literatura", "Matemática y datos", "Ciencia y tecnología", "Ciudadanía y valores", "Educación física"],
-        "Bach": ["Inglés", "Biblia", "Lenguaje y literatura", "Precalculo", "Ciencia y tecnología", "Ciudadanía y valores", "Educación física", "Proyecto de vida", "Finanzas", "Ciencias de la computación"]
+        "1B": ["Inglés", "Biblia", "Lenguaje y literatura", "Precalculo", "Ciencia y tecnología", "Ciudadanía y valores", "Educación física", "Orientación para la vida", "Finanzas y economía", "Ciencias de la computación"],
+        "2B": ["Inglés", "Biblia", "Lenguaje y literatura", "Precalculo", "Ciencia y tecnología", "Ciudadanía y valores", "Educación física", "Orientación para la vida", "Finanzas y economía", "Ciencias de la computación", "Seminario", "Curso de habilitación laboral"]
     };
 
     const MESES = ["Febrero", "Marzo", "Trimestre 1", "Mayo", "Junio", "Trimestre 2", "Agosto", "Septiembre", "Trimestre 3"];
@@ -152,11 +153,12 @@
         if(["2G","3G"].includes(g)) return "C1";
         if(["4G","5G","6G"].includes(g)) return "C2";
         if(["7G","8G","9G"].includes(g)) return "C3";
-        return "Bach";
+        if(g === "1B") return "1B";
+        return "2B";
     }
 
     function cambiarGrado() {
-        const g = document.getElementById('sel-grado').value, ciclo = getCiclo(g), lista = (ciclo === "Bach") ? MESES_B : MESES;
+        const g = document.getElementById('sel-grado').value, ciclo = getCiclo(g), lista = (ciclo.includes("B")) ? MESES_B : MESES;
         periodoActual = lista[0]; materiaVisualizada = MATERIAS[ciclo][0];
         document.getElementById('txt-grado').innerText = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text;
         document.getElementById('nav-tabs').innerHTML = lista.map(p => `<button class="tab ${p===periodoActual?'active':''}" onclick="setPeriodo('${p}', this)">${p}</button>`).join('');
@@ -173,7 +175,8 @@
         const c = getCiclo(g);
         let prom = 0;
         if(["K4","K5","K6","1G"].includes(c)) {
-            prom = (p==="Trimestre 2") ? (v.t*0.15 + v.int*0.35 + v.ex*0.5) : (v.t*0.5 + v.ex*0.5);
+            if(p.includes("Trimestre 2")) prom = (v.t*0.15 + v.int*0.35 + v.ex*0.5);
+            else prom = (v.t*0.5 + v.ex*0.5);
         } else {
             const trim = p.includes("Trimestre") || p.includes("Periodo");
             prom = trim ? (v.t*0.1 + v.l*0.05 + v.lc*0.1 + v.int*0.35 + v.ex*0.4) : (v.t*0.25 + v.l*0.2 + v.lc*0.15 + v.ex*0.4);
@@ -184,11 +187,15 @@
     function dibujar() {
         const g = document.getElementById('sel-grado').value, ciclo = getCiclo(g), gTxt = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text;
         const esp = ["K4","K5","K6","1G"].includes(ciclo), trim = periodoActual.includes("Trimestre") || periodoActual.includes("Periodo");
-        const notaMinima = (ciclo === "K4" || ciclo === "K5" || ciclo === "K6" || ciclo === "1G") ? 6.0 : 7.0;
+        const notaMinima = esp ? 6.0 : 7.0;
 
         let h = `<th>Acciones</th><th>Código</th><th>Estudiante</th><th style="width:150px">Materia</th>`;
-        if(esp) h += (periodoActual === "Trimestre 2") ? `<th>T15</th><th>I35</th><th>E50</th>` : `<th>T50</th><th>E50</th>`;
-        else h += trim ? `<th>T10</th><th>L5</th><th>LC10</th><th>I35</th><th>E40</th>` : `<th>T25</th><th>L20</th><th>LC15</th><th>E40</th>`;
+        if(esp) {
+            if(periodoActual.includes("Trimestre 2")) h += `<th>T15</th><th>I35</th><th>E50</th>`;
+            else h += `<th>T50</th><th>E50</th>`;
+        } else {
+            h += trim ? `<th>T10</th><th>L5</th><th>LC10</th><th>I35</th><th>E40</th>` : `<th>T25</th><th>L20</th><th>LC15</th><th>E40</th>`;
+        }
         
         h += `<th>PROM (Int.)</th><th>Cond.</th><th>Tardes</th><th>Inasist.</th><th>Perm.</th><th>Sin P.</th><th>Observaciones</th>`;
         document.getElementById('table-head').innerHTML = h;
@@ -211,8 +218,11 @@
                 <td style="text-align:left"><b>${al.ape}</b>, ${al.nom}</td>
                 <td><select onchange="materiaVisualizada=this.value; dibujar()">${MATERIAS[ciclo].map(m=>`<option ${m===materiaVisualizada?'selected':''}>${m}</option>`).join('')}</select></td>
                 <td><input type="text" class="nota-input" value="${n.t||0}" onchange="save('${al.id}','t',this.value)"></td>`;
+            
             if(!esp) b += `<td><input type="text" class="nota-input" value="${n.l||0}" onchange="save('${al.id}','l',this.value)"></td><td><input type="text" class="nota-input" value="${n.lc||0}" onchange="save('${al.id}','lc',this.value)"></td>`;
-            if(trim || (esp && periodoActual === "Trimestre 2")) b += `<td><input type="text" class="nota-input" value="${n.int||0}" onchange="save('${al.id}','int',this.value)"></td>`;
+            
+            if(trim || (esp && periodoActual.includes("Trimestre 2"))) b += `<td><input type="text" class="nota-input" value="${n.int||0}" onchange="save('${al.id}','int',this.value)"></td>`;
+            
             b += `<td><input type="text" class="nota-input" value="${n.ex||0}" onchange="save('${al.id}','ex',this.value)"></td>
                 <td><span class="${claseStatus}">${prom}</span></td>
                 <td><select class="cond-input" onchange="saveCond('${al.id}',this.value)">
@@ -290,7 +300,7 @@
                 <table><thead><tr><th style="text-align:left">MATERIA</th>`;
             
             if(esp) {
-                if(periodoActual === "Trimestre 2") h += `<th>T(15%)</th><th>I(35%)</th><th>E(50%)</th>`;
+                if(periodoActual.includes("Trimestre 2")) h += `<th>T(15%)</th><th>A.I(35%)</th><th>E(50%)</th>`;
                 else h += `<th>T(50%)</th><th>E(50%)</th>`;
             } else {
                 if(trim) h += `<th>T(10%)</th><th>L(5%)</th><th>LC(10%)</th><th>I(35%)</th><th>E(40%)</th>`;
@@ -304,7 +314,7 @@
                 h += `<tr><td style="text-align:left; font-weight:bold;">${m.toUpperCase()}</td>`;
                 h += `<td>${n.t||0}</td>`;
                 if(!esp) h += `<td>${n.l||0}</td><td>${n.lc||0}</td>`;
-                if(trim || (esp && periodoActual === "Trimestre 2")) h += `<td>${n.int||0}</td>`;
+                if(trim || (esp && periodoActual.includes("Trimestre 2"))) h += `<td>${n.int||0}</td>`;
                 h += `<td>${n.ex||0}</td><td style="font-weight:bold; background:#f9f9f9;">${prom}</td></tr>`;
             });
 
