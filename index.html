@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SISTEMA CAI 2026 - FINAL</title>
+    <title>SISTEMA CAI 2026 - GITHUB DEPLOY</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
@@ -18,7 +18,7 @@
         table { width: 100%; border-collapse: collapse; min-width: 1000px; }
         th { background: #f8f9fa; padding: 12px 5px; border-bottom: 2px solid #dee2e6; color: var(--p); font-size: 9px; text-transform: uppercase; }
         td { padding: 8px 5px; border-bottom: 1px solid #eee; text-align: center; }
-        .nota-input { width: 40px; padding: 6px; text-align: center; border: 1.5px solid #dcdde1; border-radius: 6px; font-weight: bold; }
+        .nota-input { width: 45px; padding: 6px; text-align: center; border: 1.5px solid #dcdde1; border-radius: 6px; font-weight: bold; }
         .panel-registro { background: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #e0e6ed; }
         .btn { padding: 10px 20px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
         .btn-add { background: var(--p); color: white; }
@@ -33,12 +33,12 @@
 
     <div id="login-screen" style="height:100vh; display:flex; align-items:center; justify-content:center; background:var(--dark);">
         <div class="login-box">
-            <img src="https://i.ibb.co/Mkf051St/Logo-CAI.png" width="80">
+            <img src="https://i.ibb.co/Mkf051St/Logo-CAI.png" alt="Logo CAI" width="80">
             <h2 style="color:var(--p);">SISTEMA CAI 2026</h2>
             <input type="text" id="user" placeholder="Usuario">
             <input type="password" id="pass" placeholder="Contraseña">
             <button onclick="login()" style="width:100%; padding:12px; background:var(--orange); color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold;">INGRESAR</button>
-            <p id="error" style="color:red; font-size:10px; margin-top:10px;"></p>
+            <p id="error" style="color:red; font-size:11px; margin-top:10px;"></p>
         </div>
     </div>
 
@@ -46,8 +46,10 @@
         <div class="header-app">
             <div style="display:flex; align-items:center; gap:12px;">
                 <img src="https://i.ibb.co/Mkf051St/Logo-CAI.png" height="50">
-                <div><b id="txt-grado" style="font-size:16px; color:var(--p);">---</b><br>
-                <span id="txt-rol" style="color:var(--orange); font-weight:700; font-size:10px;">ROL: ---</span></div>
+                <div>
+                    <b id="txt-grado" style="font-size:16px; color:var(--p);">---</b><br>
+                    <span id="txt-rol" style="color:var(--orange); font-weight:700; font-size:10px;">ROL: ---</span>
+                </div>
             </div>
             <div style="display:flex; gap:10px; align-items:center;">
                 <select id="sel-grado" onchange="cambiarGrado()" style="margin-bottom:0; width:200px;"></select>
@@ -72,12 +74,16 @@
             <div id="info-porcentajes" class="badge-eval"></div>
             
             <div class="table-card">
-                <table><thead><tr id="table-head"></tr></thead><tbody id="table-body"></tbody></table>
+                <table>
+                    <thead><tr id="table-head"></tr></thead>
+                    <tbody id="table-body"></tbody>
+                </table>
             </div>
         </div>
     </div>
 
 <script>
+    // Firebase Configuration
     const firebaseConfig = {
         apiKey: "AIzaSyBmw9CdeBr1Z11v0ye4af-WACBeCL5FDc4",
         authDomain: "academica-bcb50.firebaseapp.com",
@@ -122,6 +128,7 @@
         else if(u==='infancia' && p==='cai1') { currentRol='infancia'; valid=true; }
         else if(u==='docente' && p==='cai2') { currentRol='docente'; valid=true; }
         else if(u==='bachillerato' && p==='cai3') { currentRol='bachillerato'; valid=true; }
+        
         if(valid) {
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('app').classList.remove('hidden');
