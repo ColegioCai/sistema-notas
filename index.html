@@ -255,16 +255,16 @@
         let win = window.open('', '_blank');
         let h = `<html><head><style>
             @page { size: letter; margin: 0; }
-            body { font-family: 'Segoe UI', sans-serif; margin: 0; font-size: 8px; }
-            .boleta { height: 50vh; padding: 6mm 10mm; border-bottom: 1px dashed #ccc; box-sizing: border-box; position: relative; page-break-inside: avoid; overflow: hidden; }
-            .header { display: flex; align-items: center; border-bottom: 2px solid #1a5276; margin-bottom: 5px; }
-            .info { display: grid; grid-template-columns: 2fr 1fr 1fr; background: #f2f2f2; padding: 4px; font-weight: bold; margin-bottom: 5px; font-size: 9px; }
-            table { width: 100%; border-collapse: collapse; margin-bottom: 5px; }
-            th { background: #1a5276; color: white; padding: 3px; font-size: 8px; }
-            td { border: 1px solid #ccc; padding: 2px; text-align: center; }
-            .footer { position: absolute; bottom: 8mm; width: 90%; display: flex; justify-content: space-between; align-items: flex-end; }
-            .sello-circular { width: 70px; height: 70px; border: 1.5px solid #1a5276; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 7px; color: #1a5276; font-weight: bold; }
-            .firma { border-top: 1px solid #000; width: 220px; text-align: center; padding-top: 3px; font-weight: bold; font-size: 9px; }
+            body { font-family: 'Segoe UI', sans-serif; margin: 0; font-size: 7.5px; }
+            .boleta { min-height: 48vh; padding: 5mm 10mm; border-bottom: 1px dashed #ccc; box-sizing: border-box; position: relative; page-break-inside: avoid; overflow: hidden; }
+            .header { display: flex; align-items: center; border-bottom: 2px solid #1a5276; margin-bottom: 4px; }
+            .info { display: grid; grid-template-columns: 2fr 1fr 1fr; background: #f2f2f2; padding: 3px; font-weight: bold; margin-bottom: 4px; font-size: 8.5px; }
+            table { width: 100%; border-collapse: collapse; margin-bottom: 3px; }
+            th { background: #1a5276; color: white; padding: 2px; font-size: 7.5px; }
+            td { border: 1px solid #ccc; padding: 1.5px; text-align: center; }
+            .footer { margin-top: 10px; display: flex; justify-content: space-between; align-items: flex-end; }
+            .sello-circular { width: 60px; height: 60px; border: 1.5px solid #1a5276; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 6px; color: #1a5276; font-weight: bold; }
+            .firma { border-top: 1px solid #000; width: 200px; text-align: center; padding-top: 2px; font-weight: bold; font-size: 8px; }
         </style></head><body>`;
 
         alumnos.forEach((al, idx) => {
@@ -273,8 +273,8 @@
             const obs = al.observaciones?.[periodoActual] || "---";
             h += `<div class="boleta">
                 <div class="header">
-                    <img src="https://i.ibb.co/Mkf051St/Logo-CAI.png" height="35"> 
-                    <h2 style="margin-left:15px; color:#1a5276; font-size:14px; margin-top:0;">CAI COLEGIO AMIGOS DE ISRAEL - ${periodoActual.toUpperCase()}</h2>
+                    <img src="https://i.ibb.co/Mkf051St/Logo-CAI.png" height="30"> 
+                    <h2 style="margin-left:15px; color:#1a5276; font-size:12px; margin-top:0; margin-bottom:0;">CAI COLEGIO AMIGOS DE ISRAEL - ${periodoActual.toUpperCase()}</h2>
                 </div>
                 <div class="info"><div>ALUMNO: ${al.ape} ${al.nom}</div><div>GRADO: ${gTxt}</div><div>NIE: ${al.nie}</div></div>
                 <table><thead><tr><th style="text-align:left">MATERIA</th>`;
@@ -290,8 +290,8 @@
                 h += `<td>${n.ex||0}</td><td style="background:#f9f9f9; font-weight:bold;">${p}</td></tr>`;
             });
             h += `</tbody></table>
-                <div style="font-size:8.5px; margin-bottom:5px;"><b>CONDUCTA:</b> ${cond} | <b>TARDES:</b> ${as.t} | <b>INASISTENCIAS:</b> ${as.i}</div>
-                <div style="border:1px solid #1a5276; padding:4px; height:30px; font-size:8px;"><b>OBSERVACIONES:</b> ${obs}</div>
+                <div style="font-size:8px; margin-bottom:3px;"><b>CONDUCTA:</b> ${cond} | <b>TARDES:</b> ${as.t} | <b>INASISTENCIAS:</b> ${as.i}</div>
+                <div style="border:1px solid #1a5276; padding:3px; height:25px; font-size:7.5px; overflow:hidden;"><b>OBSERVACIONES:</b> ${obs}</div>
                 <div class="footer"><div class="sello-circular">SELLO CAI<br>2026</div><div class="firma">Rhina Elena Linares de Barahona<br>DIRECTORA</div></div>
             </div>`;
             if((idx+1)%2===0) h += `<div style="page-break-after:always;"></div>`;
