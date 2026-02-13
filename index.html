@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SISTEMA CAI 2026 - GESTIÓN TOTAL</title>
+    <title>SISTEMA CAI 2026 - GESTIÓN INTEGRAL</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
@@ -63,7 +63,7 @@
             <div id="panel-admin" class="panel-registro hidden">
                 <b style="color:var(--p)">NUEVA MATRÍCULA:</b>
                 <div style="display:flex; gap:10px; margin-top:10px;">
-                    <input type="text" id="reg-nie" placeholder="Código (Ej: CAI-XX-001)" style="margin:0">
+                    <input type="text" id="reg-nie" placeholder="Código (Ej: CAI-26-001)" style="margin:0">
                     <input type="text" id="reg-ape" placeholder="Apellidos" style="margin:0">
                     <input type="text" id="reg-nom" placeholder="Nombres" style="margin:0">
                     <button onclick="matricular()" class="btn btn-add">REGISTRAR ALUMNO</button>
@@ -86,19 +86,21 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
+    // MATERIAS ACTUALIZADAS SEGÚN REQUERIMIENTOS
     const MATERIAS = {
-        "K4": ["Taller de inglés", "Taller globalizador", "Taller de matemática", "Taller de expresión gráfica", "Taller de informática", "Taller de lectoescritura", "Taller de deporte", "Taller de Biblia"],
-        "K5": ["Taller de inglés", "Taller de Biblia", "Taller globalizador", "Taller de expresión gráfica", "Taller de matemática", "Taller de informática", "Taller de lectoescritura", "Taller de deporte"],
-        "K6": ["Taller de inglés", "Taller de conversación", "Taller de lectoescritura", "Taller de matemáticas", "Taller de informática", "Taller de desarrollo", "Educación emocional", "Taller de Biblia", "Taller de deporte", "Taller de arte", "Taller de expresión gráfica"],
-        "1G": ["Taller de números", "Taller de Biblia", "Taller de Finanzas", "Cuerpo y personalidad", "Taller de lectoescritura", "Cultura", "Educación y experiencia", "Escuela y sociedad", "Lectura"],
-        "C1": ["Comunicacion", "Numeros y formas", "Ciencia y tecnologia", "Ciudadania y valores", "Artes", "Desarrollo corporal"],
-        "C2": ["Comunicacion y literatura", "Aritmetica y Finanzas", "Ciencia y tecnologia", "Ciudadania y valores", "Artes", "Desarrollo corporal"],
-        "C3": ["Lenguaje y Literatura", "Ingles", "Matematica y datos", "Ciencia y tecnologia", "Ciudadania y valores", "Educacion fisica"],
-        "Bach": ["Lenguaje y literatura", "Ingles", "Precalculo", "Ciencia y tecnologia", "Ciudadania y valores", "Educacion fisica", "Proyecto de vida", "Finanzas", "Ciencias de la computacion"]
+        "K4": ["Inglés", "Biblia", "Informática", "Taller globalizador", "Taller de matemática", "Taller de expresión gráfica", "Taller de lectoescritura", "Taller de deporte"],
+        "K5": ["Inglés", "Biblia", "Informática", "Taller globalizador", "Taller de expresión gráfica", "Taller de matemática", "Taller de lectoescritura", "Taller de deporte"],
+        "K6": ["Inglés", "Biblia", "Informática", "Taller de conversación", "Taller de lectoescritura", "Taller de matemáticas", "Taller de desarrollo", "Educación emocional", "Taller de deporte", "Taller de arte", "Taller de expresión gráfica"],
+        "1G": ["Inglés", "Biblia", "Informática", "Finanzas", "Taller de números", "Cuerpo y personalidad", "Taller de lectoescritura", "Cultura", "Educación y experiencia", "Escuela y sociedad", "Lectura"],
+        "C1": ["Inglés", "Biblia", "Informática", "Finanzas", "Comunicación", "Números y formas", "Ciencia y tecnología", "Ciudadanía y valores", "Artes", "Desarrollo corporal"],
+        "C2": ["Inglés", "Biblia", "Informática", "Finanzas", "Comunicación y literatura", "Aritmética y Finanzas", "Ciencia y tecnología", "Ciudadanía y valores", "Artes", "Desarrollo corporal"],
+        "C3": ["Inglés", "Biblia", "Informática", "Finanzas", "Lenguaje y Literatura", "Matemática y datos", "Ciencia y tecnología", "Ciudadanía y valores", "Educación física"],
+        "Bach": ["Inglés", "Biblia", "Lenguaje y literatura", "Precalculo", "Ciencia y tecnología", "Ciudadanía y valores", "Educación física", "Proyecto de vida", "Finanzas", "Ciencias de la computación"]
     };
 
     const MESES = ["Febrero", "Marzo", "Trimestre 1", "Mayo", "Junio", "Trimestre 2", "Agosto", "Septiembre", "Trimestre 3"];
-    const MESES_B = ["Evaluación 1", "Evaluación 2", "Periodo 1", "Evaluación 3", "Evaluación 4", "Periodo 2", "Evaluación 5", "Evaluación 6", "Periodo 3", "Periodo 4"];
+    // BACHILLERATO CORREGIDO CON EVALUACIÓN 7 Y 8
+    const MESES_B = ["Evaluación 1", "Evaluación 2", "Periodo 1", "Evaluación 3", "Evaluación 4", "Periodo 2", "Evaluación 5", "Evaluación 6", "Periodo 3", "Evaluación 7", "Evaluación 8", "Periodo 4"];
 
     const GRADOS_DATA = [
         {val:"K4", t:"Kinder 4 Años", cat:"infancia"}, {val:"K5", t:"Kinder 5 Años", cat:"infancia"}, {val:"K6", t:"Kinder 6 Años", cat:"infancia"}, {val:"1G", t:"1° Grado", cat:"infancia"},
@@ -201,8 +203,8 @@
             const n = al.notas?.[periodoActual]?.[materiaVisualizada] || {};
             b += `<tr>
                 <td>
-                    <button class="btn btn-edit" onclick="editarAlumno('${al.id}','${al.nie}','${al.ape}','${al.nom}')">✎</button>
-                    <button class="btn btn-del" onclick="eliminarAlumno('${al.id}')">✖</button>
+                    <button class="btn btn-edit" title="Modificar Alumno" onclick="editarAlumno('${al.id}','${al.nie}','${al.ape}','${al.nom}')">✎</button>
+                    <button class="btn btn-del" title="Eliminar Alumno" onclick="eliminarAlumno('${al.id}')">✖</button>
                 </td>
                 <td style="color:#7f8c8d">${al.nie}</td>
                 <td style="text-align:left"><b>${al.ape}</b>, ${al.nom}</td>
