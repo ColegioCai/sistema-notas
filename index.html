@@ -7,7 +7,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        :root { --p: #1a5276; --bg: #f4f6f7; --orange: #e67e22; --dark: #2c3e50; --green: #27ae60; --red: #e74c3c; }
+        :root { --p: #1a5276; --bg: #f4f6f7; --orange: #e67e22; --dark: #2c3e50; --green: #27ae60; --red: #e74c3c; --yellow: #f1c40f; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; font-size: 11px; }
         .header-app { display: flex; justify-content: space-between; align-items: center; background: white; padding: 10px 20px; border-bottom: 4px solid var(--orange); position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .tabs { display: flex; background: #1c2833; padding: 10px 10px 0; gap: 4px; overflow-x: auto; }
@@ -15,16 +15,19 @@
         .tab.active { background: var(--bg); color: var(--p); font-weight: bold; }
         .container { max-width: 1400px; margin: 15px auto; padding: 0 15px; }
         .table-card { background: white; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); overflow-x: auto; padding: 10px; }
-        table { width: 100%; border-collapse: collapse; min-width: 1100px; }
+        table { width: 100%; border-collapse: collapse; min-width: 1300px; }
         th { background: #f8f9fa; padding: 12px 5px; border-bottom: 2px solid #dee2e6; color: var(--p); font-size: 9px; text-transform: uppercase; }
         td { padding: 8px 5px; border-bottom: 1px solid #eee; text-align: center; }
-        .nota-input { width: 40px; padding: 6px; text-align: center; border: 1.5px solid #dcdde1; border-radius: 6px; font-weight: bold; }
-        .panel-registro { background: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #e0e6ed; }
+        .nota-input { width: 35px; padding: 5px; text-align: center; border: 1.5px solid #dcdde1; border-radius: 6px; font-weight: bold; }
+        .asist-input { width: 30px; padding: 4px; text-align: center; border: 1px solid #ccc; border-radius: 4px; background: #fffde7; }
+        .obs-input { width: 150px; padding: 5px; border-radius: 4px; border: 1px solid #ccc; font-size: 9px; }
         .btn { padding: 8px 15px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 10px; }
         .btn-add { background: var(--p); color: white; }
-        .btn-edit { background: #f1c40f; color: #333; margin-right: 5px; }
+        .btn-edit { background: var(--yellow); color: #333; margin-right: 5px; }
         .btn-del { background: var(--red); color: white; }
         .btn-print { background: var(--green); color: white; margin-left: 10px; }
+        .status-aprobado { color: white; background: var(--green); padding: 4px 8px; border-radius: 4px; font-weight: bold; }
+        .status-reprobado { color: white; background: var(--red); padding: 4px 8px; border-radius: 4px; font-weight: bold; }
         .hidden { display: none !important; }
         .login-box { background: white; padding: 40px; border-radius: 20px; width: 320px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
         input, select { padding: 10px; border-radius: 8px; border: 1px solid #ccc; width: 100%; box-sizing: border-box; margin-bottom: 10px; }
@@ -47,8 +50,11 @@
         <div class="header-app">
             <div style="display:flex; align-items:center; gap:12px;">
                 <img src="https://i.ibb.co/Mkf051St/Logo-CAI.png" height="50">
-                <div><b id="txt-grado" style="font-size:16px; color:var(--p);">---</b><br>
-                <span id="txt-rol" style="color:var(--orange); font-weight:700; font-size:10px;">ROL: ---</span></div>
+                <div>
+                    <b style="font-size:16px; color:var(--p);">CAI - Colegio Amigos de Israel</b><br>
+                    <span id="txt-grado" style="font-weight:bold; color:var(--dark)">---</span> | 
+                    <span id="txt-rol" style="color:var(--orange); font-weight:700; font-size:10px;">ROL: ---</span>
+                </div>
             </div>
             <div style="display:flex; gap:10px; align-items:center;">
                 <select id="sel-grado" onchange="cambiarGrado()" style="margin-bottom:0; width:180px;"></select>
@@ -63,7 +69,7 @@
             <div id="panel-admin" class="panel-registro hidden">
                 <b style="color:var(--p)">NUEVA MATRÍCULA:</b>
                 <div style="display:flex; gap:10px; margin-top:10px;">
-                    <input type="text" id="reg-nie" placeholder="Código (Ej: CAI-26-001)" style="margin:0">
+                    <input type="text" id="reg-nie" placeholder="Código" style="margin:0">
                     <input type="text" id="reg-ape" placeholder="Apellidos" style="margin:0">
                     <input type="text" id="reg-nom" placeholder="Nombres" style="margin:0">
                     <button onclick="matricular()" class="btn btn-add">REGISTRAR ALUMNO</button>
@@ -86,7 +92,6 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // MATERIAS ACTUALIZADAS SEGÚN REQUERIMIENTOS
     const MATERIAS = {
         "K4": ["Inglés", "Biblia", "Informática", "Taller globalizador", "Taller de matemática", "Taller de expresión gráfica", "Taller de lectoescritura", "Taller de deporte"],
         "K5": ["Inglés", "Biblia", "Informática", "Taller globalizador", "Taller de expresión gráfica", "Taller de matemática", "Taller de lectoescritura", "Taller de deporte"],
@@ -99,7 +104,6 @@
     };
 
     const MESES = ["Febrero", "Marzo", "Trimestre 1", "Mayo", "Junio", "Trimestre 2", "Agosto", "Septiembre", "Trimestre 3"];
-    // BACHILLERATO CORREGIDO CON EVALUACIÓN 7 Y 8
     const MESES_B = ["Evaluación 1", "Evaluación 2", "Periodo 1", "Evaluación 3", "Evaluación 4", "Periodo 2", "Evaluación 5", "Evaluación 6", "Periodo 3", "Evaluación 7", "Evaluación 8", "Periodo 4"];
 
     const GRADOS_DATA = [
@@ -142,23 +146,6 @@
         cambiarGrado(); escucharDB();
     }
 
-    function matricular() {
-        const nie = document.getElementById('reg-nie').value, ape = document.getElementById('reg-ape').value.toUpperCase(), nom = document.getElementById('reg-nom').value.toUpperCase();
-        const grado = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text;
-        if(!nie || !ape || !nom) return alert("Complete todos los campos");
-        db.ref('alumnos').push({ nie, ape, nom, grado });
-        document.getElementById('reg-nie').value=""; document.getElementById('reg-ape').value=""; document.getElementById('reg-nom').value="";
-    }
-
-    function editarAlumno(id, n, a, nm) {
-        const nuevoN = prompt("Nuevo Código:", n), nuevoA = prompt("Nuevos Apellidos:", a), nuevoNm = prompt("Nuevos Nombres:", nm);
-        if(nuevoN && nuevoA && nuevoNm) db.ref('alumnos/'+id).update({ nie: nuevoN, ape: nuevoA.toUpperCase(), nom: nuevoNm.toUpperCase() });
-    }
-
-    function eliminarAlumno(id) {
-        if(confirm("¿Seguro que desea eliminar este alumno y sus notas permanentemente?")) db.ref('alumnos/'+id).remove();
-    }
-
     function getCiclo(g) {
         if(["K4","K5","K6","1G"].includes(g)) return g;
         if(["2G","3G"].includes(g)) return "C1";
@@ -183,28 +170,40 @@
     function calcular(n, p, g) {
         const v = { t:parseFloat(n.t)||0, l:parseFloat(n.l)||0, lc:parseFloat(n.lc)||0, int:parseFloat(n.int)||0, ex:parseFloat(n.ex)||0 };
         const c = getCiclo(g);
-        if(["K4","K5","K6","1G"].includes(c)) return (p==="Trimestre 2") ? (v.t*0.15 + v.int*0.35 + v.ex*0.5).toFixed(1) : (v.t*0.5 + v.ex*0.5).toFixed(1);
-        const trim = p.includes("Trimestre") || p.includes("Periodo");
-        return trim ? (v.t*0.1 + v.l*0.05 + v.lc*0.1 + v.int*0.35 + v.ex*0.4).toFixed(1) : (v.t*0.25 + v.l*0.2 + v.lc*0.15 + v.ex*0.4).toFixed(1);
+        let prom = 0;
+        if(["K4","K5","K6","1G"].includes(c)) {
+            prom = (p==="Trimestre 2") ? (v.t*0.15 + v.int*0.35 + v.ex*0.5) : (v.t*0.5 + v.ex*0.5);
+        } else {
+            const trim = p.includes("Trimestre") || p.includes("Periodo");
+            prom = trim ? (v.t*0.1 + v.l*0.05 + v.lc*0.1 + v.int*0.35 + v.ex*0.4) : (v.t*0.25 + v.l*0.2 + v.lc*0.15 + v.ex*0.4);
+        }
+        return parseFloat(prom.toFixed(1));
     }
 
     function dibujar() {
         const g = document.getElementById('sel-grado').value, ciclo = getCiclo(g), gTxt = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text;
         const esp = ["K4","K5","K6","1G"].includes(ciclo), trim = periodoActual.includes("Trimestre") || periodoActual.includes("Periodo");
+        const notaMinima = (ciclo === "K4" || ciclo === "K5" || ciclo === "K6" || ciclo === "1G") ? 6.0 : 7.0;
+
+        let h = `<th>Acciones</th><th>Código</th><th>Estudiante</th><th style="width:150px">Materia</th>`;
+        if(esp) h += (periodoActual === "Trimestre 2") ? `<th>T15</th><th>I35</th><th>E50</th>` : `<th>T50</th><th>E50</th>`;
+        else h += trim ? `<th>T10</th><th>L5</th><th>LC10</th><th>I35</th><th>E40</th>` : `<th>T25</th><th>L20</th><th>LC15</th><th>E40</th>`;
         
-        let h = `<th>Acciones</th><th>Código</th><th>Estudiante</th><th style="width:180px">Materia</th>`;
-        if(esp) h += (periodoActual === "Trimestre 2") ? `<th>T(15%)</th><th>I(35%)</th><th>E(50%)</th>` : `<th>T(50%)</th><th>E(50%)</th>`;
-        else h += trim ? `<th>T(10%)</th><th>L(5%)</th><th>LC(10%)</th><th>I(35%)</th><th>E(40%)</th>` : `<th>T(25%)</th><th>L(20%)</th><th>LC(15%)</th><th>P(40%)</th>`;
-        h += `<th>PROM</th>`;
+        h += `<th>PROM (Interno)</th><th>Tardes</th><th>Inasist.</th><th>Perm.</th><th>Sin Perm.</th><th>Observaciones (Docente)</th>`;
         document.getElementById('table-head').innerHTML = h;
 
         let fil = dataAlumnos.filter(a => a.grado === gTxt).sort((a,b) => a.ape.localeCompare(b.ape)), b = "";
         fil.forEach(al => {
             const n = al.notas?.[periodoActual]?.[materiaVisualizada] || {};
+            const as = al.asistencia?.[periodoActual] || { t:0, i:0, ap:0, sp:0 };
+            const obs = al.observaciones?.[periodoActual] || "";
+            const prom = calcular(n, periodoActual, g);
+            const claseStatus = prom >= notaMinima ? 'status-aprobado' : 'status-reprobado';
+
             b += `<tr>
                 <td>
-                    <button class="btn btn-edit" title="Modificar Alumno" onclick="editarAlumno('${al.id}','${al.nie}','${al.ape}','${al.nom}')">✎</button>
-                    <button class="btn btn-del" title="Eliminar Alumno" onclick="eliminarAlumno('${al.id}')">✖</button>
+                    <button class="btn btn-edit" onclick="editarAlumno('${al.id}','${al.nie}','${al.ape}','${al.nom}')">✎</button>
+                    <button class="btn btn-del" onclick="eliminarAlumno('${al.id}')">✖</button>
                 </td>
                 <td style="color:#7f8c8d">${al.nie}</td>
                 <td style="text-align:left"><b>${al.ape}</b>, ${al.nom}</td>
@@ -212,47 +211,109 @@
                 <td><input type="text" class="nota-input" value="${n.t||0}" onchange="save('${al.id}','t',this.value)"></td>`;
             if(!esp) b += `<td><input type="text" class="nota-input" value="${n.l||0}" onchange="save('${al.id}','l',this.value)"></td><td><input type="text" class="nota-input" value="${n.lc||0}" onchange="save('${al.id}','lc',this.value)"></td>`;
             if(trim || (esp && periodoActual === "Trimestre 2")) b += `<td><input type="text" class="nota-input" value="${n.int||0}" onchange="save('${al.id}','int',this.value)"></td>`;
-            b += `<td><input type="text" class="nota-input" value="${n.ex||0}" onchange="save('${al.id}','ex',this.value)"></td><td style="font-weight:bold; color:var(--p);">${calcular(n,periodoActual,g)}</td></tr>`;
+            b += `<td><input type="text" class="nota-input" value="${n.ex||0}" onchange="save('${al.id}','ex',this.value)"></td>
+                <td><span class="${claseStatus}">${prom}</span></td>
+                <td><input type="number" class="asist-input" value="${as.t||0}" onchange="saveAsist('${al.id}','t',this.value)"></td>
+                <td><input type="number" class="asist-input" value="${as.i||0}" onchange="saveAsist('${al.id}','i',this.value)"></td>
+                <td><input type="number" class="asist-input" value="${as.ap||0}" onchange="saveAsist('${al.id}','ap',this.value)"></td>
+                <td><input type="number" class="asist-input" value="${as.sp||0}" onchange="saveAsist('${al.id}','sp',this.value)"></td>
+                <td><input type="text" class="obs-input" placeholder="Nota del docente..." value="${obs}" onchange="saveObs('${al.id}',this.value)"></td>
+            </tr>`;
         });
         document.getElementById('table-body').innerHTML = b;
     }
 
     function save(id, c, v) { db.ref(`alumnos/${id}/notas/${periodoActual}/${materiaVisualizada}/${c}`).set(parseFloat(v.replace(',','.')) || 0); }
+    function saveAsist(id, c, v) { db.ref(`alumnos/${id}/asistencia/${periodoActual}/${c}`).set(parseInt(v) || 0); }
+    function saveObs(id, v) { db.ref(`alumnos/${id}/observaciones/${periodoActual}`).set(v); }
+    function matricular() {
+        const nie = document.getElementById('reg-nie').value, ape = document.getElementById('reg-ape').value.toUpperCase(), nom = document.getElementById('reg-nom').value.toUpperCase();
+        const grado = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text;
+        if(!nie || !ape || !nom) return alert("Complete todos los campos");
+        db.ref('alumnos').push({ nie, ape, nom, grado });
+        document.getElementById('reg-nie').value=""; document.getElementById('reg-ape').value=""; document.getElementById('reg-nom').value="";
+    }
+    function editarAlumno(id, n, a, nm) {
+        const nuevoN = prompt("Nuevo Código:", n), nuevoA = prompt("Nuevos Apellidos:", a), nuevoNm = prompt("Nuevos Nombres:", nm);
+        if(nuevoN && nuevoA && nuevoNm) db.ref('alumnos/'+id).update({ nie: nuevoN, ape: nuevoA.toUpperCase(), nom: nuevoNm.toUpperCase() });
+    }
+    function eliminarAlumno(id) { if(confirm("¿Seguro?")) db.ref('alumnos/'+id).remove(); }
     function escucharDB() { db.ref('alumnos').on('value', snap => { const v = snap.val(); dataAlumnos = v ? Object.keys(v).map(k=>({id:k, ...v[k]})) : []; dibujar(); }); }
 
     function generarBoletas() {
+        if(currentRol !== 'admin') return alert("Solo el administrador puede generar boletas.");
         const val = document.getElementById('sel-grado').value, gTxt = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text;
         const ciclo = getCiclo(val), alumnos = dataAlumnos.filter(a => a.grado === gTxt);
-        if(alumnos.length === 0) return alert("No hay alumnos en este grado");
-        
+        const esp = ["K4","K5","K6","1G"].includes(ciclo);
+        const trim = periodoActual.includes("Trimestre") || periodoActual.includes("Periodo");
+
         let win = window.open('', '_blank');
-        let h = `<html><head><title>Boletas CAI</title><style>
+        let h = `<html><head><title>Boletas CAI 2026</title><style>
             @page { size: letter; margin: 0; }
-            body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; }
-            .boleta { height: 50vh; padding: 10mm; border-bottom: 1px dashed #000; box-sizing: border-box; position: relative; page-break-inside: avoid; }
-            .header { display: flex; align-items: center; border-bottom: 2px solid #1a5276; padding-bottom: 10px; margin-bottom: 10px; }
-            .logo { height: 60px; margin-right: 20px; }
-            .info { display: grid; grid-template-columns: 2fr 1fr 1fr; font-size: 11px; margin-bottom: 10px; }
-            table { width: 100%; border-collapse: collapse; font-size: 10px; }
-            th { background: #1a5276; color: white; padding: 5px; }
-            td { border: 1px solid #ccc; padding: 4px; text-align: center; }
-            .firma-area { display: flex; justify-content: space-around; margin-top: 30px; position: absolute; bottom: 15mm; width: 100%; }
-            .firma { border-top: 1px solid #000; width: 200px; text-align: center; font-size: 9px; font-weight: bold; }
+            body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; font-size: 9px; color: #333; }
+            .boleta { height: 50vh; padding: 8mm; border-bottom: 1px dashed #ccc; box-sizing: border-box; position: relative; page-break-inside: avoid; }
+            .header { display: flex; align-items: center; border-bottom: 2px solid #1a5276; padding-bottom: 5px; margin-bottom: 8px; }
+            .logo { height: 45px; margin-right: 15px; }
+            .info { display: grid; grid-template-columns: 2fr 1fr 1fr; margin-bottom: 8px; font-weight: bold; background: #f0f0f0; padding: 5px; border-radius: 4px; }
+            table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+            th { background: #1a5276; color: white; padding: 3px; font-size: 8px; }
+            td { border: 1px solid #ddd; padding: 2px; text-align: center; }
+            .asist-box { display: flex; gap: 10px; font-size: 8px; background: #f9f9f9; padding: 4px; border: 1px solid #eee; margin-bottom: 5px; }
+            .obs-box { border: 1px solid #1a5276; padding: 5px; min-height: 25px; margin-bottom: 10px; font-style: italic; }
+            .footer-area { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 15px; position: absolute; bottom: 8mm; width: 93%; }
+            .firma-directora { border-top: 1.5px solid #000; width: 220px; text-align: center; padding-top: 4px; font-weight: bold; font-size: 9px; }
+            .sello-area { width: 80px; height: 80px; border: 1px solid #ccc; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 7px; color: #ccc; text-align: center; }
         </style></head><body>`;
 
         alumnos.forEach((al, idx) => {
+            const as = al.asistencia?.[periodoActual] || { t:0, i:0, ap:0, sp:0 };
+            const obs = al.observaciones?.[periodoActual] || "Sin observaciones particulares.";
+
             h += `<div class="boleta">
                 <div class="header">
                     <img src="https://i.ibb.co/Mkf051St/Logo-CAI.png" class="logo">
-                    <div><h2 style="margin:0; color:#1a5276;">COLEGIO AMIGOS DE ISRAEL</h2><small>REPORTE DE EVALUACIÓN - ${periodoActual.toUpperCase()}</small></div>
+                    <div>
+                        <h2 style="margin:0; color:#1a5276; font-size: 14px;">CAI - COLEGIO AMIGOS DE ISRAEL</h2>
+                        <small>REPORTE DE RENDIMIENTO ACADÉMICO: ${periodoActual.toUpperCase()}</small>
+                    </div>
                 </div>
-                <div class="info"><div><b>ALUMNO:</b> ${al.ape} ${al.nom}</div><div><b>GRADO:</b> ${gTxt}</div><div><b>CÓDIGO:</b> ${al.nie}</div></div>
-                <table><thead><tr><th style="text-align:left">MATERIA</th><th>T</th><th>L</th><th>E</th><th>PROM</th></tr></thead><tbody>`;
+                <div class="info"><div>ESTUDIANTE: ${al.ape} ${al.nom}</div><div>GRADO: ${gTxt}</div><div>CÓDIGO: ${al.nie}</div></div>
+                <table><thead><tr><th style="text-align:left">MATERIA</th>`;
+            
+            if(esp) {
+                if(periodoActual === "Trimestre 2") h += `<th>T(15%)</th><th>I(35%)</th><th>E(50%)</th>`;
+                else h += `<th>T(50%)</th><th>E(50%)</th>`;
+            } else {
+                if(trim) h += `<th>T(10%)</th><th>L(5%)</th><th>LC(10%)</th><th>I(35%)</th><th>E(40%)</th>`;
+                else h += `<th>T(25%)</th><th>L(20%)</th><th>LC(15%)</th><th>E(40%)</th>`;
+            }
+            h += `<th>PROMEDIO</th></tr></thead><tbody>`;
+            
             MATERIAS[ciclo].forEach(m => {
                 const n = al.notas?.[periodoActual]?.[m] || {};
-                h += `<tr><td style="text-align:left"><b>${m.toUpperCase()}</b></td><td>${n.t||0}</td><td>${n.lc||0}</td><td>${n.ex||0}</td><td>${calcular(n, periodoActual, val)}</td></tr>`;
+                const prom = calcular(n, periodoActual, val);
+                h += `<tr><td style="text-align:left; font-weight:bold;">${m.toUpperCase()}</td>`;
+                h += `<td>${n.t||0}</td>`;
+                if(!esp) h += `<td>${n.l||0}</td><td>${n.lc||0}</td>`;
+                if(trim || (esp && periodoActual === "Trimestre 2")) h += `<td>${n.int||0}</td>`;
+                h += `<td>${n.ex||0}</td><td style="font-weight:bold; background:#f9f9f9;">${prom}</td></tr>`;
             });
-            h += `</tbody></table><div class="firma-area"><div class="firma">FIRMA DE LA DIRECCIÓN</div><div class="firma">SELLO CAI</div></div></div>`;
+
+            h += `</tbody></table>
+                <div class="asist-box">
+                    <b>CONTROL DE ASISTENCIA:</b> Tardes: ${as.t} | Inasistencias: ${as.i} | Con Permiso: ${as.ap} | Sin Permiso: ${as.sp}
+                </div>
+                <div class="obs-box"><b>OBSERVACIONES PEDAGÓGICAS:</b><br>${obs}</div>
+                
+                <div class="footer-area">
+                    <div class="sello-area">ESPACIO PARA<br>SELLO CAI</div>
+                    <div class="firma-directora">
+                        Rhina Elena Linares de Barahona<br>
+                        DIRECTORA
+                    </div>
+                    <div class="firma-directora" style="width:180px;">PADRE O MADRE DE FAMILIA</div>
+                </div>
+            </div>`;
             if((idx + 1) % 2 === 0) h += `<div style="page-break-after: always;"></div>`;
         });
         win.document.write(h + "</body></html>"); win.document.close();
