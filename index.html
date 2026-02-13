@@ -2,149 +2,82 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>SISTEMA CAI - Versión Final 2026</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SISTEMA CAI 2026 - FINAL</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        :root { --p: #1a5276; --bg: #f4f6f7; --red: #c0392b; --orange: #a04000; --dark: #1b2631; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; }
-        
-        /* Login */
-        #login-box { max-width: 350px; margin: 80px auto; background: white; padding: 30px; border-radius: 8px; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
-        #login-box input, #login-box select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        
-        .container { max-width: 98%; margin: 15px auto; background: white; padding: 20px; border-radius: 8px; }
-        .btn { background: var(--p); color: white; border: none; padding: 8px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; }
-        .btn-del { background: var(--red); font-size: 10px; margin-left: 5px; }
+        :root { --p: #1a5276; --bg: #f4f6f7; --orange: #e67e22; --dark: #2c3e50; --green: #27ae60; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; font-size: 11px; }
+        .header-app { display: flex; justify-content: space-between; align-items: center; background: white; padding: 10px 20px; border-bottom: 4px solid var(--orange); position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .tabs { display: flex; background: #1c2833; padding: 10px 10px 0; gap: 4px; overflow-x: auto; }
+        .tab { padding: 10px 15px; color: #bdc3c7; cursor: pointer; border-radius: 6px 6px 0 0; background: rgba(255,255,255,0.05); border: none; font-size: 10px; white-space: nowrap; }
+        .tab.active { background: var(--bg); color: var(--p); font-weight: bold; }
+        .container { max-width: 1400px; margin: 15px auto; padding: 0 15px; }
+        .table-card { background: white; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); overflow-x: auto; padding: 10px; }
+        table { width: 100%; border-collapse: collapse; min-width: 1000px; }
+        th { background: #f8f9fa; padding: 12px 5px; border-bottom: 2px solid #dee2e6; color: var(--p); font-size: 9px; text-transform: uppercase; }
+        td { padding: 8px 5px; border-bottom: 1px solid #eee; text-align: center; }
+        .nota-input { width: 40px; padding: 6px; text-align: center; border: 1.5px solid #dcdde1; border-radius: 6px; font-weight: bold; }
+        .panel-registro { background: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #e0e6ed; }
+        .btn { padding: 10px 20px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-add { background: var(--p); color: white; }
+        .btn-print { background: var(--green); color: white; margin-left: 10px; }
+        .badge-eval { font-size: 10px; padding: 6px 15px; border-radius: 20px; background: #ebf5fb; color: var(--p); font-weight: bold; margin-bottom: 15px; display: inline-block; }
         .hidden { display: none !important; }
-        
-        /* Tablas de Control */
-        table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 10px; }
-        th { background: var(--dark); color: white; padding: 10px; }
-        td { border: 1px solid #ccc; padding: 5px; text-align: center; font-weight: bold; }
-        
-        /* Colores de Promedios con Máximo Contraste */
-        .bg-70 { background: #0e6655 !important; color: white !important; } 
-        .bg-30 { background: #935116 !important; color: white !important; } 
-        .bg-total { background: #154360 !important; color: white !important; } 
-        .bg-28 { background: #512e5f !important; color: white !important; } 
-        
-        input[type="number"] { width: 45px; padding: 5px; text-align: center; border: 2px solid #2e86c1; border-radius: 3px; font-weight: bold; }
-        input:read-only { background-color: #ebedef; border: 1px solid #bdc3c7; color: #7f8c8d; cursor: not-allowed; }
-
-        /* Boleta de Impresión */
-        .media-hoja { width: 19cm; height: 12.5cm; padding: 0.8cm; margin: 0 auto; background: white; border: 1px dashed #666; color: #000; }
-        .header-bol { display: flex; align-items: center; justify-content: space-between; border-bottom: 3px solid var(--p); padding-bottom: 5px; margin-bottom: 10px; }
-        .logo-bol { width: 80px; height: 80px; object-fit: contain; }
-        
-        @media print { 
-            .no-print { display: none !important; } 
-            body { background: white; }
-            .media-hoja { border: none; width: 100%; height: auto; padding: 0; }
-        }
+        .login-box { background: white; padding: 40px; border-radius: 20px; width: 320px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
+        input[type="text"], input[type="password"], select { padding: 10px; border-radius: 8px; border: 1px solid #ccc; width: 100%; box-sizing: border-box; margin-bottom: 15px; }
     </style>
 </head>
 <body>
 
-    <div id="login-box">
-        <h2 style="color:var(--p);">SISTEMA CAI</h2>
-        <p style="font-weight: bold; color: #555;">CONTROL DE NOTAS 2026</p>
-        <input type="text" id="u" placeholder="Usuario">
-        <input type="password" id="p" placeholder="Contraseña">
-        <select id="r">
-            <option value="Admin">ADMINISTRADOR</option>
-            <option value="Matematica">PROF. MATEMÁTICA</option>
-            <option value="Lenguaje">PROF. LENGUAJE</option>
-            <option value="Ciencias">PROF. CIENCIAS</option>
-            <option value="Sociales">PROF. SOCIALES</option>
-            <option value="Ingles">PROF. INGLÉS</option>
-        </select>
-        <button class="btn" style="width:100%; margin-top:10px; padding:15px;" onclick="login()">ACCEDER</button>
+    <div id="login-screen" style="height:100vh; display:flex; align-items:center; justify-content:center; background:var(--dark);">
+        <div class="login-box">
+            <img src="https://i.ibb.co/Mkf051St/Logo-CAI.png" width="80">
+            <h2 style="color:var(--p);">SISTEMA CAI 2026</h2>
+            <input type="text" id="user" placeholder="Usuario">
+            <input type="password" id="pass" placeholder="Contraseña">
+            <button onclick="login()" style="width:100%; padding:12px; background:var(--orange); color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold;">INGRESAR</button>
+            <p id="error" style="color:red; font-size:10px; margin-top:10px;"></p>
+        </div>
     </div>
 
     <div id="app" class="hidden">
-        <div class="container no-print">
-            <button onclick="location.reload()" style="float:right;" class="btn btn-del">CERRAR SESIÓN</button>
-            <h3>Panel: <span id="user-tag" style="color:var(--orange)"></span></h3>
-
-            <div id="admin-panel" class="hidden" style="background:#fdf2e9; padding:15px; border: 2px solid var(--orange); border-radius: 8px; margin-bottom: 20px;">
-                <h4 style="margin:0 0 10px 0;">REGISTRAR ALUMNO</h4>
-                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap:8px;">
-                    <input type="text" id="a1" placeholder="1er Apellido" oninput="this.value = this.value.toUpperCase()">
-                    <input type="text" id="a2" placeholder="2do Apellido" oninput="this.value = this.value.toUpperCase()">
-                    <input type="text" id="n1" placeholder="1er Nombre" oninput="this.value = this.value.toUpperCase()">
-                    <input type="text" id="n2" placeholder="2do Nombre" oninput="this.value = this.value.toUpperCase()">
-                    <input type="text" id="new-code" placeholder="Código" oninput="this.value = this.value.toUpperCase()">
-                    <select id="new-grado">
-                        <option value="1° GRADO">1° GRADO</option><option value="2° GRADO">2° GRADO</option>
-                        <option value="3° GRADO">3° GRADO</option><option value="4° GRADO">4° GRADO</option>
-                        <option value="5° GRADO">5° GRADO</option><option value="6° GRADO">6° GRADO</option>
-                        <option value="7° GRADO">7° GRADO</option><option value="8° GRADO">8° GRADO</option>
-                        <option value="9° GRADO">9° GRADO</option>
-                        <option value="1° AÑO BACH.">1° AÑO BACH.</option><option value="2° AÑO BACH.">2° AÑO BACH.</option>
-                    </select>
-                    <button class="btn" style="background:var(--orange)" onclick="inscribir()">GUARDAR</button>
-                </div>
+        <div class="header-app">
+            <div style="display:flex; align-items:center; gap:12px;">
+                <img src="https://i.ibb.co/Mkf051St/Logo-CAI.png" height="50">
+                <div><b id="txt-grado" style="font-size:16px; color:var(--p);">---</b><br>
+                <span id="txt-rol" style="color:var(--orange); font-weight:700; font-size:10px;">ROL: ---</span></div>
             </div>
-
-            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:15px; margin-bottom:15px; background:#d5dbdb; padding:15px; border-radius:5px;">
-                <select id="sel-mes" onchange="draw()">
-                    <option value="Enero">ENERO</option><option value="Febrero">FEBRERO</option>
-                    <option value="Marzo">MARZO</option><option value="Abril">ABRIL</option>
-                    <option value="Mayo">MAYO</option><option value="Junio">JUNIO</option>
-                    <option value="Julio">JULIO</option><option value="Agosto">AGOSTO</option>
-                    <option value="Septiembre">SEPTIEMBRE</option><option value="Octubre">OCTUBRE</option>
-                </select>
-                <select id="sel-grado" onchange="draw()">
-                    <option value="1° GRADO">1° GRADO</option><option value="2° GRADO">2° GRADO</option>
-                    <option value="3° GRADO">3° GRADO</option><option value="4° GRADO">4° GRADO</option>
-                    <option value="5° GRADO">5° GRADO</option><option value="6° GRADO">6° GRADO</option>
-                    <option value="7° GRADO">7° GRADO</option><option value="8° GRADO">8° GRADO</option>
-                    <option value="9° GRADO">9° GRADO</option>
-                    <option value="1° AÑO BACH.">1° AÑO BACH.</option><option value="2° AÑO BACH.">2° AÑO BACH.</option>
-                </select>
-                <div id="materia-admin-box" class="hidden">
-                    <select id="sel-materia-admin" onchange="draw()" style="border: 2px solid var(--p);">
-                        <option value="Matematica">MATEMÁTICA</option><option value="Lenguaje">LENGUAJE</option>
-                        <option value="Ciencias">CIENCIAS</option><option value="Sociales">SOCIALES</option>
-                        <option value="Ingles">INGLÉS</option>
-                    </select>
-                </div>
+            <div style="display:flex; gap:10px; align-items:center;">
+                <select id="sel-grado" onchange="cambiarGrado()" style="margin-bottom:0; width:200px;"></select>
+                <button onclick="generarBoletas()" class="btn btn-print">📑 BOLETAS</button>
+                <button onclick="location.reload()" class="btn" style="background:#e74c3c; color:white;">SALIR</button>
             </div>
-
-            <table>
-                <thead>
-                    <tr>
-                        <th>CÓDIGO</th><th>ALUMNO</th><th>T1(15%)</th><th>CUAD(15%)</th><th>T2(15%)</th><th>LAB(25%)</th>
-                        <th class="bg-70">70%</th><th>EXAM(30%)</th><th class="bg-30">30%</th><th>NOTA FINAL</th>
-                        <th class="bg-28">CONV. 28%</th><th>ACCIONES</th>
-                    </tr>
-                </thead>
-                <tbody id="list-main"></tbody>
-            </table>
         </div>
 
-        <div id="container-boleta" class="hidden">
-            <div id="boleta-impresion"></div>
-            <div class="no-print" style="text-align:center; padding:20px;">
-                <button class="btn" onclick="window.print()">IMPRIMIR AHORA</button>
-                <button class="btn" style="background:var(--red)" onclick="closeBoleta()">VOLVER AL SISTEMA</button>
+        <nav id="nav-tabs" class="tabs"></nav>
+
+        <div class="container">
+            <div id="panel-admin" class="panel-registro hidden">
+                <b style="color:var(--p)">MATRICULAR EN ESTE GRADO:</b>
+                <div style="display:flex; gap:10px; margin-top:10px;">
+                    <input type="text" id="reg-nie" placeholder="Código Estudiante" style="width:150px; margin:0">
+                    <input type="text" id="reg-ape" placeholder="Apellidos" style="margin:0">
+                    <input type="text" id="reg-nom" placeholder="Nombres" style="margin:0">
+                    <button onclick="matricular()" class="btn btn-add">REGISTRAR</button>
+                </div>
+            </div>
+
+            <div id="info-porcentajes" class="badge-eval"></div>
+            
+            <div class="table-card">
+                <table><thead><tr id="table-head"></tr></thead><tbody id="table-body"></tbody></table>
             </div>
         </div>
     </div>
 
 <script>
-    const LOGO_URL = "https://i.ibb.co/L6v9R53h/Whats-App-Image-2025-01-23-at-12-32-53-PM.jpg";
-    
-    const USUARIOS = {
-        "Admin": { user: "Registro", pass: "Academica" },
-        "Matematica": { user: "docentematematica", pass: "cai2026" },
-        "Lenguaje": { user: "docentelenguaje", pass: "cai2026" },
-        "Ciencias": { user: "docenteciencias", pass: "cai2026" },
-        "Sociales": { user: "docentesociales", pass: "cai2026" },
-        "Ingles": { user: "docenteingles", pass: "cai2026" }
-    };
-
     const firebaseConfig = {
         apiKey: "AIzaSyBmw9CdeBr1Z11v0ye4af-WACBeCL5FDc4",
         authDomain: "academica-bcb50.firebaseapp.com",
@@ -153,131 +86,198 @@
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    let role = ""; let data = [];
+
+    const MATERIAS = {
+        "K4": ["Taller de inglés", "Taller globalizador", "Taller de matemática", "Taller de expresión gráfica", "Taller de informática", "Taller de lectoescritura", "Taller de deporte", "Taller de Biblia"],
+        "K5": ["Taller de inglés", "Taller de Biblia", "Taller globalizador", "Taller de expresión gráfica", "Taller de matemática", "Taller de informática", "Taller de lectoescritura", "Taller de deporte"],
+        "K6": ["Taller de inglés", "Taller de conversación", "Taller de lectoescritura", "Taller de matemáticas", "Taller de informática", "Taller de desarrollo", "Educación emocional y hábitos higiénicos", "Taller de Biblia", "Taller de deporte", "Taller de arte", "Taller de expresión gráfica"],
+        "1G": ["Taller de números", "Taller de Biblia", "Taller de Finanzas", "Taller de cuerpo, mente y personalidad", "Taller de lectoescritura", "Cultura", "Educación y experiencia / exploración", "Escuela y sociedad", "Lectura"],
+        "C1": ["Comunicacion", "Numeros y formas", "Ciencia y tecnologia", "Ciudadania y valores", "Artes", "Desarrollo corporal"],
+        "C2": ["Comunicacion y literatura", "Aritmetica y Finanzas", "Ciencia y tecnologia", "Ciudadania y valores", "Artes", "Desarrollo corporal"],
+        "C3": ["Lenguaje y Literatura", "Ingles", "Matematica y datos", "Ciencia y tecnologia", "Ciudadania y valores", "Educacion fisica y deportes"],
+        "Bach": ["Lenguaje y literatura", "Ingles", "Precalculo", "Ciencia y tecnologia", "Ciudadania y valores", "Educacion fisica y deportes", "Proyecto de vida y carrera", "Finanzas y economia", "Ciencias de la computacion"]
+    };
+
+    const MESES = ["Febrero", "Marzo", "Trimestre 1", "Mayo", "Junio", "Trimestre 2", "Agosto", "Septiembre", "Trimestre 3"];
+    const MESES_B = ["Evaluación 1", "Evaluación 2", "Periodo 1", "Evaluación 3", "Evaluación 4", "Periodo 2", "Evaluación 5", "Evaluación 6", "Periodo 3", "Periodo 4"];
+
+    const GRADOS_DATA = [
+        {val:"K4", t:"Kinder 4 Años", cat:"infancia"}, {val:"K5", t:"Kinder 5 Años", cat:"infancia"}, {val:"K6", t:"Kinder 6 Años", cat:"infancia"}, {val:"1G", t:"1° Grado", cat:"infancia"},
+        {val:"2G", t:"2° Grado", cat:"docente"}, {val:"3G", t:"3° Grado", cat:"docente"},
+        {val:"4G", t:"4° Grado", cat:"docente"}, {val:"5G", t:"5° Grado", cat:"docente"}, {val:"6G", t:"6° Grado", cat:"docente"},
+        {val:"7G", t:"7° Grado", cat:"docente"}, {val:"8G", t:"8° Grado", cat:"docente"}, {val:"9G", t:"9° Grado", cat:"docente"},
+        {val:"1B", t:"1° Bachillerato", cat:"bachillerato"}, {val:"2B", t:"2° Bachillerato", cat:"bachillerato"}
+    ];
+
+    let currentRol = "";
+    let dataAlumnos = [];
+    let periodoActual = "Febrero";
+    let materiaVisualizada = "";
 
     function login() {
-        const u = document.getElementById('u').value.toLowerCase();
-        const p = document.getElementById('p').value;
-        const r = document.getElementById('r').value;
-
-        if(u === USUARIOS[r].user.toLowerCase() && p === USUARIOS[r].pass) {
-            role = r;
-            document.getElementById('login-box').classList.add('hidden');
+        const u = document.getElementById('user').value.toLowerCase();
+        const p = document.getElementById('pass').value;
+        let valid = false;
+        if(u==='admin' && p==='admin2026') { currentRol='admin'; valid=true; }
+        else if(u==='infancia' && p==='cai1') { currentRol='infancia'; valid=true; }
+        else if(u==='docente' && p==='cai2') { currentRol='docente'; valid=true; }
+        else if(u==='bachillerato' && p==='cai3') { currentRol='bachillerato'; valid=true; }
+        if(valid) {
+            document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('app').classList.remove('hidden');
-            document.getElementById('user-tag').innerText = role === "Admin" ? "MODO ADMINISTRADOR" : "DOCENTE: " + role.toUpperCase();
-            
-            if(role === "Admin") {
-                document.getElementById('admin-panel').classList.remove('hidden');
-                document.getElementById('materia-admin-box').classList.remove('hidden');
+            document.getElementById('txt-rol').innerText = "ROL: " + currentRol.toUpperCase();
+            if(currentRol==='admin') document.getElementById('panel-admin').classList.remove('hidden');
+            cargarSelect();
+        } else { document.getElementById('error').innerText = "Usuario o Clave incorrectos"; }
+    }
+
+    function cargarSelect() {
+        let options = "";
+        const cats = {"infancia": "PRIMERA INFANCIA", "docente": "BÁSICA (CICLOS 1-3)", "bachillerato": "BACHILLERATO"};
+        Object.keys(cats).forEach(c => {
+            if(currentRol === 'admin' || currentRol === c) {
+                options += `<optgroup label="${cats[c]}">`;
+                GRADOS_DATA.filter(g => g.cat === c).forEach(g => { options += `<option value="${g.val}">${g.t}</option>`; });
+                options += `</optgroup>`;
             }
-            db.ref('alumnos').on('value', s => {
-                const val = s.val();
-                data = val ? Object.keys(val).map(k=>({id:k,...val[k]})) : [];
-                draw();
-            });
-        } else {
-            alert("Credenciales incorrectas");
+        });
+        document.getElementById('sel-grado').innerHTML = options;
+        cambiarGrado(); escucharDB();
+    }
+
+    function matricular() {
+        const nie = document.getElementById('reg-nie').value;
+        const ape = document.getElementById('reg-ape').value.toUpperCase();
+        const nom = document.getElementById('reg-nom').value.toUpperCase();
+        const grado = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text;
+        if(!nie || !ape || !nom) return alert("Faltan datos");
+        db.ref('alumnos').push({ nie, ape, nom, grado });
+        document.getElementById('reg-nie').value=""; document.getElementById('reg-ape').value=""; document.getElementById('reg-nom').value="";
+    }
+
+    function getCiclo(g) {
+        if(["K4","K5","K6","1G"].includes(g)) return g;
+        if(["2G","3G"].includes(g)) return "C1";
+        if(["4G","5G","6G"].includes(g)) return "C2";
+        if(["7G","8G","9G"].includes(g)) return "C3";
+        return "Bach";
+    }
+
+    function cambiarGrado() {
+        const g = document.getElementById('sel-grado').value;
+        const ciclo = getCiclo(g);
+        const lista = (ciclo === "Bach") ? MESES_B : MESES;
+        periodoActual = lista[0];
+        materiaVisualizada = MATERIAS[ciclo][0];
+        document.getElementById('txt-grado').innerText = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text;
+        document.getElementById('nav-tabs').innerHTML = lista.map(p => `<button class="tab ${p===periodoActual?'active':''}" onclick="setPeriodo('${p}', this)">${p}</button>`).join('');
+        dibujar();
+    }
+
+    function setPeriodo(p, btn) {
+        periodoActual = p;
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        btn.classList.add('active'); dibujar();
+    }
+
+    function calcular(n, p, g) {
+        const v = { t:parseFloat(n.t)||0, l:parseFloat(n.l)||0, lc:parseFloat(n.lc)||0, int:parseFloat(n.int)||0, ex:parseFloat(n.ex)||0 };
+        const c = getCiclo(g);
+        if(["K4","K5","K6","1G"].includes(c)) {
+            return (p==="Trimestre 2") ? (v.t*0.15 + v.int*0.35 + v.ex*0.5).toFixed(1) : (v.t*0.5 + v.ex*0.5).toFixed(1);
         }
+        const trim = p.includes("Trimestre") || p.includes("Periodo");
+        return trim ? (v.t*0.1 + v.l*0.05 + v.lc*0.1 + v.int*0.35 + v.ex*0.4).toFixed(1) : (v.t*0.25 + v.l*0.2 + v.lc*0.15 + v.ex*0.4).toFixed(1);
     }
 
-    function inscribir() {
-        if(role !== "Admin") return;
-        const a1 = document.getElementById('a1').value.trim();
-        const n1 = document.getElementById('n1').value.trim();
-        const code = document.getElementById('new-code').value.trim();
-        if(!a1 || !n1 || !code) return alert("Faltan datos");
-
-        const fullName = `${a1} ${document.getElementById('a2').value.trim()}, ${n1} ${document.getElementById('n2').value.trim()}`.trim().toUpperCase();
-        db.ref('alumnos').push({ name: fullName, code: code.toUpperCase(), grado: document.getElementById('new-grado').value });
-        alert("Alumno registrado");
-        ["a1","a2","n1","n2","new-code"].forEach(id => document.getElementById(id).value = "");
+    function dibujar() {
+        const g = document.getElementById('sel-grado').value;
+        const ciclo = getCiclo(g);
+        const gTxt = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text;
+        const esp = ["K4","K5","K6","1G"].includes(ciclo);
+        const trim = periodoActual.includes("Trimestre") || periodoActual.includes("Periodo");
+        let h = `<th>Estudiante</th><th style="width:200px">Materia</th>`;
+        if(esp) h += (periodoActual === "Trimestre 2") ? `<th>T (15%)</th><th>I (35%)</th><th>E (50%)</th>` : `<th>T (50%)</th><th>E (50%)</th>`;
+        else h += trim ? `<th>T(10%)</th><th>L(5%)</th><th>LC(10%)</th><th>I(35%)</th><th>E(40%)</th>` : `<th>T(25%)</th><th>L(20%)</th><th>LC(15%)</th><th>P(40%)</th>`;
+        h += `<th>PROM</th>`;
+        document.getElementById('table-head').innerHTML = h;
+        let fil = dataAlumnos.filter(a => a.grado === gTxt).sort((a,b) => a.ape.localeCompare(b.ape));
+        let b = "";
+        fil.forEach(al => {
+            const n = al.notas?.[periodoActual]?.[materiaVisualizada] || {};
+            b += `<tr><td style="text-align:left"><b>${al.ape}</b>, ${al.nom}</td>
+                <td><select style="width:100%" onchange="materiaVisualizada=this.value; dibujar()">${MATERIAS[ciclo].map(m=>`<option ${m===materiaVisualizada?'selected':''}>${m}</option>`).join('')}</select></td>
+                <td><input type="text" class="nota-input" value="${n.t||0}" onchange="save('${al.id}','t',this.value)"></td>`;
+            if(!esp) b += `<td><input type="text" class="nota-input" value="${n.l||0}" onchange="save('${al.id}','l',this.value)"></td><td><input type="text" class="nota-input" value="${n.lc||0}" onchange="save('${al.id}','lc',this.value)"></td>`;
+            if(trim || (esp && periodoActual === "Trimestre 2")) b += `<td><input type="text" class="nota-input" value="${n.int||0}" onchange="save('${al.id}','int',this.value)"></td>`;
+            b += `<td><input type="text" class="nota-input" value="${n.ex||0}" onchange="save('${al.id}','ex',this.value)"></td><td style="font-weight:bold; color:var(--p);">${calcular(n,periodoActual,g)}</td></tr>`;
+        });
+        document.getElementById('table-body').innerHTML = b;
     }
 
-    function eliminarAlumno(id, nombre) {
-        if(confirm(`¿Está seguro de eliminar a ${nombre}? Esta acción no se puede deshacer.`)) {
-            db.ref(`alumnos/${id}`).remove();
-        }
-    }
+    function save(id, c, v) { db.ref(`alumnos/${id}/notas/${periodoActual}/${materiaVisualizada}/${c}`).set(parseFloat(v.replace(',','.')) || 0); }
+    function escucharDB() { db.ref('alumnos').on('value', snap => { const v = snap.val(); dataAlumnos = v ? Object.keys(v).map(k=>({id:k, ...v[k]})) : []; dibujar(); }); }
 
-    function saveNota(alId, mes, campo, val) {
-        val = parseFloat(val);
-        if(isNaN(val) || val < 0 || val > 10) return alert("Nota inválida");
-        let mat = (role === "Admin") ? document.getElementById('sel-materia-admin').value : role;
-        db.ref(`alumnos/${alId}/notas/${mes}/${mat}/${campo}`).set(val);
-    }
-
-    function draw() {
-        const mes = document.getElementById('sel-mes').value;
-        const grado = document.getElementById('sel-grado').value;
-        const list = document.getElementById('list-main'); 
-        list.innerHTML = "";
-        let mat = (role === "Admin") ? document.getElementById('sel-materia-admin').value : role;
+    function generarBoletas() {
+        const val = document.getElementById('sel-grado').value;
+        const gTxt = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text;
+        const ciclo = getCiclo(val);
+        const alumnos = dataAlumnos.filter(a => a.grado === gTxt);
+        if(alumnos.length === 0) return alert("No hay alumnos");
         
-        data.filter(a => a.grado === grado).sort((a,b) => a.name.localeCompare(b.name)).forEach(al => {
-            const n = (al.notas && al.notas[mes] && al.notas[mes][mat]) ? al.notas[mes][mat] : {t1:0, cu:0, t2:0, lab:0, ex:0};
-            const s70 = (n.t1*0.15) + (n.cu*0.15) + (n.t2*0.15) + (n.lab*0.25);
-            const nf = s70 + (n.ex*0.30);
-            const p28 = nf >= 7 ? (nf * 0.28) : 0;
-            const isLock = (val) => (val > 0 && role !== "Admin") ? "readonly" : "";
+        let win = window.open('', '_blank');
+        let h = `<html><head><title>Boletas CAI</title><style>
+            @page { size: letter; margin: 0; }
+            body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; background: white; }
+            .boleta { height: 50vh; padding: 10mm; border-bottom: 1px dashed #000; box-sizing: border-box; position: relative; overflow: hidden; page-break-inside: avoid; }
+            .header { display: flex; align-items: center; border-bottom: 2px solid #1a5276; padding-bottom: 10px; margin-bottom: 10px; }
+            .logo { height: 60px; margin-right: 20px; }
+            .info-estudiante { display: grid; grid-template-columns: 2fr 1fr 1fr; font-size: 11px; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+            table { width: 100%; border-collapse: collapse; font-size: 10px; margin-top: 5px; }
+            th { background: #1a5276; color: white; padding: 6px; text-transform: uppercase; }
+            td { border: 1px solid #ccc; padding: 5px; text-align: center; }
+            .firma-area { display: flex; justify-content: center; align-items: center; gap: 100px; margin-top: 40px; position: absolute; bottom: 18mm; width: 100%; }
+            .firma-linea { border-top: 1px solid black; width: 220px; text-align: center; padding-top: 5px; font-size: 10px; font-weight: bold; }
+            .sello-area { border: 1px dashed #ccc; width: 90px; height: 90px; font-size: 8px; color: #ccc; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
+            .versiculo { position: absolute; bottom: 5mm; width: 100%; text-align: center; font-style: italic; font-size: 9px; color: #555; }
+        </style></head><body>`;
 
-            let row = `<tr><td>${al.code}</td><td style="text-align:left">${al.name}</td>
-                <td><input type="number" step="0.1" value="${n.t1}" ${isLock(n.t1)} onchange="saveNota('${al.id}','${mes}','t1',this.value)"></td>
-                <td><input type="number" step="0.1" value="${n.cu}" ${isLock(n.cu)} onchange="saveNota('${al.id}','${mes}','cu',this.value)"></td>
-                <td><input type="number" step="0.1" value="${n.t2}" ${isLock(n.t2)} onchange="saveNota('${al.id}','${mes}','t2',this.value)"></td>
-                <td><input type="number" step="0.1" value="${n.lab}" ${isLock(n.lab)} onchange="saveNota('${al.id}','${mes}','lab',this.value)"></td>
-                <td class="bg-70">${s70.toFixed(2)}</td>
-                <td><input type="number" step="0.1" value="${n.ex}" ${isLock(n.ex)} onchange="saveNota('${al.id}','${mes}','ex',this.value)"></td>
-                <td class="bg-30">${(n.ex*0.30).toFixed(2)}</td><td class="bg-total">${nf.toFixed(2)}</td><td class="bg-28">${p28.toFixed(2)}</td>
-                <td>`;
-            if(role === "Admin") {
-                row += `<button class="btn" onclick="verBoleta('${al.id}')">BOLETA</button>`;
-                row += `<button class="btn btn-del" onclick="eliminarAlumno('${al.id}','${al.name}')">ELIMINAR</button>`;
-            } else {
-                row += `<span style="color:#888; font-size:9px;">BLOQUEADO</span>`;
-            }
-            list.innerHTML += row + `</td></tr>`;
-        });
-    }
-
-    function verBoleta(id) {
-        const al = data.find(x => x.id === id);
-        const mes = document.getElementById('sel-mes').value;
-        let matHtml = "";
-        ["Matematica","Lenguaje","Ciencias","Sociales","Ingles"].forEach(m => {
-            const n = (al.notas && al.notas[mes] && al.notas[mes][m]) ? al.notas[mes][m] : {t1:0, cu:0, t2:0, lab:0, ex:0};
-            const s70 = (n.t1*0.15) + (n.cu*0.15) + (n.t2*0.15) + (n.lab*0.25);
-            matHtml += `<tr><td style="text-align:left; padding-left:10px;">${m.toUpperCase()}</td><td>${s70.toFixed(2)}</td><td>${(n.ex*0.30).toFixed(2)}</td><td>${(s70 + (n.ex*0.30)).toFixed(2)}</td></tr>`;
-        });
-
-        document.getElementById('boleta-impresion').innerHTML = `
-            <div class="media-hoja">
-                <div class="header-bol">
-                    <img src="${LOGO_URL}" class="logo-bol" onerror="this.src='https://via.placeholder.com/80?text=LOGO'">
-                    <div style="text-align:right">
-                        <h2 style="margin:0; color:var(--p);">COLEGIO AMIGOS DE ISRAEL</h2>
-                        <p style="margin:0; font-weight:bold;">BOLETA DE NOTAS - MES: ${mes.toUpperCase()}</p>
+        alumnos.forEach((al, idx) => {
+            h += `<div class="boleta">
+                <div class="header">
+                    <img src="https://i.ibb.co/Mkf051St/Logo-CAI.png" class="logo">
+                    <div>
+                        <h2 style="margin:0; color:#1a5276; font-size: 18px;">COLEGIO AMIGOS DE ISRAEL</h2>
+                        <span style="color:#e67e22; font-weight:bold; letter-spacing:1px;">REPORTE ACADÉMICO - ${periodoActual.toUpperCase()}</span>
                     </div>
                 </div>
-                <div style="margin-bottom:15px; border:1px solid #000; padding:10px; font-size:12px;">
-                    <b>ALUMNO:</b> ${al.name} <br>
-                    <b>GRADO:</b> ${al.grado} &nbsp;&nbsp; | &nbsp;&nbsp; <b>CÓDIGO:</b> ${al.code}
+                <div class="info-estudiante">
+                    <div><b>ALUMNO:</b> ${al.ape} ${al.nom}</div>
+                    <div><b>GRADO:</b> ${gTxt}</div>
+                    <div><b>CÓDIGO:</b> ${al.nie}</div>
                 </div>
                 <table>
-                    <thead><tr><th>ASIGNATURA</th><th>70% ACTIV.</th><th>30% EXAMEN</th><th>PROMEDIO</th></tr></thead>
-                    <tbody>${matHtml}</tbody>
-                </table>
-                <div style="margin-top:40px; display:flex; justify-content:space-around; font-size:11px;">
-                    <div style="border-top:1px solid #000; width:200px; text-align:center; padding-top:5px;">Firma de Dirección / Sello</div>
-                    <div style="border-top:1px solid #000; width:200px; text-align:center; padding-top:5px;">Firma de Padre o Tutor</div>
+                    <thead><tr><th style="text-align:left">ASIGNATURA O TALLER</th><th>TAREAS</th><th>LAB/LIBRO</th><th>EXAMEN</th><th>PROMEDIO</th></tr></thead>
+                    <tbody>`;
+            MATERIAS[ciclo].forEach(m => {
+                const n = al.notas?.[periodoActual]?.[m] || {};
+                h += `<tr>
+                        <td style="text-align:left; font-weight:bold;">${m.toUpperCase()}</td>
+                        <td>${n.t||0}</td><td>${n.lc||0}</td><td>${n.ex||0}</td>
+                        <td style="background:#f9f9f9; font-size:11px;"><b>${calcular(n, periodoActual, val)}</b></td>
+                    </tr>`;
+            });
+            h += `</tbody></table>
+                <div class="firma-area">
+                    <div class="firma-linea">FIRMA DE LA DIRECTORA</div>
+                    <div class="sello-area">SELLO CAI</div>
                 </div>
+                <div class="versiculo">"Instruye al niño en su camino, y aun cuando fuere viejo no se apratará de él." - Proverbios 22:6</div>
             </div>`;
-        document.getElementById('container-boleta').classList.remove('hidden');
-        document.querySelector('.container').classList.add('hidden');
-    }
-
-    function closeBoleta() {
-        document.getElementById('container-boleta').classList.add('hidden');
-        document.querySelector('.container').classList.remove('hidden');
+            if((idx + 1) % 2 === 0) h += `<div style="page-break-after: always;"></div>`;
+        });
+        win.document.write(h + "</body></html>"); win.document.close();
+        setTimeout(() => { win.print(); }, 500);
     }
 </script>
 </body>
