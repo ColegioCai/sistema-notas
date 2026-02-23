@@ -19,11 +19,9 @@
         th { background: #f8f9fa; padding: 12px 5px; border-bottom: 2px solid #dee2e6; color: var(--p); font-size: 9px; text-transform: uppercase; }
         td { padding: 8px 5px; border-bottom: 1px solid #eee; text-align: center; }
         .nota-input { width: 38px; padding: 5px; text-align: center; border: 1.5px solid #dcdde1; border-radius: 6px; font-weight: bold; }
-        /* Estilo para inputs de nombre/nie (solo editables por admin) */
         .edit-al-input { border: none; background: transparent; font-size: 11px; width: 100%; text-align: inherit; color: inherit; }
         .edit-al-input:enabled { background: #fff9f0; border-bottom: 1px dashed var(--orange); cursor: text; }
         .edit-al-input:disabled { color: #2c3e50; cursor: default; }
-        
         .asist-input { width: 30px; padding: 4px; text-align: center; border: 1px solid #ccc; border-radius: 4px; }
         .cond-input { width: 50px; padding: 4px; border-radius: 4px; border: 1px solid #ccc; font-weight: bold; }
         .obs-input { width: 150px; padding: 5px; border-radius: 4px; border: 1px solid #ccc; font-size: 9px; }
@@ -79,7 +77,7 @@
                     <input type="text" id="reg-nom" placeholder="Nombres" style="margin:0">
                     <button onclick="matricular()" class="btn btn-add">MATRICULAR</button>
                 </div>
-                <small style="color:gray; font-size:9px;">* Como ADMIN, puedes editar nombres y códigos directamente en la tabla.</small>
+                <small style="color:gray; font-size:9px;">* El orden alfabético se aplica automáticamente al registrar o editar.</small>
             </div>
 
             <div class="table-card">
@@ -204,7 +202,14 @@
         h += `<th>PROM</th><th>Cond.</th><th>Tar.</th><th>Ina.</th><th>Obs.</th>`;
         document.getElementById('table-head').innerHTML = h;
 
-        let fil = dataAlumnos.filter(a => a.grado === gTxt).sort((a,b) => a.ape.localeCompare(b.ape)), b = "";
+        // SECCIÓN CLAVE: Ordenar alfabéticamente por apellido
+        let fil = dataAlumnos.filter(a => a.grado === gTxt).sort((a,b) => {
+            if (a.ape < b.ape) return -1;
+            if (a.ape > b.ape) return 1;
+            return 0;
+        });
+
+        let b = "";
         fil.forEach(al => {
             const n = al.notas?.[periodoActual]?.[materiaVisualizada] || {};
             const as = al.asistencia?.[periodoActual] || { t:0, i:0 };
@@ -250,7 +255,7 @@
         if(nie && ape && nom) { 
             db.ref('alumnos').push({ nie, ape, nom, grado }); 
             document.getElementById('reg-nie').value = ""; document.getElementById('reg-ape').value = ""; document.getElementById('reg-nom').value = "";
-            alert("Listo"); 
+            alert("Alumno registrado"); 
         }
     }
 
@@ -267,7 +272,7 @@
     function generarBoletas() {
         if(currentRol !== 'admin') return alert("Solo Admin");
         const val = document.getElementById('sel-grado').value, gTxt = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text;
-        const ciclo = getCiclo(val), alumnos = dataAlumnos.filter(a => a.grado === gTxt);
+        const ciclo = getCiclo(val), alumnos = dataAlumnos.filter(a => a.grado === gTxt).sort((a,b) => a.ape.localeCompare(b.ape));
         const esp = ["K4","K5","K6","1G"].includes(ciclo), trim = periodoActual.includes("Trimestre") || periodoActual.includes("Periodo");
 
         let win = window.open('', '_blank');
