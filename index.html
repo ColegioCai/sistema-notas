@@ -34,7 +34,7 @@
         .hidden { display: none !important; }
         .login-box { background: white; padding: 40px; border-radius: 20px; width: 320px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
         input, select { padding: 10px; border-radius: 8px; border: 1px solid #ccc; width: 100%; box-sizing: border-box; margin-bottom: 10px; }
-        #preview-codigo { color: var(--orange); font-weight: bold; font-size: 12px; margin-bottom: 5px; }
+        #preview-codigo { color: var(--orange); font-weight: bold; font-size: 11px; margin-bottom: 5px; background: #fff5eb; padding: 5px; border-radius: 5px; border: 1px solid #ffe0c2; display: inline-block; }
     </style>
 </head>
 <body>
@@ -71,12 +71,12 @@
 
         <div class="container">
             <div id="panel-admin" class="panel-registro hidden" style="background:white; padding:15px; border-radius:10px; margin-bottom:15px; border-left: 5px solid var(--p);">
-                <div id="preview-codigo">Código Sugerido: CAI-XX-0194</div>
+                <div id="preview-codigo">Escribe los apellidos para sugerir código...</div><br>
                 <b style="color:var(--p)">REGISTRO DE MATRÍCULA:</b>
                 <div style="display:flex; gap:10px; margin-top:10px;">
                     <input type="text" id="reg-ape" placeholder="Apellidos" oninput="generarSugerencia()" style="margin:0">
                     <input type="text" id="reg-nom" placeholder="Nombres" style="margin:0">
-                    <input type="text" id="reg-nie" placeholder="Código Manual (Opcional)" style="margin:0">
+                    <input type="text" id="reg-nie" placeholder="Código (Opcional)" style="margin:0">
                     <button onclick="matricular()" class="btn btn-add">MATRICULAR</button>
                 </div>
             </div>
@@ -164,19 +164,22 @@
         return g;
     }
 
+    // Lógica mejorada para sugerir código
     function generarSugerencia() {
         const ape = document.getElementById('reg-ape').value.trim();
-        if(!ape) { document.getElementById('preview-codigo').innerText = "Código Sugerido: ---"; return; }
+        if(!ape) { document.getElementById('preview-codigo').innerText = "Escribe los apellidos para sugerir código..."; return ""; }
         
-        const iniciales = ape.split(' ').map(n => n[0]).join('').toUpperCase();
-        let maxCorr = 193; // Empieza antes del 0194
+        const iniciales = ape.split(' ').filter(n => n.length > 0).map(n => n[0]).join('').toUpperCase();
+        let maxCorr = 193; 
+        
         dataAlumnos.forEach(al => {
-            const parts = al.nie.split('-');
-            if(parts.length === 3) {
-                const num = parseInt(parts[2]);
+            if(al.nie && al.nie.includes('-')) {
+                const parts = al.nie.split('-');
+                const num = parseInt(parts[parts.length-1]);
                 if(!isNaN(num) && num > maxCorr) maxCorr = num;
             }
         });
+        
         const nextCorr = (maxCorr + 1).toString().padStart(4, '0');
         const sugerido = `CAI-${iniciales}-${nextCorr}`;
         document.getElementById('preview-codigo').innerText = "Código Sugerido: " + sugerido;
@@ -233,7 +236,7 @@
 
             b += `<tr>
                 ${isAdmin ? `<td><button class="btn btn-del" onclick="eliminarAlumno('${al.id}')">✖</button></td>` : ''}
-                <td><input type="text" class="edit-al-input" value="${al.nie}" ${!isAdmin?'disabled':''} onchange="actualizarAlumno('${al.id}','nie',this.value)" style="font-weight:bold"></td>
+                <td><input type="text" class="edit-al-input" value="${al.nie || ''}" ${!isAdmin?'disabled':''} onchange="actualizarAlumno('${al.id}','nie',this.value)" style="font-weight:bold"></td>
                 <td style="text-align:left"><input type="text" class="edit-al-input" value="${al.ape}" ${!isAdmin?'disabled':''} onchange="actualizarAlumno('${al.id}','ape',this.value)"></td>
                 <td style="text-align:left"><input type="text" class="edit-al-input" value="${al.nom}" ${!isAdmin?'disabled':''} onchange="actualizarAlumno('${al.id}','nom',this.value)"></td>
                 <td><select onchange="materiaVisualizada=this.value; dibujar()">${MATERIAS[ciclo].map(m=>`<option ${m===materiaVisualizada?'selected':''}>${m}</option>`).join('')}</select></td>
@@ -262,20 +265,35 @@
     function saveCond(id, v) { db.ref(`alumnos/${id}/conducta/${periodoActual}`).set(v); }
     function saveObs(id, v) { db.ref(`alumnos/${id}/observaciones/${periodoActual}`).set(v); }
     
+    // Función de matrícula corregida para autogenerar el código
     function matricular() {
         if(currentRol!=='admin') return;
-        let nie = document.getElementById('reg-nie').value.trim();
-        const ape = document.getElementById('reg-ape').value.toUpperCase(), nom = document.getElementById('reg-nom').value.toUpperCase();
+        const apeInput = document.getElementById('reg-ape').value.trim();
+        const nomInput = document.getElementById('reg-nom').value.trim();
+        let nieInput = document.getElementById('reg-nie').value.trim();
         const grado = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text;
-        
-        if(!nie) nie = generarSugerencia();
 
-        if(nie && ape && nom) { 
-            db.ref('alumnos').push({ nie, ape, nom, grado }); 
-            document.getElementById('reg-nie').value = ""; document.getElementById('reg-ape').value = ""; document.getElementById('reg-nom').value = "";
-            generarSugerencia();
-            alert("Alumno registrado con código: " + nie); 
+        if(!apeInput || !nomInput) { alert("Por favor ingresa Apellidos y Nombres"); return; }
+
+        // Si el código manual está vacío, generamos el automático AHORA
+        if(!nieInput) {
+            nieInput = generarSugerencia();
         }
+
+        const nuevoAlumno = {
+            nie: nieInput,
+            ape: apeInput.toUpperCase(),
+            nom: nomInput.toUpperCase(),
+            grado: grado
+        };
+
+        db.ref('alumnos').push(nuevoAlumno).then(() => {
+            document.getElementById('reg-nie').value = ""; 
+            document.getElementById('reg-ape').value = ""; 
+            document.getElementById('reg-nom').value = "";
+            document.getElementById('preview-codigo').innerText = "Escribe los apellidos para sugerir código...";
+            alert("Alumno registrado con código: " + nieInput); 
+        });
     }
 
     function actualizarAlumno(id, campo, valor) {
