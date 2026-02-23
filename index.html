@@ -19,8 +19,11 @@
         th { background: #f8f9fa; padding: 12px 5px; border-bottom: 2px solid #dee2e6; color: var(--p); font-size: 9px; text-transform: uppercase; }
         td { padding: 8px 5px; border-bottom: 1px solid #eee; text-align: center; }
         .nota-input { width: 38px; padding: 5px; text-align: center; border: 1.5px solid #dcdde1; border-radius: 6px; font-weight: bold; }
-        .edit-al-input { border: none; background: transparent; font-size: 11px; width: 100%; text-align: inherit; }
-        .edit-al-input:focus { background: #fff9f0; outline: 1px solid var(--orange); border-radius: 3px; }
+        /* Estilo para inputs de nombre/nie (solo editables por admin) */
+        .edit-al-input { border: none; background: transparent; font-size: 11px; width: 100%; text-align: inherit; color: inherit; }
+        .edit-al-input:enabled { background: #fff9f0; border-bottom: 1px dashed var(--orange); cursor: text; }
+        .edit-al-input:disabled { color: #2c3e50; cursor: default; }
+        
         .asist-input { width: 30px; padding: 4px; text-align: center; border: 1px solid #ccc; border-radius: 4px; }
         .cond-input { width: 50px; padding: 4px; border-radius: 4px; border: 1px solid #ccc; font-weight: bold; }
         .obs-input { width: 150px; padding: 5px; border-radius: 4px; border: 1px solid #ccc; font-size: 9px; }
@@ -69,14 +72,14 @@
 
         <div class="container">
             <div id="panel-admin" class="panel-registro hidden" style="background:white; padding:15px; border-radius:10px; margin-bottom:15px; border-left: 5px solid var(--p);">
-                <b style="color:var(--p)">REGISTRO / MATRÍCULA:</b>
+                <b style="color:var(--p)">REGISTRO DE MATRÍCULA:</b>
                 <div style="display:flex; gap:10px; margin-top:10px;">
-                    <input type="text" id="reg-nie" placeholder="Código (NIE)" style="margin:0">
+                    <input type="text" id="reg-nie" placeholder="NIE" style="margin:0">
                     <input type="text" id="reg-ape" placeholder="Apellidos" style="margin:0">
                     <input type="text" id="reg-nom" placeholder="Nombres" style="margin:0">
                     <button onclick="matricular()" class="btn btn-add">MATRICULAR</button>
                 </div>
-                <small style="color:gray; font-size:9px;">* Para editar un alumno existente, haz clic sobre su nombre o NIE en la tabla.</small>
+                <small style="color:gray; font-size:9px;">* Como ADMIN, puedes editar nombres y códigos directamente en la tabla.</small>
             </div>
 
             <div class="table-card">
@@ -195,7 +198,7 @@
         const esp = ["K4","K5","K6","1G"].includes(ciclo), trim = periodoActual.includes("Trimestre") || periodoActual.includes("Periodo");
         const isAdmin = currentRol === 'admin';
 
-        let h = `${isAdmin ? '<th>Borrar</th>' : ''}<th>CÓDIGO (NIE)</th><th>Apellidos</th><th>Nombres</th><th style="width:140px">Materia</th>`;
+        let h = `${isAdmin ? '<th>Borrar</th>' : ''}<th>NIE</th><th>Apellidos</th><th>Nombres</th><th style="width:140px">Materia</th>`;
         if(esp) h += (periodoActual === "Trimestre 2") ? `<th>T15%</th><th>I35%</th><th>E50%</th>` : `<th>T50%</th><th>E50%</th>`;
         else h += trim ? `<th>T10</th><th>L5</th><th>LC10</th><th>I35</th><th>E40</th>` : `<th>T25</th><th>L20</th><th>LC15</th><th>E40</th>`;
         h += `<th>PROM</th><th>Cond.</th><th>Tar.</th><th>Ina.</th><th>Obs.</th>`;
@@ -240,23 +243,17 @@
     function saveCond(id, v) { db.ref(`alumnos/${id}/conducta/${periodoActual}`).set(v); }
     function saveObs(id, v) { db.ref(`alumnos/${id}/observaciones/${periodoActual}`).set(v); }
     
-    // Función para matricular nuevos alumnos
     function matricular() {
         if(currentRol!=='admin') return;
         const nie = document.getElementById('reg-nie').value, ape = document.getElementById('reg-ape').value.toUpperCase(), nom = document.getElementById('reg-nom').value.toUpperCase();
         const grado = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text;
         if(nie && ape && nom) { 
             db.ref('alumnos').push({ nie, ape, nom, grado }); 
-            document.getElementById('reg-nie').value = "";
-            document.getElementById('reg-ape').value = "";
-            document.getElementById('reg-nom').value = "";
-            alert("Alumno matriculado con éxito"); 
-        } else {
-            alert("Por favor complete todos los campos");
+            document.getElementById('reg-nie').value = ""; document.getElementById('reg-ape').value = ""; document.getElementById('reg-nom').value = "";
+            alert("Listo"); 
         }
     }
 
-    // Nueva función para actualizar datos básicos del alumno
     function actualizarAlumno(id, campo, valor) {
         if(currentRol !== 'admin') return;
         let v = valor.trim();
@@ -264,7 +261,7 @@
         db.ref(`alumnos/${id}/${campo}`).set(v);
     }
     
-    function eliminarAlumno(id) { if(currentRol==='admin' && confirm("¿Borrar permanentemente este alumno y sus notas?")) db.ref('alumnos/'+id).remove(); }
+    function eliminarAlumno(id) { if(currentRol==='admin' && confirm("¿Borrar permanentemente?")) db.ref('alumnos/'+id).remove(); }
     function escucharDB() { db.ref('alumnos').on('value', snap => { const v = snap.val(); dataAlumnos = v ? Object.keys(v).map(k=>({id:k, ...v[k]})) : []; dibujar(); }); }
 
     function generarBoletas() {
