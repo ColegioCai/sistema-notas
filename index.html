@@ -34,6 +34,7 @@
         .hidden { display: none !important; }
         .login-box { background: white; padding: 40px; border-radius: 20px; width: 320px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
         input, select { padding: 10px; border-radius: 8px; border: 1px solid #ccc; width: 100%; box-sizing: border-box; margin-bottom: 10px; }
+        #preview-codigo { color: var(--orange); font-weight: bold; font-size: 12px; margin-bottom: 5px; }
     </style>
 </head>
 <body>
@@ -70,14 +71,14 @@
 
         <div class="container">
             <div id="panel-admin" class="panel-registro hidden" style="background:white; padding:15px; border-radius:10px; margin-bottom:15px; border-left: 5px solid var(--p);">
+                <div id="preview-codigo">Código Sugerido: CAI-XX-0194</div>
                 <b style="color:var(--p)">REGISTRO DE MATRÍCULA:</b>
                 <div style="display:flex; gap:10px; margin-top:10px;">
-                    <input type="text" id="reg-nie" placeholder="NIE" style="margin:0">
-                    <input type="text" id="reg-ape" placeholder="Apellidos" style="margin:0">
+                    <input type="text" id="reg-ape" placeholder="Apellidos" oninput="generarSugerencia()" style="margin:0">
                     <input type="text" id="reg-nom" placeholder="Nombres" style="margin:0">
+                    <input type="text" id="reg-nie" placeholder="Código Manual (Opcional)" style="margin:0">
                     <button onclick="matricular()" class="btn btn-add">MATRICULAR</button>
                 </div>
-                <small style="color:gray; font-size:9px;">* El orden alfabético se aplica automáticamente al registrar o editar.</small>
             </div>
 
             <div class="table-card">
@@ -163,6 +164,25 @@
         return g;
     }
 
+    function generarSugerencia() {
+        const ape = document.getElementById('reg-ape').value.trim();
+        if(!ape) { document.getElementById('preview-codigo').innerText = "Código Sugerido: ---"; return; }
+        
+        const iniciales = ape.split(' ').map(n => n[0]).join('').toUpperCase();
+        let maxCorr = 193; // Empieza antes del 0194
+        dataAlumnos.forEach(al => {
+            const parts = al.nie.split('-');
+            if(parts.length === 3) {
+                const num = parseInt(parts[2]);
+                if(!isNaN(num) && num > maxCorr) maxCorr = num;
+            }
+        });
+        const nextCorr = (maxCorr + 1).toString().padStart(4, '0');
+        const sugerido = `CAI-${iniciales}-${nextCorr}`;
+        document.getElementById('preview-codigo').innerText = "Código Sugerido: " + sugerido;
+        return sugerido;
+    }
+
     function cambiarGrado() {
         const g = document.getElementById('sel-grado').value, ciclo = getCiclo(g);
         let lista = ["K4","K5","K6","1G"].includes(ciclo) ? MESES_INFANCIA : (ciclo.includes("B") ? MESES_B : MESES_GENERAL);
@@ -196,19 +216,13 @@
         const esp = ["K4","K5","K6","1G"].includes(ciclo), trim = periodoActual.includes("Trimestre") || periodoActual.includes("Periodo");
         const isAdmin = currentRol === 'admin';
 
-        let h = `${isAdmin ? '<th>Borrar</th>' : ''}<th>NIE</th><th>Apellidos</th><th>Nombres</th><th style="width:140px">Materia</th>`;
+        let h = `${isAdmin ? '<th>Borrar</th>' : ''}<th>CÓDIGO</th><th>Apellidos</th><th>Nombres</th><th style="width:140px">Materia</th>`;
         if(esp) h += (periodoActual === "Trimestre 2") ? `<th>T15%</th><th>I35%</th><th>E50%</th>` : `<th>T50%</th><th>E50%</th>`;
         else h += trim ? `<th>T10</th><th>L5</th><th>LC10</th><th>I35</th><th>E40</th>` : `<th>T25</th><th>L20</th><th>LC15</th><th>E40</th>`;
         h += `<th>PROM</th><th>Cond.</th><th>Tar.</th><th>Ina.</th><th>Obs.</th>`;
         document.getElementById('table-head').innerHTML = h;
 
-        // SECCIÓN CLAVE: Ordenar alfabéticamente por apellido
-        let fil = dataAlumnos.filter(a => a.grado === gTxt).sort((a,b) => {
-            if (a.ape < b.ape) return -1;
-            if (a.ape > b.ape) return 1;
-            return 0;
-        });
-
+        let fil = dataAlumnos.filter(a => a.grado === gTxt).sort((a,b) => a.ape.localeCompare(b.ape));
         let b = "";
         fil.forEach(al => {
             const n = al.notas?.[periodoActual]?.[materiaVisualizada] || {};
@@ -250,12 +264,17 @@
     
     function matricular() {
         if(currentRol!=='admin') return;
-        const nie = document.getElementById('reg-nie').value, ape = document.getElementById('reg-ape').value.toUpperCase(), nom = document.getElementById('reg-nom').value.toUpperCase();
+        let nie = document.getElementById('reg-nie').value.trim();
+        const ape = document.getElementById('reg-ape').value.toUpperCase(), nom = document.getElementById('reg-nom').value.toUpperCase();
         const grado = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text;
+        
+        if(!nie) nie = generarSugerencia();
+
         if(nie && ape && nom) { 
             db.ref('alumnos').push({ nie, ape, nom, grado }); 
             document.getElementById('reg-nie').value = ""; document.getElementById('reg-ape').value = ""; document.getElementById('reg-nom').value = "";
-            alert("Alumno registrado"); 
+            generarSugerencia();
+            alert("Alumno registrado con código: " + nie); 
         }
     }
 
@@ -299,7 +318,7 @@
                     <img src="https://i.ibb.co/Mkf051St/Logo-CAI.png" height="30"> 
                     <h2 style="margin-left:15px; color:#1a5276; font-size:12px; margin-top:0; margin-bottom:0;">CAI COLEGIO AMIGOS DE ISRAEL - ${periodoActual.toUpperCase()}</h2>
                 </div>
-                <div class="info"><div>ALUMNO: ${al.ape} ${al.nom}</div><div>GRADO: ${gTxt}</div><div>NIE: ${al.nie}</div></div>
+                <div class="info"><div>ALUMNO: ${al.ape} ${al.nom}</div><div>GRADO: ${gTxt}</div><div>CÓDIGO: ${al.nie}</div></div>
                 <table><thead><tr><th style="text-align:left">MATERIA</th>`;
             if(esp) h += (periodoActual === "Trimestre 2") ? `<th>T15%</th><th>I35%</th><th>E50%</th>` : `<th>T50%</th><th>E50%</th>`;
             else h += trim ? `<th>T10</th><th>L5</th><th>LC10</th><th>I35</th><th>E40</th>` : `<th>T25</th><th>L20</th><th>LC15</th><th>E40</th>`;
