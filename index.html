@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SISTEMA CAI 2026 - FINAL</title>
+    <title>SISTEMA CAI 2026 - FINAL PROFESIONAL</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
@@ -13,6 +13,7 @@
         .tabs { display: flex; background: #1c2833; padding: 10px 10px 0; gap: 4px; overflow-x: auto; }
         .tab { padding: 10px 15px; color: #bdc3c7; cursor: pointer; border-radius: 6px 6px 0 0; background: rgba(255,255,255,0.05); border: none; font-size: 10px; white-space: nowrap; }
         .tab.active { background: var(--bg); color: var(--p); font-weight: bold; }
+        .tab.resumen-tab { border-bottom: 3px solid var(--orange); color: var(--orange); font-weight: bold; }
         .container { max-width: 1400px; margin: 15px auto; padding: 0 15px; }
         .table-card { background: white; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); overflow-x: auto; padding: 10px; }
         table { width: 100%; border-collapse: collapse; min-width: 1200px; }
@@ -21,20 +22,13 @@
         .nota-input { width: 38px; padding: 5px; text-align: center; border: 1.5px solid #dcdde1; border-radius: 6px; font-weight: bold; }
         .edit-al-input { border: none; background: transparent; font-size: 11px; width: 100%; text-align: inherit; color: inherit; }
         .edit-al-input:enabled { background: #fff9f0; border-bottom: 1px dashed var(--orange); cursor: text; }
-        .edit-al-input:disabled { color: #2c3e50; cursor: default; }
-        .asist-input { width: 30px; padding: 4px; text-align: center; border: 1px solid #ccc; border-radius: 4px; }
-        .cond-input { width: 50px; padding: 4px; border-radius: 4px; border: 1px solid #ccc; font-weight: bold; }
-        .obs-input { width: 150px; padding: 5px; border-radius: 4px; border: 1px solid #ccc; font-size: 9px; }
         .btn { padding: 8px 15px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 10px; }
         .btn-add { background: var(--p); color: white; }
-        .btn-del { background: var(--red); color: white; padding: 5px 8px; border-radius: 4px; }
         .btn-print { background: var(--green); color: white; }
-        .status-aprobado { color: white; background: var(--green); padding: 4px 8px; border-radius: 4px; font-weight: bold; }
-        .status-reprobado { color: white; background: var(--red); padding: 4px 8px; border-radius: 4px; font-weight: bold; }
+        .btn-del { background: var(--red); color: white; padding: 5px 8px; border-radius: 4px; }
         .hidden { display: none !important; }
         .login-box { background: white; padding: 40px; border-radius: 20px; width: 320px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
         input, select { padding: 10px; border-radius: 8px; border: 1px solid #ccc; width: 100%; box-sizing: border-box; margin-bottom: 10px; }
-        #preview-codigo { color: var(--orange); font-weight: bold; font-size: 11px; margin-bottom: 5px; background: #fff5eb; padding: 5px; border-radius: 5px; border: 1px solid #ffe0c2; display: inline-block; }
     </style>
 </head>
 <body>
@@ -62,7 +56,7 @@
             </div>
             <div style="display:flex; gap:10px; align-items:center;">
                 <select id="sel-grado" onchange="cambiarGrado()" style="margin-bottom:0; width:180px;"></select>
-                <button id="btn-boletas" onclick="generarBoletas()" class="btn btn-print hidden">📑 BOLETAS</button>
+                <button id="btn-boletas" onclick="generarBoletas()" class="btn btn-print hidden">📑 GENERAR BOLETAS</button>
                 <button onclick="location.reload()" class="btn" style="background:var(--red); color:white;">SALIR</button>
             </div>
         </div>
@@ -71,12 +65,11 @@
 
         <div class="container">
             <div id="panel-admin" class="panel-registro hidden" style="background:white; padding:15px; border-radius:10px; margin-bottom:15px; border-left: 5px solid var(--p);">
-                <div id="preview-codigo">Escribe los apellidos para sugerir código...</div><br>
                 <b style="color:var(--p)">REGISTRO DE MATRÍCULA:</b>
                 <div style="display:flex; gap:10px; margin-top:10px;">
-                    <input type="text" id="reg-ape" placeholder="Apellidos" oninput="generarSugerencia()" style="margin:0">
+                    <input type="text" id="reg-ape" placeholder="Apellidos" style="margin:0">
                     <input type="text" id="reg-nom" placeholder="Nombres" style="margin:0">
-                    <input type="text" id="reg-nie" placeholder="Código (Opcional)" style="margin:0">
+                    <input type="text" id="reg-nie" placeholder="NIE / Código" style="margin:0">
                     <button onclick="matricular()" class="btn btn-add">MATRICULAR</button>
                 </div>
             </div>
@@ -110,8 +103,7 @@
     };
 
     const MESES_GENERAL = ["Febrero", "Marzo", "Trimestre 1", "Mayo", "Junio", "Trimestre 2", "Agosto", "Septiembre", "Trimestre 3"];
-    const MESES_B = ["Evaluación 1", "Evaluación 2", "Periodo 1", "Evaluación 3", "Evaluación 4", "Periodo 2", "Evaluación 5", "Evaluación 6", "Periodo 3", "Evaluación 7", "Evaluación 8", "Periodo 4"];
-    const MESES_INFANCIA = ["Trimestre 1", "Trimestre 2", "Trimestre 3"];
+    const MESES_B = ["Trimestre 1 - Eval 1", "Trimestre 1 - Eval 2", "RESUMEN T1", "Trimestre 2 - Eval 1", "Trimestre 2 - Eval 2", "RESUMEN T2", "Trimestre 3 - Eval 1", "Trimestre 3 - Eval 2", "RESUMEN T3", "Trimestre 4 - Eval 1", "Trimestre 4 - Eval 2", "RESUMEN T4"];
 
     const GRADOS_DATA = [
         {val:"K4", t:"Kinder 4 Años", cat:"infancia"}, {val:"K5", t:"Kinder 5 Años", cat:"infancia"}, {val:"K6", t:"Kinder 6 Años", cat:"infancia"}, {val:"1G", t:"1° Grado", cat:"infancia"},
@@ -139,19 +131,12 @@
                 document.getElementById('btn-boletas').classList.remove('hidden');
             }
             cargarSelect();
-        } else { document.getElementById('error').innerText = "Datos incorrectos"; }
+        }
     }
 
     function cargarSelect() {
         let options = "";
-        const cats = {"infancia": "PRIMERA INFANCIA", "docente": "BÁSICA", "bachillerato": "BACHILLERATO"};
-        Object.keys(cats).forEach(c => {
-            if(currentRol === 'admin' || currentRol === c) {
-                options += `<optgroup label="${cats[c]}">`;
-                GRADOS_DATA.filter(g => g.cat === c).forEach(g => { options += `<option value="${g.val}">${g.t}</option>`; });
-                options += `</optgroup>`;
-            }
-        });
+        GRADOS_DATA.forEach(g => { if(currentRol==='admin' || currentRol===g.cat) options += `<option value="${g.val}">${g.t}</option>`; });
         document.getElementById('sel-grado').innerHTML = options;
         cambiarGrado(); escucharDB();
     }
@@ -164,195 +149,152 @@
         return g;
     }
 
-    // Lógica mejorada para sugerir código
-    function generarSugerencia() {
-        const ape = document.getElementById('reg-ape').value.trim();
-        if(!ape) { document.getElementById('preview-codigo').innerText = "Escribe los apellidos para sugerir código..."; return ""; }
-        
-        const iniciales = ape.split(' ').filter(n => n.length > 0).map(n => n[0]).join('').toUpperCase();
-        let maxCorr = 193; 
-        
-        dataAlumnos.forEach(al => {
-            if(al.nie && al.nie.includes('-')) {
-                const parts = al.nie.split('-');
-                const num = parseInt(parts[parts.length-1]);
-                if(!isNaN(num) && num > maxCorr) maxCorr = num;
-            }
-        });
-        
-        const nextCorr = (maxCorr + 1).toString().padStart(4, '0');
-        const sugerido = `CAI-${iniciales}-${nextCorr}`;
-        document.getElementById('preview-codigo').innerText = "Código Sugerido: " + sugerido;
-        return sugerido;
-    }
-
     function cambiarGrado() {
         const g = document.getElementById('sel-grado').value, ciclo = getCiclo(g);
-        let lista = ["K4","K5","K6","1G"].includes(ciclo) ? MESES_INFANCIA : (ciclo.includes("B") ? MESES_B : MESES_GENERAL);
+        let lista = (ciclo.includes("B")) ? MESES_B : (["K4","K5","K6","1G"].includes(ciclo) ? ["Trimestre 1", "Trimestre 2", "Trimestre 3"] : MESES_GENERAL);
         periodoActual = lista[0]; 
         materiaVisualizada = MATERIAS[ciclo][0];
         document.getElementById('txt-grado').innerText = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text;
-        document.getElementById('nav-tabs').innerHTML = lista.map(p => `<button class="tab ${p===periodoActual?'active':''}" onclick="setPeriodo('${p}', this)">${p}</button>`).join('');
+        document.getElementById('nav-tabs').innerHTML = lista.map(p => `<button class="tab ${p.includes('RESUMEN')?'resumen-tab':''} ${p===periodoActual?'active':''}" onclick="setPeriodo('${p}', this)">${p}</button>`).join('');
         dibujar();
     }
 
-    function setPeriodo(p, btn) {
-        periodoActual = p; document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        btn.classList.add('active'); dibujar();
-    }
+    function setPeriodo(p, btn) { periodoActual = p; dibujar(); document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); btn.classList.add('active'); }
 
     function calcular(n, p, g) {
         const v = { t:parseFloat(n.t)||0, l:parseFloat(n.l)||0, lc:parseFloat(n.lc)||0, int:parseFloat(n.int)||0, ex:parseFloat(n.ex)||0 };
         const c = getCiclo(g);
-        let prom = 0;
-        if(["K4","K5","K6","1G"].includes(c)) {
-            prom = (p === "Trimestre 2") ? (v.t*0.15 + v.int*0.35 + v.ex*0.5) : (v.t*0.5 + v.ex*0.5);
-        } else {
-            const trim = p.includes("Trimestre") || p.includes("Periodo");
-            prom = trim ? (v.t*0.1 + v.l*0.05 + v.lc*0.1 + v.int*0.35 + v.ex*0.4) : (v.t*0.25 + v.l*0.2 + v.lc*0.15 + v.ex*0.4);
+        if(c.includes("B")) {
+            if(p.includes("Eval 1")) return parseFloat(((v.t*0.25) + (v.l*0.20) + (v.lc*0.15) + (v.ex*0.40)).toFixed(1));
+            return parseFloat(((v.t*0.10) + (v.l*0.05) + (v.lc*0.10) + (v.int*0.35) + (v.ex*0.40)).toFixed(1));
         }
+        if(["K4","K5","K6","1G"].includes(c)) return parseFloat(((p === "Trimestre 2") ? (v.t*0.15 + v.int*0.35 + v.ex*0.5) : (v.t*0.5 + v.ex*0.5)).toFixed(1));
+        const trim = p.includes("Trimestre");
+        let prom = trim ? (v.t*0.1 + v.l*0.05 + v.lc*0.1 + v.int*0.35 + v.ex*0.4) : (v.t*0.25 + v.l*0.2 + v.lc*0.15 + v.ex*0.4);
         return parseFloat(prom.toFixed(1));
     }
 
     function dibujar() {
         const g = document.getElementById('sel-grado').value, ciclo = getCiclo(g), gTxt = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text;
-        const esp = ["K4","K5","K6","1G"].includes(ciclo), trim = periodoActual.includes("Trimestre") || periodoActual.includes("Periodo");
+        const esResumen = periodoActual.includes("RESUMEN");
+        const baseTrim = esResumen ? periodoActual.replace("RESUMEN T", "Trimestre ") : "";
         const isAdmin = currentRol === 'admin';
 
-        let h = `${isAdmin ? '<th>Borrar</th>' : ''}<th>CÓDIGO</th><th>Apellidos</th><th>Nombres</th><th style="width:140px">Materia</th>`;
-        if(esp) h += (periodoActual === "Trimestre 2") ? `<th>T15%</th><th>I35%</th><th>E50%</th>` : `<th>T50%</th><th>E50%</th>`;
-        else h += trim ? `<th>T10</th><th>L5</th><th>LC10</th><th>I35</th><th>E40</th>` : `<th>T25</th><th>L20</th><th>LC15</th><th>E40</th>`;
-        h += `<th>PROM</th><th>Cond.</th><th>Tar.</th><th>Ina.</th><th>Obs.</th>`;
+        let h = `${isAdmin?'<th>Elim</th>':''}<th>CÓDIGO</th><th>Apellidos</th><th>Nombres</th><th style="width:150px">Materia</th>`;
+        if(esResumen) h += `<th>Tareas (P)</th><th>Libros (P)</th><th>Lab (P)</th><th>Int (E2)</th><th>Parcial (P)</th><th>PROM FINAL</th>`;
+        else h += `<th>T</th><th>L</th><th>LC</th><th>INT</th><th>E</th><th>PROM</th>`;
+        h += `<th>Cond.</th><th>Tar.</th><th>Ina.</th>`;
         document.getElementById('table-head').innerHTML = h;
 
         let fil = dataAlumnos.filter(a => a.grado === gTxt).sort((a,b) => a.ape.localeCompare(b.ape));
         let b = "";
         fil.forEach(al => {
-            const n = al.notas?.[periodoActual]?.[materiaVisualizada] || {};
-            const as = al.asistencia?.[periodoActual] || { t:0, i:0 };
             const cond = al.conducta?.[periodoActual] || "MB";
-            const obs = al.observaciones?.[periodoActual] || "";
-            const prom = calcular(n, periodoActual, g);
+            const as = al.asistencia?.[periodoActual] || { t:0, i:0 };
 
-            b += `<tr>
-                ${isAdmin ? `<td><button class="btn btn-del" onclick="eliminarAlumno('${al.id}')">✖</button></td>` : ''}
-                <td><input type="text" class="edit-al-input" value="${al.nie || ''}" ${!isAdmin?'disabled':''} onchange="actualizarAlumno('${al.id}','nie',this.value)" style="font-weight:bold"></td>
-                <td style="text-align:left"><input type="text" class="edit-al-input" value="${al.ape}" ${!isAdmin?'disabled':''} onchange="actualizarAlumno('${al.id}','ape',this.value)"></td>
-                <td style="text-align:left"><input type="text" class="edit-al-input" value="${al.nom}" ${!isAdmin?'disabled':''} onchange="actualizarAlumno('${al.id}','nom',this.value)"></td>
-                <td><select onchange="materiaVisualizada=this.value; dibujar()">${MATERIAS[ciclo].map(m=>`<option ${m===materiaVisualizada?'selected':''}>${m}</option>`).join('')}</select></td>
-                <td><input type="text" class="nota-input" value="${n.t||0}" onchange="save('${al.id}','t',this.value)"></td>`;
-            
-            if(!esp) b += `<td><input type="text" class="nota-input" value="${n.l||0}" onchange="save('${al.id}','l',this.value)"></td><td><input type="text" class="nota-input" value="${n.lc||0}" onchange="save('${al.id}','lc',this.value)"></td>`;
-            if(trim || (esp && periodoActual === "Trimestre 2")) b += `<td><input type="text" class="nota-input" value="${n.int||0}" onchange="save('${al.id}','int',this.value)"></td>`;
-            
-            b += `<td><input type="text" class="nota-input" value="${n.ex||0}" onchange="save('${al.id}','ex',this.value)"></td>
-                <td><span class="${prom >= (esp?6:7) ? 'status-aprobado':'status-reprobado'}">${prom}</span></td>
-                <td><select class="cond-input" onchange="saveCond('${al.id}',this.value)">
-                    <option value="B" ${cond==='B'?'selected':''}>B</option>
-                    <option value="MB" ${cond==='MB'?'selected':''}>MB</option>
-                    <option value="E" ${cond==='E'?'selected':''}>E</option>
-                </select></td>
-                <td><input type="number" class="asist-input" value="${as.t||0}" onchange="saveAsist('${al.id}','t',this.value)"></td>
-                <td><input type="number" class="asist-input" value="${as.i||0}" onchange="saveAsist('${al.id}','i',this.value)"></td>
-                <td><input type="text" class="obs-input" value="${obs}" onchange="saveObs('${al.id}',this.value)"></td>
-            </tr>`;
+            if(esResumen) {
+                const n1 = al.notas?.[`${baseTrim} - Eval 1`]?.[materiaVisualizada] || {};
+                const n2 = al.notas?.[`${baseTrim} - Eval 2`]?.[materiaVisualizada] || {};
+                const p1 = calcular(n1, `${baseTrim} - Eval 1`, g), p2 = calcular(n2, `${baseTrim} - Eval 2`, g);
+                const pFinal = ((p1 + p2) / 2).toFixed(1);
+
+                b += `<tr>${isAdmin?`<td>-</td>`:''}<td>${al.nie}</td><td style="text-align:left">${al.ape}</td><td style="text-align:left">${al.nom}</td>
+                    <td><select onchange="materiaVisualizada=this.value; dibujar()">${MATERIAS[ciclo].map(m=>`<option ${m===materiaVisualizada?'selected':''}>${m}</option>`).join('')}</select></td>
+                    <td>${(((n1.t||0)+(n2.t||0))/2).toFixed(1)}</td><td>${(((n1.l||0)+(n2.l||0))/2).toFixed(1)}</td><td>${(((n1.lc||0)+(n2.lc||0))/2).toFixed(1)}</td>
+                    <td>${(n2.int||0).toFixed(1)}</td><td>${(((n1.ex||0)+(n2.ex||0))/2).toFixed(1)}</td>
+                    <td style="background:#e8f4f8; font-weight:bold;">${pFinal}</td>
+                    <td>${cond}</td><td>${as.t}</td><td>${as.i}</td></tr>`;
+            } else {
+                const n = al.notas?.[periodoActual]?.[materiaVisualizada] || {};
+                const prom = calcular(n, periodoActual, g);
+                b += `<tr>${isAdmin?`<td><button onclick="eliminarAlumno('${al.id}')" class="btn btn-del">✖</button></td>`:''}
+                    <td>${al.nie}</td><td style="text-align:left">${al.ape}</td><td style="text-align:left">${al.nom}</td>
+                    <td><select onchange="materiaVisualizada=this.value; dibujar()">${MATERIAS[ciclo].map(m=>`<option ${m===materiaVisualizada?'selected':''}>${m}</option>`).join('')}</select></td>
+                    <td><input type="text" class="nota-input" value="${n.t||0}" onchange="save('${al.id}','t',this.value)"></td>
+                    <td><input type="text" class="nota-input" value="${n.l||0}" onchange="save('${al.id}','l',this.value)"></td>
+                    <td><input type="text" class="nota-input" value="${n.lc||0}" onchange="save('${al.id}','lc',this.value)"></td>
+                    <td><input type="text" class="nota-input" value="${n.int||0}" onchange="save('${al.id}','int',this.value)"></td>
+                    <td><input type="text" class="nota-input" value="${n.ex||0}" onchange="save('${al.id}','ex',this.value)"></td>
+                    <td style="font-weight:bold">${prom}</td>
+                    <td><select onchange="db.ref('alumnos/${al.id}/conducta/${periodoActual}').set(this.value)"><option ${cond==='B'?'selected':''}>B</option><option ${cond==='MB'?'selected':''}>MB</option><option ${cond==='E'?'selected':''}>E</option></select></td>
+                    <td><input type="number" class="nota-input" value="${as.t}" onchange="db.ref('alumnos/${al.id}/asistencia/${periodoActual}/t').set(this.value)"></td>
+                    <td><input type="number" class="nota-input" value="${as.i}" onchange="db.ref('alumnos/${al.id}/asistencia/${periodoActual}/i').set(this.value)"></td></tr>`;
+            }
         });
         document.getElementById('table-body').innerHTML = b;
     }
 
-    function save(id, c, v) { db.ref(`alumnos/${id}/notas/${periodoActual}/${materiaVisualizada}/${c}`).set(parseFloat(v.replace(',','.')) || 0); }
-    function saveAsist(id, c, v) { db.ref(`alumnos/${id}/asistencia/${periodoActual}/${c}`).set(parseInt(v) || 0); }
-    function saveCond(id, v) { db.ref(`alumnos/${id}/conducta/${periodoActual}`).set(v); }
-    function saveObs(id, v) { db.ref(`alumnos/${id}/observaciones/${periodoActual}`).set(v); }
-    
-    // Función de matrícula corregida para autogenerar el código
+    function save(id, c, v) { db.ref(`alumnos/${id}/notas/${periodoActual}/${materiaVisualizada}/${c}`).set(parseFloat(v) || 0); }
     function matricular() {
-        if(currentRol!=='admin') return;
-        const apeInput = document.getElementById('reg-ape').value.trim();
-        const nomInput = document.getElementById('reg-nom').value.trim();
-        let nieInput = document.getElementById('reg-nie').value.trim();
-        const grado = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text;
-
-        if(!apeInput || !nomInput) { alert("Por favor ingresa Apellidos y Nombres"); return; }
-
-        // Si el código manual está vacío, generamos el automático AHORA
-        if(!nieInput) {
-            nieInput = generarSugerencia();
-        }
-
-        const nuevoAlumno = {
-            nie: nieInput,
-            ape: apeInput.toUpperCase(),
-            nom: nomInput.toUpperCase(),
-            grado: grado
-        };
-
-        db.ref('alumnos').push(nuevoAlumno).then(() => {
-            document.getElementById('reg-nie').value = ""; 
-            document.getElementById('reg-ape').value = ""; 
-            document.getElementById('reg-nom').value = "";
-            document.getElementById('preview-codigo').innerText = "Escribe los apellidos para sugerir código...";
-            alert("Alumno registrado con código: " + nieInput); 
-        });
+        const n = { nie: document.getElementById('reg-nie').value, ape: document.getElementById('reg-ape').value.toUpperCase(), nom: document.getElementById('reg-nom').value.toUpperCase(), grado: document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text };
+        db.ref('alumnos').push(n).then(()=>alert("Matriculado"));
     }
-
-    function actualizarAlumno(id, campo, valor) {
-        if(currentRol !== 'admin') return;
-        let v = valor.trim();
-        if(campo !== 'nie') v = v.toUpperCase();
-        db.ref(`alumnos/${id}/${campo}`).set(v);
-    }
-    
-    function eliminarAlumno(id) { if(currentRol==='admin' && confirm("¿Borrar permanentemente?")) db.ref('alumnos/'+id).remove(); }
+    function eliminarAlumno(id) { if(confirm("¿Eliminar?")) db.ref('alumnos/'+id).remove(); }
     function escucharDB() { db.ref('alumnos').on('value', snap => { const v = snap.val(); dataAlumnos = v ? Object.keys(v).map(k=>({id:k, ...v[k]})) : []; dibujar(); }); }
 
     function generarBoletas() {
-        if(currentRol !== 'admin') return alert("Solo Admin");
-        const val = document.getElementById('sel-grado').value, gTxt = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text;
-        const ciclo = getCiclo(val), alumnos = dataAlumnos.filter(a => a.grado === gTxt).sort((a,b) => a.ape.localeCompare(b.ape));
-        const esp = ["K4","K5","K6","1G"].includes(ciclo), trim = periodoActual.includes("Trimestre") || periodoActual.includes("Periodo");
+        const val = document.getElementById('sel-grado').value, ciclo = getCiclo(val), gTxt = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text;
+        const alumnos = dataAlumnos.filter(a => a.grado === gTxt).sort((a,b) => a.ape.localeCompare(b.ape));
+        const esResumen = periodoActual.includes("RESUMEN");
+        const baseTrim = esResumen ? periodoActual.replace("RESUMEN T", "Trimestre ") : periodoActual;
 
         let win = window.open('', '_blank');
         let h = `<html><head><style>
             @page { size: letter; margin: 0; }
             body { font-family: 'Segoe UI', sans-serif; margin: 0; font-size: 7.5px; }
-            .boleta { min-height: 48vh; padding: 5mm 10mm; border-bottom: 1px dashed #ccc; box-sizing: border-box; position: relative; page-break-inside: avoid; overflow: hidden; }
+            .boleta { min-height: 48vh; padding: 5mm 10mm; border-bottom: 1px dashed #ccc; box-sizing: border-box; page-break-inside: avoid; position: relative; }
             .header { display: flex; align-items: center; border-bottom: 2px solid #1a5276; margin-bottom: 4px; }
             .info { display: grid; grid-template-columns: 2fr 1fr 1fr; background: #f2f2f2; padding: 3px; font-weight: bold; margin-bottom: 4px; font-size: 8.5px; }
             table { width: 100%; border-collapse: collapse; margin-bottom: 3px; }
-            th { background: #1a5276; color: white; padding: 2px; font-size: 7.5px; }
-            td { border: 1px solid #ccc; padding: 1.5px; text-align: center; }
-            .footer { margin-top: 10px; display: flex; justify-content: space-between; align-items: flex-end; }
-            .sello-circular { width: 60px; height: 60px; border: 1.5px solid #1a5276; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 6px; color: #1a5276; font-weight: bold; }
-            .firma { border-top: 1px solid #000; width: 200px; text-align: center; padding-top: 2px; font-weight: bold; font-size: 8px; }
+            th { background: #1a5276; color: white; padding: 2px; }
+            td { border: 1px solid #ccc; padding: 2px; text-align: center; }
+            .footer { margin-top: 25px; display: flex; justify-content: space-between; }
+            .firma { border-top: 1px solid #000; width: 220px; text-align: center; padding-top: 2px; font-size: 8px; font-weight: bold; }
         </style></head><body>`;
 
         alumnos.forEach((al, idx) => {
             const as = al.asistencia?.[periodoActual] || { t:0, i:0 };
             const cond = al.conducta?.[periodoActual] || "MB";
             const obs = al.observaciones?.[periodoActual] || "---";
+
             h += `<div class="boleta">
                 <div class="header">
                     <img src="https://i.ibb.co/Mkf051St/Logo-CAI.png" height="30"> 
-                    <h2 style="margin-left:15px; color:#1a5276; font-size:12px; margin-top:0; margin-bottom:0;">CAI COLEGIO AMIGOS DE ISRAEL - ${periodoActual.toUpperCase()}</h2>
+                    <h2 style="margin-left:15px; color:#1a5276; font-size:12px;">CAI COLEGIO AMIGOS DE ISRAEL - ${periodoActual}</h2>
                 </div>
                 <div class="info"><div>ALUMNO: ${al.ape} ${al.nom}</div><div>GRADO: ${gTxt}</div><div>CÓDIGO: ${al.nie}</div></div>
-                <table><thead><tr><th style="text-align:left">MATERIA</th>`;
-            if(esp) h += (periodoActual === "Trimestre 2") ? `<th>T15%</th><th>I35%</th><th>E50%</th>` : `<th>T50%</th><th>E50%</th>`;
-            else h += trim ? `<th>T10</th><th>L5</th><th>LC10</th><th>I35</th><th>E40</th>` : `<th>T25</th><th>L20</th><th>LC15</th><th>E40</th>`;
-            h += `<th>PROM</th></tr></thead><tbody>`;
+                <table><thead><tr><th style="text-align:left">MATERIA</th><th>TAREAS</th><th>LIBROS</th><th>LAB</th><th>INT</th><th>PARCIAL</th><th>PROM</th></tr></thead><tbody>`;
+            
             MATERIAS[ciclo].forEach(m => {
-                const n = al.notas?.[periodoActual]?.[m] || {};
-                const p = calcular(n, periodoActual, val);
-                h += `<tr><td style="text-align:left; font-weight:bold;">${m}</td><td>${n.t||0}</td>`;
-                if(!esp) h += `<td>${n.l||0}</td><td>${n.lc||0}</td>`;
-                if(trim || (esp && periodoActual === "Trimestre 2")) h += `<td>${n.int||0}</td>`;
-                h += `<td>${n.ex||0}</td><td style="background:#f9f9f9; font-weight:bold;">${p}</td></tr>`;
+                let promFinal, t, l, lc, int, ex;
+                if(esResumen) {
+                    const n1 = al.notas?.[`${baseTrim} - Eval 1`]?.[m] || {};
+                    const n2 = al.notas?.[`${baseTrim} - Eval 2`]?.[m] || {};
+                    const p1 = calcular(n1, `${baseTrim} - Eval 1`, val), p2 = calcular(n2, `${baseTrim} - Eval 2`, val);
+                    promFinal = ((p1 + p2) / 2).toFixed(1);
+                    t = (((n1.t||0)+(n2.t||0))/2).toFixed(1);
+                    l = (((n1.l||0)+(n2.l||0))/2).toFixed(1);
+                    lc = (((n1.lc||0)+(n2.lc||0))/2).toFixed(1);
+                    int = (n2.int||0).toFixed(1);
+                    ex = (((n1.ex||0)+(n2.ex||0))/2).toFixed(1);
+                } else {
+                    const n = al.notas?.[periodoActual]?.[m] || {};
+                    promFinal = calcular(n, periodoActual, val);
+                    t=n.t||0; l=n.l||0; lc=n.lc||0; int=n.int||0; ex=n.ex||0;
+                }
+
+                h += `<tr><td style="text-align:left; font-weight:bold;">${m}</td>
+                    <td>${t}</td><td>${l}</td><td>${lc}</td><td>${int}</td><td>${ex}</td>
+                    <td style="background:#f9f9f9; font-weight:bold;">${promFinal}</td></tr>`;
             });
+
             h += `</tbody></table>
-                <div style="font-size:8px; margin-bottom:3px;"><b>CONDUCTA:</b> ${cond} | <b>TARDES:</b> ${as.t} | <b>INASISTENCIAS:</b> ${as.i}</div>
-                <div style="border:1px solid #1a5276; padding:3px; height:25px; font-size:7.5px; overflow:hidden;"><b>OBSERVACIONES:</b> ${obs}</div>
-                <div class="footer"><div class="sello-circular">SELLO CAI<br>2026</div><div class="firma">Rhina Elena Linares de Barahona<br>DIRECTORA</div></div>
+                <div style="font-size:8px;"><b>CONDUCTA:</b> ${cond} | <b>TARDES:</b> ${as.t} | <b>INASISTENCIAS:</b> ${as.i}</div>
+                <div style="border:1px solid #1a5276; padding:3px; height:20px; margin-top:3px;"><b>OBSERVACIONES:</b> ${obs}</div>
+                <div class="footer">
+                    <div class="firma">f. __________________________<br>FIRMA DOCENTE</div>
+                    <div class="firma">Rhina Elena Linares de Barahona<br>DIRECTORA</div>
+                </div>
             </div>`;
             if((idx+1)%2===0) h += `<div style="page-break-after:always;"></div>`;
         });
