@@ -166,12 +166,14 @@
     function calcular(n, p, g) {
         const v = { t:parseFloat(n.t)||0, l:parseFloat(n.l)||0, lc:parseFloat(n.lc)||0, int:parseFloat(n.int)||0, ex:parseFloat(n.ex)||0 };
         const c = getCiclo(g);
+        // PRIMERA INFANCIA: Tareas y Examen solamente (50% y 50%)
+        if(["K4","K5","K6","1G"].includes(c)) return parseFloat((v.t*0.5 + v.ex*0.5).toFixed(1));
+        
         if(c.includes("B")) {
             if(p.includes("Eval 1")) return parseFloat(((v.t*0.25) + (v.l*0.20) + (v.lc*0.15) + (v.ex*0.40)).toFixed(1));
             return parseFloat(((v.t*0.10) + (v.l*0.05) + (v.lc*0.10) + (v.int*0.35) + (v.ex*0.40)).toFixed(1));
         }
         const esT2 = p.includes("Trimestre 2");
-        if(["K4","K5","K6","1G"].includes(c)) return parseFloat((esT2 ? (v.t*0.15 + v.int*0.35 + v.ex*0.5) : (v.t*0.5 + v.ex*0.5)).toFixed(1));
         const trim = p.includes("Trimestre");
         let prom = esT2 ? (trim ? (v.t*0.1 + v.l*0.05 + v.lc*0.1 + v.int*0.35 + v.ex*0.4) : (v.t*0.25 + v.l*0.2 + v.lc*0.15 + v.ex*0.4)) : (trim ? (v.t*0.35 + v.l*0.15 + v.lc*0.1 + v.ex*0.4) : (v.t*0.25 + v.l*0.2 + v.lc*0.15 + v.ex*0.4));
         return parseFloat(prom.toFixed(1));
@@ -196,9 +198,12 @@
             if(esResumen && ciclo.includes("B")) h += `<th>E1 (25%)</th><th>E2 (75%)</th><th>INT</th><th>PROM FINAL</th>`;
             else {
                 const esT2 = periodoActual.includes("Trimestre 2");
-                // REGLA BACHILLERATO: Solo mostrar INT en Eval 2 o en Trimestre 2 completo. No mostrar en Eval 1.
-                let showInt = (ciclo.includes("B") ? (periodoActual.includes("Eval 2") || esT2) : esT2);
-                h += `<th>T</th><th>L</th><th>LC</th>${showInt?'<th>INT</th>':''}<th>E</th><th>PROM</th>`;
+                const esInfancia = ["K4","K5","K6","1G"].includes(ciclo);
+                if(esInfancia) h += `<th>T</th><th>E</th><th>PROM</th>`;
+                else {
+                    let showInt = (ciclo.includes("B") ? (periodoActual.includes("Eval 2") || esT2) : esT2);
+                    h += `<th>T</th><th>L</th><th>LC</th>${showInt?'<th>INT</th>':''}<th>E</th><th>PROM</th>`;
+                }
             }
         }
         document.getElementById('table-head').innerHTML = h;
@@ -223,16 +228,22 @@
                     <td>${p1}</td><td>${p2}</td><td>${n2.int||0}</td><td style="font-weight:bold; background:#e8f4f8">${((p1+p2)/2).toFixed(1)}</td></tr>`;
             } else {
                 const n = al.notas?.[periodoActual]?.[materiaVisualizada] || {}, prom = calcular(n, periodoActual, g);
+                const esInfancia = ["K4","K5","K6","1G"].includes(ciclo);
                 const esT2 = periodoActual.includes("Trimestre 2");
-                let showInt = (ciclo.includes("B") ? (periodoActual.includes("Eval 2") || esT2) : esT2);
+
                 b += `<tr>${isAdmin?`<td><button onclick="eliminarAlumno('${al.id}')" class="btn btn-del">✖</button></td>`:''}
                     <td>${al.nie}</td><td style="text-align:left">${al.ape}</td><td style="text-align:left">${al.nom}</td>
                     <td><select onchange="materiaVisualizada=this.value; dibujar()">${MATERIAS[ciclo].map(m=>`<option ${m===materiaVisualizada?'selected':''}>${m}</option>`).join('')}</select></td>
-                    <td><input type="text" class="nota-input" value="${n.t||0}" onchange="save('${al.id}','t',this.value)"></td>
-                    <td><input type="text" class="nota-input" value="${n.l||0}" onchange="save('${al.id}','l',this.value)"></td>
-                    <td><input type="text" class="nota-input" value="${n.lc||0}" onchange="save('${al.id}','lc',this.value)"></td>
-                    ${showInt?`<td><input type="text" class="nota-input" value="${n.int||0}" onchange="save('${al.id}','int',this.value)"></td>`:''}
-                    <td><input type="text" class="nota-input" value="${n.ex||0}" onchange="save('${al.id}','ex',this.value)"></td>
+                    <td><input type="text" class="nota-input" value="${n.t||0}" onchange="save('${al.id}','t',this.value)"></td>`;
+                
+                if(!esInfancia) {
+                    b += `<td><input type="text" class="nota-input" value="${n.l||0}" onchange="save('${al.id}','l',this.value)"></td>
+                          <td><input type="text" class="nota-input" value="${n.lc||0}" onchange="save('${al.id}','lc',this.value)"></td>`;
+                    let showInt = (ciclo.includes("B") ? (periodoActual.includes("Eval 2") || esT2) : esT2);
+                    if(showInt) b += `<td><input type="text" class="nota-input" value="${n.int||0}" onchange="save('${al.id}','int',this.value)"></td>`;
+                }
+                
+                b += `<td><input type="text" class="nota-input" value="${n.ex||0}" onchange="save('${al.id}','ex',this.value)"></td>
                     <td style="font-weight:bold">${prom}</td></tr>`;
             }
         });
@@ -252,6 +263,7 @@
         const alumnos = dataAlumnos.filter(a => a.grado === gTxt).sort((a,b) => a.ape.localeCompare(b.ape));
         const esResumen = periodoActual.includes("RESUMEN");
         const baseTrim = esResumen ? periodoActual.replace("RESUMEN T", "Trimestre ") : (periodoActual === "Conducta y Asistencia" ? "Trimestre 1" : periodoActual);
+        const esInfancia = ["K4","K5","K6","1G"].includes(ciclo);
         
         let win = window.open('', '_blank');
         let h = `<html><head><style>
@@ -273,21 +285,33 @@
             h += `<div class="boleta">
                 <div class="header"><img src="https://i.ibb.co/Mkf051St/Logo-CAI.png" height="30"> <h2 style="margin-left:15px; color:#1a5276; font-size:12px;">CAI COLEGIO AMIGOS DE ISRAEL - ${baseTrim}</h2></div>
                 <div class="info"><div>ALUMNO: ${al.ape} ${al.nom}</div><div>GRADO: ${gTxt}</div><div>CÓDIGO: ${al.nie}</div></div>
-                <table><thead><tr><th style="text-align:left">MATERIA</th>${(esResumen && ciclo.includes("B")) ? '<th>EVAL 1</th><th>EVAL 2</th><th>INT</th>' : '<th>T</th><th>L</th><th>LC</th>'} ${(ciclo.includes("B") || baseTrim.includes("2")) && !esResumen ? '<th>INT</th>':''} <th>E</th><th>PROM</th></tr></thead><tbody>`;
+                <table><thead><tr><th style="text-align:left">MATERIA</th>`;
+            
+            if(esInfancia) h += `<th>TAREAS</th><th>EXAMEN</th>`;
+            else if(esResumen && ciclo.includes("B")) h += `<th>EVAL 1</th><th>EVAL 2</th><th>INT</th>`;
+            else h += `<th>T</th><th>L</th><th>LC</th>${(ciclo.includes("B") ? (baseTrim.includes("Eval 2") || baseTrim.includes("Trimestre 2")) : baseTrim.includes("2")) ? '<th>INT</th>' : ''} <th>E</th>`;
+            
+            h += `<th>PROM</th></tr></thead><tbody>`;
             
             MATERIAS[ciclo].forEach(m => {
-                let promFinal;
-                if(esResumen && ciclo.includes("B")) {
+                const n = al.notas?.[baseTrim]?.[m] || {};
+                let promFinal = calcular(n, baseTrim, val);
+                
+                h += `<tr><td style="text-align:left; font-weight:bold;">${m}</td>`;
+                
+                if(esInfancia) {
+                    h += `<td>${n.t||0}</td><td>${n.ex||0}</td>`;
+                } else if(esResumen && ciclo.includes("B")) {
                     const n1 = al.notas?.[`${baseTrim} - Eval 1`]?.[m] || {}, n2 = al.notas?.[`${baseTrim} - Eval 2`]?.[m] || {};
                     const p1 = calcular(n1, `${baseTrim} - Eval 1`, val), p2 = calcular(n2, `${baseTrim} - Eval 2`, val);
                     promFinal = ((p1 + p2) / 2).toFixed(1);
-                    h += `<tr><td style="text-align:left; font-weight:bold;">${m}</td><td>${p1}</td><td>${p2}</td><td>${n2.int||0}</td><td>-</td><td style="background:#f9f9f9; font-weight:bold;">${promFinal}</td></tr>`;
+                    h += `<td>${p1}</td><td>${p2}</td><td>${n2.int||0}</td>`;
                 } else {
-                    const n = al.notas?.[baseTrim]?.[m] || {};
-                    promFinal = calcular(n, baseTrim, val);
                     const showInt = (ciclo.includes("B") ? (baseTrim.includes("Eval 2") || baseTrim.includes("Trimestre 2")) : baseTrim.includes("2"));
-                    h += `<tr><td style="text-align:left; font-weight:bold;">${m}</td><td>${n.t||0}</td><td>${n.l||0}</td><td>${n.lc||0}</td>${showInt?`<td>${n.int||0}</td>`:''}<td>${n.ex||0}</td><td style="background:#f9f9f9; font-weight:bold;">${promFinal}</td></tr>`;
+                    h += `<td>${n.t||0}</td><td>${n.l||0}</td><td>${n.lc||0}</td>${showInt?`<td>${n.int||0}</td>`:''}<td>${n.ex||0}</td>`;
                 }
+                
+                h += `<td style="background:#f9f9f9; font-weight:bold;">${promFinal}</td></tr>`;
             });
 
             h += `</tbody></table>
