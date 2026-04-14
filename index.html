@@ -168,7 +168,6 @@
         const c = getCiclo(g);
         if(c.includes("B")) {
             if(p.includes("Eval 1")) return parseFloat(((v.t*0.25) + (v.l*0.20) + (v.lc*0.15) + (v.ex*0.40)).toFixed(1));
-            // La Integradora tiene un peso de 35% en Bachillerato
             return parseFloat(((v.t*0.10) + (v.l*0.05) + (v.lc*0.10) + (v.int*0.35) + (v.ex*0.40)).toFixed(1));
         }
         const esT2 = p.includes("Trimestre 2");
@@ -197,7 +196,8 @@
             if(esResumen && ciclo.includes("B")) h += `<th>E1 (25%)</th><th>E2 (75%)</th><th>INT</th><th>PROM FINAL</th>`;
             else {
                 const esT2 = periodoActual.includes("Trimestre 2");
-                const showInt = (ciclo.includes("B") || esT2);
+                // REGLA BACHILLERATO: Solo mostrar INT en Eval 2 o en Trimestre 2 completo. No mostrar en Eval 1.
+                let showInt = (ciclo.includes("B") ? (periodoActual.includes("Eval 2") || esT2) : esT2);
                 h += `<th>T</th><th>L</th><th>LC</th>${showInt?'<th>INT</th>':''}<th>E</th><th>PROM</th>`;
             }
         }
@@ -223,7 +223,8 @@
                     <td>${p1}</td><td>${p2}</td><td>${n2.int||0}</td><td style="font-weight:bold; background:#e8f4f8">${((p1+p2)/2).toFixed(1)}</td></tr>`;
             } else {
                 const n = al.notas?.[periodoActual]?.[materiaVisualizada] || {}, prom = calcular(n, periodoActual, g);
-                const esT2 = periodoActual.includes("Trimestre 2"), showInt = (ciclo.includes("B") || esT2);
+                const esT2 = periodoActual.includes("Trimestre 2");
+                let showInt = (ciclo.includes("B") ? (periodoActual.includes("Eval 2") || esT2) : esT2);
                 b += `<tr>${isAdmin?`<td><button onclick="eliminarAlumno('${al.id}')" class="btn btn-del">✖</button></td>`:''}
                     <td>${al.nie}</td><td style="text-align:left">${al.ape}</td><td style="text-align:left">${al.nom}</td>
                     <td><select onchange="materiaVisualizada=this.value; dibujar()">${MATERIAS[ciclo].map(m=>`<option ${m===materiaVisualizada?'selected':''}>${m}</option>`).join('')}</select></td>
@@ -284,7 +285,7 @@
                 } else {
                     const n = al.notas?.[baseTrim]?.[m] || {};
                     promFinal = calcular(n, baseTrim, val);
-                    const showInt = (ciclo.includes("B") || baseTrim.includes("2"));
+                    const showInt = (ciclo.includes("B") ? (baseTrim.includes("Eval 2") || baseTrim.includes("Trimestre 2")) : baseTrim.includes("2"));
                     h += `<tr><td style="text-align:left; font-weight:bold;">${m}</td><td>${n.t||0}</td><td>${n.l||0}</td><td>${n.lc||0}</td>${showInt?`<td>${n.int||0}</td>`:''}<td>${n.ex||0}</td><td style="background:#f9f9f9; font-weight:bold;">${promFinal}</td></tr>`;
                 }
             });
