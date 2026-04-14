@@ -14,14 +14,13 @@
         .tab { padding: 10px 15px; color: #bdc3c7; cursor: pointer; border-radius: 6px 6px 0 0; background: rgba(255,255,255,0.05); border: none; font-size: 10px; white-space: nowrap; }
         .tab.active { background: var(--bg); color: var(--p); font-weight: bold; }
         .tab.resumen-tab { border-bottom: 3px solid var(--orange); color: var(--orange); font-weight: bold; }
+        .tab.asistencia-tab { border-bottom: 3px solid var(--green); color: var(--green); }
         .container { max-width: 1400px; margin: 15px auto; padding: 0 15px; }
         .table-card { background: white; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); overflow-x: auto; padding: 10px; }
         table { width: 100%; border-collapse: collapse; min-width: 1200px; }
         th { background: #f8f9fa; padding: 12px 5px; border-bottom: 2px solid #dee2e6; color: var(--p); font-size: 9px; text-transform: uppercase; }
         td { padding: 8px 5px; border-bottom: 1px solid #eee; text-align: center; }
         .nota-input { width: 38px; padding: 5px; text-align: center; border: 1.5px solid #dcdde1; border-radius: 6px; font-weight: bold; }
-        .edit-al-input { border: none; background: transparent; font-size: 11px; width: 100%; text-align: inherit; color: inherit; }
-        .edit-al-input:enabled { background: #fff9f0; border-bottom: 1px dashed var(--orange); cursor: text; }
         .btn { padding: 8px 15px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 10px; }
         .btn-add { background: var(--p); color: white; }
         .btn-print { background: var(--green); color: white; }
@@ -49,7 +48,7 @@
             <div style="display:flex; align-items:center; gap:12px;">
                 <img src="https://i.ibb.co/Mkf051St/Logo-CAI.png" height="50">
                 <div>
-                    <b style="font-size:16px; color:var(--p);">CAI - Colegio Amigos de Israel</b><br>
+                    <b style="font-size:16px; color:var(--p);">CAI - Colegio Amigos de Israel (10398)</b><br>
                     <span id="txt-grado" style="font-weight:bold; color:var(--dark)">---</span> | 
                     <span id="txt-rol" style="color:var(--orange); font-weight:700; font-size:10px;">ROL: ---</span>
                 </div>
@@ -121,15 +120,11 @@
         else if(u==='infancia' && p==='cai1') currentRol='infancia';
         else if(u==='docente' && p==='cai2') currentRol='docente';
         else if(u==='bachillerato' && p==='cai3') currentRol='bachillerato';
-        
         if(currentRol) {
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('app').classList.remove('hidden');
             document.getElementById('txt-rol').innerText = "ROL: " + currentRol.toUpperCase();
-            if(currentRol==='admin') {
-                document.getElementById('panel-admin').classList.remove('hidden');
-                document.getElementById('btn-boletas').classList.remove('hidden');
-            }
+            if(currentRol==='admin') document.getElementById('panel-admin').classList.remove('hidden');
             cargarSelect();
         }
     }
@@ -151,11 +146,18 @@
 
     function cambiarGrado() {
         const g = document.getElementById('sel-grado').value, ciclo = getCiclo(g);
-        let lista = (ciclo.includes("B")) ? MESES_B : (["K4","K5","K6","1G"].includes(ciclo) ? ["Trimestre 1", "Trimestre 2", "Trimestre 3"] : MESES_GENERAL);
+        let lista = (ciclo.includes("B")) ? [...MESES_B] : (["K4","K5","K6","1G"].includes(ciclo) ? ["Trimestre 1", "Trimestre 2", "Trimestre 3"] : [...MESES_GENERAL]);
+        lista.push("Conducta y Asistencia");
         periodoActual = lista[0]; 
         materiaVisualizada = MATERIAS[ciclo][0];
         document.getElementById('txt-grado').innerText = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text;
-        document.getElementById('nav-tabs').innerHTML = lista.map(p => `<button class="tab ${p.includes('RESUMEN')?'resumen-tab':''} ${p===periodoActual?'active':''}" onclick="setPeriodo('${p}', this)">${p}</button>`).join('');
+        document.getElementById('nav-tabs').innerHTML = lista.map(p => {
+            let cl = "tab";
+            if(p.includes('RESUMEN')) cl += " resumen-tab";
+            if(p === "Conducta y Asistencia") cl += " asistencia-tab";
+            if(p === periodoActual) cl += " active";
+            return `<button class="${cl}" onclick="setPeriodo('${p}', this)">${p}</button>`;
+        }).join('');
         dibujar();
     }
 
@@ -166,59 +168,71 @@
         const c = getCiclo(g);
         if(c.includes("B")) {
             if(p.includes("Eval 1")) return parseFloat(((v.t*0.25) + (v.l*0.20) + (v.lc*0.15) + (v.ex*0.40)).toFixed(1));
+            // La Integradora tiene un peso de 35% en Bachillerato
             return parseFloat(((v.t*0.10) + (v.l*0.05) + (v.lc*0.10) + (v.int*0.35) + (v.ex*0.40)).toFixed(1));
         }
-        if(["K4","K5","K6","1G"].includes(c)) return parseFloat(((p === "Trimestre 2") ? (v.t*0.15 + v.int*0.35 + v.ex*0.5) : (v.t*0.5 + v.ex*0.5)).toFixed(1));
+        const esT2 = p.includes("Trimestre 2");
+        if(["K4","K5","K6","1G"].includes(c)) return parseFloat((esT2 ? (v.t*0.15 + v.int*0.35 + v.ex*0.5) : (v.t*0.5 + v.ex*0.5)).toFixed(1));
         const trim = p.includes("Trimestre");
-        let prom = trim ? (v.t*0.1 + v.l*0.05 + v.lc*0.1 + v.int*0.35 + v.ex*0.4) : (v.t*0.25 + v.l*0.2 + v.lc*0.15 + v.ex*0.4);
+        let prom = esT2 ? (trim ? (v.t*0.1 + v.l*0.05 + v.lc*0.1 + v.int*0.35 + v.ex*0.4) : (v.t*0.25 + v.l*0.2 + v.lc*0.15 + v.ex*0.4)) : (trim ? (v.t*0.35 + v.l*0.15 + v.lc*0.1 + v.ex*0.4) : (v.t*0.25 + v.l*0.2 + v.lc*0.15 + v.ex*0.4));
         return parseFloat(prom.toFixed(1));
     }
 
     function dibujar() {
         const g = document.getElementById('sel-grado').value, ciclo = getCiclo(g), gTxt = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text;
-        const esResumen = periodoActual.includes("RESUMEN");
-        const baseTrim = esResumen ? periodoActual.replace("RESUMEN T", "Trimestre ") : "";
-        const isAdmin = currentRol === 'admin';
+        const isAdmin = currentRol === 'admin', esResumen = periodoActual.includes("RESUMEN"), esAsistencia = periodoActual === "Conducta y Asistencia";
+        
+        if(currentRol === 'admin') {
+            if(ciclo.includes("B")) {
+                esResumen ? document.getElementById('btn-boletas').classList.remove('hidden') : document.getElementById('btn-boletas').classList.add('hidden');
+            } else {
+                document.getElementById('btn-boletas').classList.remove('hidden');
+            }
+        }
 
-        let h = `${isAdmin?'<th>Elim</th>':''}<th>CÓDIGO</th><th>Apellidos</th><th>Nombres</th><th style="width:150px">Materia</th>`;
-        if(esResumen) h += `<th>Tareas (P)</th><th>Libros (P)</th><th>Lab (P)</th><th>Int (E2)</th><th>Parcial (P)</th><th>PROM FINAL</th>`;
-        else h += `<th>T</th><th>L</th><th>LC</th><th>INT</th><th>E</th><th>PROM</th>`;
-        h += `<th>Cond.</th><th>Tar.</th><th>Ina.</th>`;
+        let h = `${isAdmin?'<th>Elim</th>':''}<th>CÓDIGO</th><th>Apellidos</th><th>Nombres</th>`;
+        if(esAsistencia) h += `<th>Trimestre Ref.</th><th>Conducta</th><th>Tardes</th><th>Inasistencias</th><th>Observaciones</th>`;
+        else {
+            h += `<th style="width:150px">Materia</th>`;
+            if(esResumen && ciclo.includes("B")) h += `<th>E1 (25%)</th><th>E2 (75%)</th><th>INT</th><th>PROM FINAL</th>`;
+            else {
+                const esT2 = periodoActual.includes("Trimestre 2");
+                const showInt = (ciclo.includes("B") || esT2);
+                h += `<th>T</th><th>L</th><th>LC</th>${showInt?'<th>INT</th>':''}<th>E</th><th>PROM</th>`;
+            }
+        }
         document.getElementById('table-head').innerHTML = h;
 
         let fil = dataAlumnos.filter(a => a.grado === gTxt).sort((a,b) => a.ape.localeCompare(b.ape));
         let b = "";
         fil.forEach(al => {
-            const cond = al.conducta?.[periodoActual] || "MB";
-            const as = al.asistencia?.[periodoActual] || { t:0, i:0 };
-
-            if(esResumen) {
-                const n1 = al.notas?.[`${baseTrim} - Eval 1`]?.[materiaVisualizada] || {};
-                const n2 = al.notas?.[`${baseTrim} - Eval 2`]?.[materiaVisualizada] || {};
-                const p1 = calcular(n1, `${baseTrim} - Eval 1`, g), p2 = calcular(n2, `${baseTrim} - Eval 2`, g);
-                const pFinal = ((p1 + p2) / 2).toFixed(1);
-
+            if(esAsistencia) {
+                const perRef = "Trimestre 1", cond = al.conducta?.[perRef] || "MB", as = al.asistencia?.[perRef] || { t:0, i:0 }, obs = al.observaciones?.[perRef] || "";
+                b += `<tr>${isAdmin?`<td>-</td>`:''}<td>${al.nie}</td><td style="text-align:left">${al.ape}</td><td style="text-align:left">${al.nom}</td>
+                    <td><select id="sel-per-ref-${al.id}" onchange="dibujar()"><option>Trimestre 1</option><option>Trimestre 2</option><option>Trimestre 3</option><option>Trimestre 4</option></select></td>
+                    <td><select onchange="db.ref('alumnos/${al.id}/conducta/'+document.getElementById('sel-per-ref-${al.id}').value).set(this.value)"><option ${cond==='B'?'selected':''}>B</option><option ${cond==='MB'?'selected':''}>MB</option><option ${cond==='E'?'selected':''}>E</option></select></td>
+                    <td><input type="number" class="nota-input" value="${as.t}" onchange="db.ref('alumnos/${al.id}/asistencia/'+document.getElementById('sel-per-ref-${al.id}').value+'/t').set(this.value)"></td>
+                    <td><input type="number" class="nota-input" value="${as.i}" onchange="db.ref('alumnos/${al.id}/asistencia/'+document.getElementById('sel-per-ref-${al.id}').value+'/i').set(this.value)"></td>
+                    <td><input type="text" style="width:100%" value="${obs}" onchange="db.ref('alumnos/${al.id}/observaciones/'+document.getElementById('sel-per-ref-${al.id}').value).set(this.value)"></td></tr>`;
+            } else if(esResumen && ciclo.includes("B")) {
+                const base = periodoActual.replace("RESUMEN T", "Trimestre ");
+                const n1 = al.notas?.[`${base} - Eval 1`]?.[materiaVisualizada] || {}, n2 = al.notas?.[`${base} - Eval 2`]?.[materiaVisualizada] || {};
+                const p1 = calcular(n1, `${base} - Eval 1`, g), p2 = calcular(n2, `${base} - Eval 2`, g);
                 b += `<tr>${isAdmin?`<td>-</td>`:''}<td>${al.nie}</td><td style="text-align:left">${al.ape}</td><td style="text-align:left">${al.nom}</td>
                     <td><select onchange="materiaVisualizada=this.value; dibujar()">${MATERIAS[ciclo].map(m=>`<option ${m===materiaVisualizada?'selected':''}>${m}</option>`).join('')}</select></td>
-                    <td>${(((n1.t||0)+(n2.t||0))/2).toFixed(1)}</td><td>${(((n1.l||0)+(n2.l||0))/2).toFixed(1)}</td><td>${(((n1.lc||0)+(n2.lc||0))/2).toFixed(1)}</td>
-                    <td>${(n2.int||0).toFixed(1)}</td><td>${(((n1.ex||0)+(n2.ex||0))/2).toFixed(1)}</td>
-                    <td style="background:#e8f4f8; font-weight:bold;">${pFinal}</td>
-                    <td>${cond}</td><td>${as.t}</td><td>${as.i}</td></tr>`;
+                    <td>${p1}</td><td>${p2}</td><td>${n2.int||0}</td><td style="font-weight:bold; background:#e8f4f8">${((p1+p2)/2).toFixed(1)}</td></tr>`;
             } else {
-                const n = al.notas?.[periodoActual]?.[materiaVisualizada] || {};
-                const prom = calcular(n, periodoActual, g);
+                const n = al.notas?.[periodoActual]?.[materiaVisualizada] || {}, prom = calcular(n, periodoActual, g);
+                const esT2 = periodoActual.includes("Trimestre 2"), showInt = (ciclo.includes("B") || esT2);
                 b += `<tr>${isAdmin?`<td><button onclick="eliminarAlumno('${al.id}')" class="btn btn-del">✖</button></td>`:''}
                     <td>${al.nie}</td><td style="text-align:left">${al.ape}</td><td style="text-align:left">${al.nom}</td>
                     <td><select onchange="materiaVisualizada=this.value; dibujar()">${MATERIAS[ciclo].map(m=>`<option ${m===materiaVisualizada?'selected':''}>${m}</option>`).join('')}</select></td>
                     <td><input type="text" class="nota-input" value="${n.t||0}" onchange="save('${al.id}','t',this.value)"></td>
                     <td><input type="text" class="nota-input" value="${n.l||0}" onchange="save('${al.id}','l',this.value)"></td>
                     <td><input type="text" class="nota-input" value="${n.lc||0}" onchange="save('${al.id}','lc',this.value)"></td>
-                    <td><input type="text" class="nota-input" value="${n.int||0}" onchange="save('${al.id}','int',this.value)"></td>
+                    ${showInt?`<td><input type="text" class="nota-input" value="${n.int||0}" onchange="save('${al.id}','int',this.value)"></td>`:''}
                     <td><input type="text" class="nota-input" value="${n.ex||0}" onchange="save('${al.id}','ex',this.value)"></td>
-                    <td style="font-weight:bold">${prom}</td>
-                    <td><select onchange="db.ref('alumnos/${al.id}/conducta/${periodoActual}').set(this.value)"><option ${cond==='B'?'selected':''}>B</option><option ${cond==='MB'?'selected':''}>MB</option><option ${cond==='E'?'selected':''}>E</option></select></td>
-                    <td><input type="number" class="nota-input" value="${as.t}" onchange="db.ref('alumnos/${al.id}/asistencia/${periodoActual}/t').set(this.value)"></td>
-                    <td><input type="number" class="nota-input" value="${as.i}" onchange="db.ref('alumnos/${al.id}/asistencia/${periodoActual}/i').set(this.value)"></td></tr>`;
+                    <td style="font-weight:bold">${prom}</td></tr>`;
             }
         });
         document.getElementById('table-body').innerHTML = b;
@@ -236,8 +250,8 @@
         const val = document.getElementById('sel-grado').value, ciclo = getCiclo(val), gTxt = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text;
         const alumnos = dataAlumnos.filter(a => a.grado === gTxt).sort((a,b) => a.ape.localeCompare(b.ape));
         const esResumen = periodoActual.includes("RESUMEN");
-        const baseTrim = esResumen ? periodoActual.replace("RESUMEN T", "Trimestre ") : periodoActual;
-
+        const baseTrim = esResumen ? periodoActual.replace("RESUMEN T", "Trimestre ") : (periodoActual === "Conducta y Asistencia" ? "Trimestre 1" : periodoActual);
+        
         let win = window.open('', '_blank');
         let h = `<html><head><style>
             @page { size: letter; margin: 0; }
@@ -253,48 +267,32 @@
         </style></head><body>`;
 
         alumnos.forEach((al, idx) => {
-            const as = al.asistencia?.[periodoActual] || { t:0, i:0 };
-            const cond = al.conducta?.[periodoActual] || "MB";
-            const obs = al.observaciones?.[periodoActual] || "---";
+            const as = al.asistencia?.[baseTrim] || { t:0, i:0 }, cond = al.conducta?.[baseTrim] || "MB", obs = al.observaciones?.[baseTrim] || "---";
 
             h += `<div class="boleta">
-                <div class="header">
-                    <img src="https://i.ibb.co/Mkf051St/Logo-CAI.png" height="30"> 
-                    <h2 style="margin-left:15px; color:#1a5276; font-size:12px;">CAI COLEGIO AMIGOS DE ISRAEL - ${periodoActual}</h2>
-                </div>
+                <div class="header"><img src="https://i.ibb.co/Mkf051St/Logo-CAI.png" height="30"> <h2 style="margin-left:15px; color:#1a5276; font-size:12px;">CAI COLEGIO AMIGOS DE ISRAEL - ${baseTrim}</h2></div>
                 <div class="info"><div>ALUMNO: ${al.ape} ${al.nom}</div><div>GRADO: ${gTxt}</div><div>CÓDIGO: ${al.nie}</div></div>
-                <table><thead><tr><th style="text-align:left">MATERIA</th><th>TAREAS</th><th>LIBROS</th><th>LAB</th><th>INT</th><th>PARCIAL</th><th>PROM</th></tr></thead><tbody>`;
+                <table><thead><tr><th style="text-align:left">MATERIA</th>${(esResumen && ciclo.includes("B")) ? '<th>EVAL 1</th><th>EVAL 2</th><th>INT</th>' : '<th>T</th><th>L</th><th>LC</th>'} ${(ciclo.includes("B") || baseTrim.includes("2")) && !esResumen ? '<th>INT</th>':''} <th>E</th><th>PROM</th></tr></thead><tbody>`;
             
             MATERIAS[ciclo].forEach(m => {
-                let promFinal, t, l, lc, int, ex;
-                if(esResumen) {
-                    const n1 = al.notas?.[`${baseTrim} - Eval 1`]?.[m] || {};
-                    const n2 = al.notas?.[`${baseTrim} - Eval 2`]?.[m] || {};
+                let promFinal;
+                if(esResumen && ciclo.includes("B")) {
+                    const n1 = al.notas?.[`${baseTrim} - Eval 1`]?.[m] || {}, n2 = al.notas?.[`${baseTrim} - Eval 2`]?.[m] || {};
                     const p1 = calcular(n1, `${baseTrim} - Eval 1`, val), p2 = calcular(n2, `${baseTrim} - Eval 2`, val);
                     promFinal = ((p1 + p2) / 2).toFixed(1);
-                    t = (((n1.t||0)+(n2.t||0))/2).toFixed(1);
-                    l = (((n1.l||0)+(n2.l||0))/2).toFixed(1);
-                    lc = (((n1.lc||0)+(n2.lc||0))/2).toFixed(1);
-                    int = (n2.int||0).toFixed(1);
-                    ex = (((n1.ex||0)+(n2.ex||0))/2).toFixed(1);
+                    h += `<tr><td style="text-align:left; font-weight:bold;">${m}</td><td>${p1}</td><td>${p2}</td><td>${n2.int||0}</td><td>-</td><td style="background:#f9f9f9; font-weight:bold;">${promFinal}</td></tr>`;
                 } else {
-                    const n = al.notas?.[periodoActual]?.[m] || {};
-                    promFinal = calcular(n, periodoActual, val);
-                    t=n.t||0; l=n.l||0; lc=n.lc||0; int=n.int||0; ex=n.ex||0;
+                    const n = al.notas?.[baseTrim]?.[m] || {};
+                    promFinal = calcular(n, baseTrim, val);
+                    const showInt = (ciclo.includes("B") || baseTrim.includes("2"));
+                    h += `<tr><td style="text-align:left; font-weight:bold;">${m}</td><td>${n.t||0}</td><td>${n.l||0}</td><td>${n.lc||0}</td>${showInt?`<td>${n.int||0}</td>`:''}<td>${n.ex||0}</td><td style="background:#f9f9f9; font-weight:bold;">${promFinal}</td></tr>`;
                 }
-
-                h += `<tr><td style="text-align:left; font-weight:bold;">${m}</td>
-                    <td>${t}</td><td>${l}</td><td>${lc}</td><td>${int}</td><td>${ex}</td>
-                    <td style="background:#f9f9f9; font-weight:bold;">${promFinal}</td></tr>`;
             });
 
             h += `</tbody></table>
                 <div style="font-size:8px;"><b>CONDUCTA:</b> ${cond} | <b>TARDES:</b> ${as.t} | <b>INASISTENCIAS:</b> ${as.i}</div>
                 <div style="border:1px solid #1a5276; padding:3px; height:20px; margin-top:3px;"><b>OBSERVACIONES:</b> ${obs}</div>
-                <div class="footer">
-                    <div class="firma">f. __________________________<br>FIRMA DOCENTE</div>
-                    <div class="firma">Rhina Elena Linares de Barahona<br>DIRECTORA</div>
-                </div>
+                <div class="footer"><div class="firma">f. __________________________<br>FIRMA DOCENTE</div><div class="firma">Rhina Elena Linares de Barahona<br>DIRECTORA</div></div>
             </div>`;
             if((idx+1)%2===0) h += `<div style="page-break-after:always;"></div>`;
         });
