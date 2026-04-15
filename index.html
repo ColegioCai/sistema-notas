@@ -107,6 +107,7 @@
     };
 
     const MESES_BASICA = ["Febrero", "Marzo", "Abril", "Primer Trimestre", "Mayo", "Junio", "Julio", "Segundo Trimestre", "Agosto", "Septiembre", "Octubre", "Tercer Trimestre"];
+    const MESES_INFANCIA = ["Febrero", "Marzo", "Abril", "Trimestre 1", "Mayo", "Junio", "Julio", "Trimestre 2", "Agosto", "Septiembre", "Octubre", "Trimestre 3"];
     const MESES_B = ["Periodo 1 - Eval 1", "Periodo 1 - Eval 2", "RESUMEN T1", "Periodo 2 - Eval 1", "Periodo 2 - Eval 2", "RESUMEN T2", "Periodo 3 - Eval 1", "Periodo 3 - Eval 2", "RESUMEN T3"];
 
     const GRADOS_DATA = [
@@ -155,7 +156,7 @@
         if(ciclo.includes("B")) {
             lista = [...MESES_B];
         } else if(["K4","K5","K6","1G"].includes(ciclo)) {
-            lista = ["Trimestre 1", "Trimestre 2", "Trimestre 3"];
+            lista = [...MESES_INFANCIA];
         } else {
             lista = [...MESES_BASICA];
         }
@@ -192,6 +193,7 @@
         const g = document.getElementById('sel-grado').value, ciclo = getCiclo(g), gTxt = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text;
         const isAdmin = currentRol === 'admin', esPromedio = periodoActual.includes("Trimestre") || periodoActual.includes("RESUMEN"), esAsistencia = periodoActual === "Conducta y Asistencia";
         const esInfancia = ["K4","K5","K6","1G"].includes(ciclo);
+        const esBachillerato = ciclo.includes("B");
 
         if(esPromedio || esInfancia) document.getElementById('btn-boletas').classList.remove('hidden');
         else document.getElementById('btn-boletas').classList.add('hidden');
@@ -201,14 +203,22 @@
         else {
             h += `<th style="width:150px">Materia</th>`;
             if(esPromedio) {
-                if(ciclo.includes("B")) h += `<th>PERIOD 1</th><th>PERIOD 2</th><th>INT</th><th>PROM FINAL</th>`;
+                if(esBachillerato) h += `<th>PERIOD 1</th><th>PERIOD 2</th><th>INT</th><th>PROM FINAL</th>`;
                 else {
-                    const meses = periodoActual.includes("Primer")?["FEB","MARZ","ABRIL"]:periodoActual.includes("Segundo")?["MAYO","JUN","JUL"]:["AGOS","SEPT","OCT"];
+                    const tNum = periodoActual.slice(-1);
+                    const meses = tNum=="1"?["FEB","MARZ","ABRIL"]:tNum=="2"?["MAYO","JUN","JUL"]:["AGOS","SEPT","OCT"];
                     h += `<th>${meses[0]}</th><th>${meses[1]}</th><th>${meses[2]} (INT)</th><th>PROM FINAL</th>`;
                 }
             } else {
-                const showInt = ["Abril", "Julio", "Octubre"].includes(periodoActual);
-                if(esInfancia) h += `<th>T</th><th>E</th><th>PROM</th>`;
+                // ACTIVACIÓN DE CASILLA INTEGRADORA:
+                // - En Básica/C1-C3: Abril, Julio, Octubre
+                // - En Bachillerato: Evaluaciones #2
+                // - En Infancia (Kinder/1G): SOLO JULIO
+                const showInt = (esInfancia && periodoActual === "Julio") || 
+                                (!esInfancia && !esBachillerato && ["Abril", "Julio", "Octubre"].includes(periodoActual)) || 
+                                (esBachillerato && periodoActual.includes("Eval 2"));
+
+                if(esInfancia) h += `<th>T</th>${showInt?'<th>INT</th>':''}<th>E</th><th>PROM</th>`;
                 else h += `<th>T</th><th>L</th><th>LC</th>${showInt?'<th>INT</th>':''}<th>E</th><th>PROM</th>`;
             }
         }
@@ -218,25 +228,24 @@
         let b = "";
         fil.forEach(al => {
             if(esAsistencia) {
-                const perRef = esInfancia ? "Trimestre 1" : "Abril";
+                const perRef = "Abril";
                 const cond = al.conducta?.[perRef] || "MB", as = al.asistencia?.[perRef] || { t:0, i:0 }, obs = al.observaciones?.[perRef] || "";
                 b += `<tr>${isAdmin?`<td>-</td>`:''}<td>${al.nie}</td><td style="text-align:left">${al.ape}</td><td style="text-align:left">${al.nom}</td>
-                    <td><select id="sel-per-ref-${al.id}" onchange="dibujar()">
-                        ${esInfancia ? '<option>Trimestre 1</option><option>Trimestre 2</option><option>Trimestre 3</option>' : '<option>Abril</option><option>Julio</option><option>Octubre</option>'}
-                    </select></td>
+                    <td><select id="sel-per-ref-${al.id}" onchange="dibujar()"><option>Abril</option><option>Julio</option><option>Octubre</option></select></td>
                     <td><select onchange="db.ref('alumnos/${al.id}/conducta/'+document.getElementById('sel-per-ref-${al.id}').value).set(this.value)"><option ${cond==='B'?'selected':''}>B</option><option ${cond==='MB'?'selected':''}>MB</option><option ${cond==='E'?'selected':''}>E</option></select></td>
                     <td><input type="number" class="nota-input" value="${as.t}" onchange="db.ref('alumnos/${al.id}/asistencia/'+document.getElementById('sel-per-ref-${al.id}').value+'/t').set(this.value)"></td>
                     <td><input type="number" class="nota-input" value="${as.i}" onchange="db.ref('alumnos/${al.id}/asistencia/'+document.getElementById('sel-per-ref-${al.id}').value+'/i').set(this.value)"></td>
                     <td><input type="text" style="width:100%" value="${obs}" onchange="db.ref('alumnos/${al.id}/observaciones/'+document.getElementById('sel-per-ref-${al.id}').value).set(this.value)"></td></tr>`;
             } else if(esPromedio) {
                 let p1, p2, p3, notaInt = 0;
-                if(ciclo.includes("B")) {
+                if(esBachillerato) {
                     const base = periodoActual.replace("RESUMEN T", "Periodo ");
                     const n1 = al.notas?.[`${base} - Eval 1`]?.[materiaVisualizada] || {}, n2 = al.notas?.[`${base} - Eval 2`]?.[materiaVisualizada] || {};
                     p1 = calcular(n1, `${base} - Eval 1`, g); p2 = calcular(n2, `${base} - Eval 2`, g); notaInt = n2.int || 0;
                     p3 = ((p1 + p2) / 2).toFixed(1);
                 } else {
-                    const meses = periodoActual.includes("Primer")?["Febrero","Marzo","Abril"]:periodoActual.includes("Segundo")?["Mayo","Junio","Julio"]:["Agosto","Septiembre","Octubre"];
+                    const tNum = periodoActual.slice(-1);
+                    const meses = tNum=="1"?["Febrero","Marzo","Abril"]:tNum=="2"?["Mayo","Junio","Julio"]:["Agosto","Septiembre","Octubre"];
                     p1 = calcular(al.notas?.[meses[0]]?.[materiaVisualizada] || {}, meses[0], g);
                     p2 = calcular(al.notas?.[meses[1]]?.[materiaVisualizada] || {}, meses[1], g);
                     const n3 = al.notas?.[meses[2]]?.[materiaVisualizada] || {};
@@ -248,7 +257,10 @@
                     <td>${p1}</td><td>${p2}</td><td>${notaInt}</td><td style="font-weight:bold; background:#e8f4f8">${p3}</td></tr>`;
             } else {
                 const n = al.notas?.[periodoActual]?.[materiaVisualizada] || {}, prom = calcular(n, periodoActual, g);
-                const isMesInt = ["Abril", "Julio", "Octubre"].includes(periodoActual);
+                const showInt = (esInfancia && periodoActual === "Julio") || 
+                                (!esInfancia && !esBachillerato && ["Abril", "Julio", "Octubre"].includes(periodoActual)) || 
+                                (esBachillerato && periodoActual.includes("Eval 2"));
+
                 b += `<tr>${isAdmin?`<td><button onclick="eliminarAlumno('${al.id}')" class="btn btn-del">✖</button></td>`:''}
                     <td>${al.nie}</td><td style="text-align:left">${al.ape}</td><td style="text-align:left">${al.nom}</td>
                     <td><select onchange="materiaVisualizada=this.value; dibujar()">${MATERIAS[ciclo].map(m=>`<option ${m===materiaVisualizada?'selected':''}>${m}</option>`).join('')}</select></td>
@@ -256,8 +268,9 @@
                 if(!esInfancia) {
                     b += `<td><input type="text" class="nota-input" value="${n.l||0}" onchange="save('${al.id}','l',this.value)"></td>
                           <td><input type="text" class="nota-input" value="${n.lc||0}" onchange="save('${al.id}','lc',this.value)"></td>`;
-                    if(isMesInt) b += `<td><input type="text" class="nota-input" value="${n.int||0}" onchange="save('${al.id}','int',this.value)"></td>`;
                 }
+                if(showInt) b += `<td><input type="text" class="nota-input" value="${n.int||0}" onchange="save('${al.id}','int',this.value)"></td>`;
+                
                 b += `<td><input type="text" class="nota-input" value="${n.ex||0}" onchange="save('${al.id}','ex',this.value)"></td><td style="font-weight:bold">${prom}</td></tr>`;
             }
         });
@@ -275,7 +288,6 @@
     function generarBoletas() {
         const val = document.getElementById('sel-grado').value, ciclo = getCiclo(val), gTxt = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text;
         const alumnos = dataAlumnos.filter(a => a.grado === gTxt).sort((a,b) => a.ape.localeCompare(b.ape));
-        const esInfancia = ["K4","K5","K6","1G"].includes(ciclo);
         let tNum = periodoActual.includes("1") || periodoActual.includes("Primer") ? "1" : periodoActual.includes("2") || periodoActual.includes("Segundo") ? "2" : "3";
         const labelBoleta = "TRIMESTRE " + tNum;
 
@@ -295,45 +307,31 @@
         </style></head><body>`;
 
         alumnos.forEach((al, idx) => {
-            const mesesAsis = esInfancia ? ("Trimestre "+tNum) : (tNum=="1"?"Abril":tNum=="2"?"Julio":"Octubre");
+            const mesesAsis = tNum=="1"?"Abril":tNum=="2"?"Julio":"Octubre";
             const as = al.asistencia?.[mesesAsis] || { t:0, i:0 }, cond = al.conducta?.[mesesAsis] || "MB";
             h += `<div class="boleta">
                 <div class="header"><img src="https://i.ibb.co/Mkf051St/Logo-CAI.png" height="40"> <div style="margin-left:20px;"><h2 style="margin:0; color:#1a5276; font-size:14px;">CAI - COLEGIO AMIGOS DE ISRAEL</h2><small style="color:#e67e22; font-weight:bold;">${labelBoleta}</small></div></div>
                 <div class="info"><div>ALUMNO: ${al.ape} ${al.nom}</div><div>GRADO: ${gTxt}</div><div>CÓDIGO: ${al.nie}</div></div>
                 <table><thead><tr><th style="text-align:left">MATERIA</th>`;
-            
-            if(esInfancia) h += `<th>TAREAS (50%)</th><th>EXAMEN (50%)</th><th>PROMEDIO</th>`;
-            else {
-                const mesesLabel = tNum=="1"?["FEB","MARZ","ABRIL"]:tNum=="2"?["MAYO","JUN","JUL"]:["AGOS","SEPT","OCT"];
-                h += `<th>${mesesLabel[0]}</th><th>${mesesLabel[1]}</th><th>${mesesLabel[2]} (INT)</th><th>PROM FINAL</th>`;
-            }
-            
-            h += `</tr></thead><tbody>`;
+            const mesesLabel = tNum=="1"?["FEB","MARZ","ABRIL"]:tNum=="2"?["MAYO","JUN","JUL"]:["AGOS","SEPT","OCT"];
+            h += `<th>${mesesLabel[0]}</th><th>${mesesLabel[1]}</th><th>${mesesLabel[2]} (INT)</th><th>PROM FINAL</th></tr></thead><tbody>`;
 
             MATERIAS[ciclo].forEach(m => {
-                let p1, p2, p3, notaInt = 0, notaEx = 0;
-                if(esInfancia) {
-                    const mesInf = "Trimestre "+tNum;
-                    const n = al.notas?.[mesInf]?.[m] || {};
-                    p1 = n.t || 0; notaEx = n.ex || 0;
-                    p3 = calcular(n, mesInf, val);
-                    h += `<tr><td style="text-align:left; font-weight:bold;">${m}</td><td>${p1}</td><td>${notaEx}</td><td class="prom-cell">${p3}</td></tr>`;
+                let p1, p2, p3, notaInt = 0;
+                if(ciclo.includes("B")) {
+                    const base = "Periodo " + tNum;
+                    const n1 = al.notas?.[`${base} - Eval 1`]?.[m] || {}, n2 = al.notas?.[`${base} - Eval 2`]?.[m] || {};
+                    p1 = calcular(n1, `${base} - Eval 1`, val); p2 = calcular(n2, `${base} - Eval 2`, val); notaInt = n2.int || 0;
+                    p3 = ((p1 + p2) / 2).toFixed(1);
                 } else {
-                    if(ciclo.includes("B")) {
-                        const base = "Periodo " + tNum;
-                        const n1 = al.notas?.[`${base} - Eval 1`]?.[m] || {}, n2 = al.notas?.[`${base} - Eval 2`]?.[m] || {};
-                        p1 = calcular(n1, `${base} - Eval 1`, val); p2 = calcular(n2, `${base} - Eval 2`, val); notaInt = n2.int || 0;
-                        p3 = ((p1 + p2) / 2).toFixed(1);
-                    } else {
-                        const meses = tNum=="1"?["Febrero","Marzo","Abril"]:tNum=="2"?["Mayo","Junio","Julio"]:["Agosto","Septiembre","Octubre"];
-                        p1 = calcular(al.notas?.[meses[0]]?.[m] || {}, meses[0], val);
-                        p2 = calcular(al.notas?.[meses[1]]?.[m] || {}, meses[1], val);
-                        const n3 = al.notas?.[meses[2]]?.[m] || {};
-                        p3 = calcular(n3, meses[2], val); notaInt = n3.int || 0;
-                        p3 = ((p1 + p2 + p3) / 3).toFixed(1);
-                    }
-                    h += `<tr><td style="text-align:left; font-weight:bold;">${m}</td><td>${p1}</td><td>${p2}</td><td>${notaInt}</td><td class="prom-cell">${p3}</td></tr>`;
+                    const meses = tNum=="1"?["Febrero","Marzo","Abril"]:tNum=="2"?["Mayo","Junio","Julio"]:["Agosto","Septiembre","Octubre"];
+                    p1 = calcular(al.notas?.[meses[0]]?.[m] || {}, meses[0], val);
+                    p2 = calcular(al.notas?.[meses[1]]?.[m] || {}, meses[1], val);
+                    const n3 = al.notas?.[meses[2]]?.[m] || {};
+                    p3 = calcular(n3, meses[2], val); notaInt = n3.int || 0;
+                    p3 = ((p1 + p2 + p3) / 3).toFixed(1);
                 }
+                h += `<tr><td style="text-align:left; font-weight:bold;">${m}</td><td>${p1}</td><td>${p2}</td><td>${notaInt}</td><td class="prom-cell">${p3}</td></tr>`;
             });
 
             h += `</tbody></table>
