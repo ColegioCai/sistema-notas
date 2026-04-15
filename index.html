@@ -106,7 +106,7 @@
         "2B": ["Inglés", "Biblia", "Lenguaje y literatura", "Precalculo", "Ciencia y tecnología", "Ciudadanía y valores", "Educación física", "Orientacion para la vida", "Finanzas y economia", "Ciencias de la computación", "Seminario", "Curso de habilitacion laboral"]
     };
 
-    const MESES_BASICA = ["Febrero", "Marzo", "Abril", "PROMEDIO T1", "Mayo", "Junio", "Julio", "PROMEDIO T2", "Agosto", "Septiembre", "Octubre", "PROMEDIO T3"];
+    const MESES_BASICA = ["Febrero", "Marzo", "Abril", "Primer Trimestre", "Mayo", "Junio", "Julio", "Segundo Trimestre", "Agosto", "Septiembre", "Octubre", "Tercer Trimestre"];
     const MESES_B = ["Periodo 1 - Eval 1", "Periodo 1 - Eval 2", "RESUMEN T1", "Periodo 2 - Eval 1", "Periodo 2 - Eval 2", "RESUMEN T2", "Periodo 3 - Eval 1", "Periodo 3 - Eval 2", "RESUMEN T3"];
 
     const GRADOS_DATA = [
@@ -165,7 +165,7 @@
         document.getElementById('txt-grado').innerText = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text;
         document.getElementById('nav-tabs').innerHTML = lista.map(p => {
             let cl = "tab";
-            if(p.includes('PROMEDIO') || p.includes('RESUMEN')) cl += " promedio-tab";
+            if(p.includes('Trimestre') || p.includes('RESUMEN')) cl += " promedio-tab";
             if(p === "Conducta y Asistencia") cl += " asistencia-tab";
             if(p === periodoActual) cl += " active";
             return `<button class="${cl}" onclick="setPeriodo('${p}', this)">${p}</button>`;
@@ -190,7 +190,7 @@
 
     function dibujar() {
         const g = document.getElementById('sel-grado').value, ciclo = getCiclo(g), gTxt = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text;
-        const isAdmin = currentRol === 'admin', esPromedio = periodoActual.includes("PROMEDIO") || periodoActual.includes("RESUMEN"), esAsistencia = periodoActual === "Conducta y Asistencia";
+        const isAdmin = currentRol === 'admin', esPromedio = periodoActual.includes("Trimestre") || periodoActual.includes("RESUMEN"), esAsistencia = periodoActual === "Conducta y Asistencia";
         const esInfancia = ["K4","K5","K6","1G"].includes(ciclo);
 
         if(esPromedio || esInfancia) document.getElementById('btn-boletas').classList.remove('hidden');
@@ -203,8 +203,7 @@
             if(esPromedio) {
                 if(ciclo.includes("B")) h += `<th>PERIOD 1</th><th>PERIOD 2</th><th>INT</th><th>PROM FINAL</th>`;
                 else {
-                    const tNum = periodoActual.slice(-1);
-                    const meses = tNum=="1"?["FEB","MARZ","ABRIL"]:tNum=="2"?["MAYO","JUN","JUL"]:["AGOS","SEPT","OCT"];
+                    const meses = periodoActual.includes("Primer")?["FEB","MARZ","ABRIL"]:periodoActual.includes("Segundo")?["MAYO","JUN","JUL"]:["AGOS","SEPT","OCT"];
                     h += `<th>${meses[0]}</th><th>${meses[1]}</th><th>${meses[2]} (INT)</th><th>PROM FINAL</th>`;
                 }
             } else {
@@ -237,8 +236,7 @@
                     p1 = calcular(n1, `${base} - Eval 1`, g); p2 = calcular(n2, `${base} - Eval 2`, g); notaInt = n2.int || 0;
                     p3 = ((p1 + p2) / 2).toFixed(1);
                 } else {
-                    const tNum = periodoActual.slice(-1);
-                    const meses = tNum=="1"?["Febrero","Marzo","Abril"]:tNum=="2"?["Mayo","Junio","Julio"]:["Agosto","Septiembre","Octubre"];
+                    const meses = periodoActual.includes("Primer")?["Febrero","Marzo","Abril"]:periodoActual.includes("Segundo")?["Mayo","Junio","Julio"]:["Agosto","Septiembre","Octubre"];
                     p1 = calcular(al.notas?.[meses[0]]?.[materiaVisualizada] || {}, meses[0], g);
                     p2 = calcular(al.notas?.[meses[1]]?.[materiaVisualizada] || {}, meses[1], g);
                     const n3 = al.notas?.[meses[2]]?.[materiaVisualizada] || {};
@@ -278,8 +276,8 @@
         const val = document.getElementById('sel-grado').value, ciclo = getCiclo(val), gTxt = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text;
         const alumnos = dataAlumnos.filter(a => a.grado === gTxt).sort((a,b) => a.ape.localeCompare(b.ape));
         const esInfancia = ["K4","K5","K6","1G"].includes(ciclo);
-        const tNum = periodoActual.slice(-1);
-        const labelBoleta = esInfancia ? "TRIMESTRE " + tNum : "PROMEDIOS T" + tNum;
+        let tNum = periodoActual.includes("1") || periodoActual.includes("Primer") ? "1" : periodoActual.includes("2") || periodoActual.includes("Segundo") ? "2" : "3";
+        const labelBoleta = "TRIMESTRE " + tNum;
 
         let win = window.open('', '_blank');
         let h = `<html><head><style>
