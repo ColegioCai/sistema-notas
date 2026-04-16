@@ -119,6 +119,7 @@
     ];
 
     let currentRol = "", dataAlumnos = [], periodoActual = "", materiaVisualizada = "";
+    let trimestreRefAsistencia = "Primer Trimestre"; 
 
     function login() {
         const u = document.getElementById('user').value.toLowerCase(), p = document.getElementById('pass').value;
@@ -199,7 +200,7 @@
         else document.getElementById('btn-boletas').classList.add('hidden');
 
         let h = `${isAdmin?'<th>Elim</th>':''}<th>CÓDIGO</th><th>Apellidos</th><th>Nombres</th>`;
-        if(esAsistencia) h += `<th>Periodo Ref.</th><th>Conducta</th><th>Tardes</th><th>Inasistencias</th><th>Observaciones</th>`;
+        if(esAsistencia) h += `<th>Seleccionar Trimestre</th><th>Conducta</th><th>Tardes</th><th>Inasistencias</th><th>Observaciones</th>`;
         else {
             h += `<th style="width:150px">Materia</th>`;
             if(esPromedio) {
@@ -210,16 +211,16 @@
                     h += `<th>${meses[0]}</th><th>${meses[1]}</th><th>${meses[2]} (INT)</th><th>PROM FINAL</th>`;
                 }
             } else {
-                // ACTIVACIÓN DE CASILLA INTEGRADORA:
-                // - En Básica/C1-C3: Abril, Julio, Octubre
-                // - En Bachillerato: Evaluaciones #2
-                // - En Infancia (Kinder/1G): SOLO JULIO
                 const showInt = (esInfancia && periodoActual === "Julio") || 
                                 (!esInfancia && !esBachillerato && ["Abril", "Julio", "Octubre"].includes(periodoActual)) || 
                                 (esBachillerato && periodoActual.includes("Eval 2"));
 
-                if(esInfancia) h += `<th>T</th>${showInt?'<th>INT</th>':''}<th>E</th><th>PROM</th>`;
-                else h += `<th>T</th><th>L</th><th>LC</th>${showInt?'<th>INT</th>':''}<th>E</th><th>PROM</th>`;
+                if(esInfancia) {
+                    h += `<th>T</th>${showInt?'<th>INT</th>':''}<th>E</th><th>PROM</th>`;
+                } else {
+                    // CAMBIO A NOMBRES REALES PARA BÁSICA Y BACHILLERATO
+                    h += `<th>Tareas</th><th>Laboratorio</th><th>Libro/Cuaderno</th>${showInt?'<th>INT</th>':''}<th>Examen</th><th>PROM</th>`;
+                }
             }
         }
         document.getElementById('table-head').innerHTML = h;
@@ -228,14 +229,17 @@
         let b = "";
         fil.forEach(al => {
             if(esAsistencia) {
-                const perRef = "Abril";
-                const cond = al.conducta?.[perRef] || "MB", as = al.asistencia?.[perRef] || { t:0, i:0 }, obs = al.observaciones?.[perRef] || "";
+                const cond = al.conducta?.[trimestreRefAsistencia] || "MB", as = al.asistencia?.[trimestreRefAsistencia] || { t:0, i:0 }, obs = al.observaciones?.[trimestreRefAsistencia] || "";
                 b += `<tr>${isAdmin?`<td>-</td>`:''}<td>${al.nie}</td><td style="text-align:left">${al.ape}</td><td style="text-align:left">${al.nom}</td>
-                    <td><select id="sel-per-ref-${al.id}" onchange="dibujar()"><option>Abril</option><option>Julio</option><option>Octubre</option></select></td>
-                    <td><select onchange="db.ref('alumnos/${al.id}/conducta/'+document.getElementById('sel-per-ref-${al.id}').value).set(this.value)"><option ${cond==='B'?'selected':''}>B</option><option ${cond==='MB'?'selected':''}>MB</option><option ${cond==='E'?'selected':''}>E</option></select></td>
-                    <td><input type="number" class="nota-input" value="${as.t}" onchange="db.ref('alumnos/${al.id}/asistencia/'+document.getElementById('sel-per-ref-${al.id}').value+'/t').set(this.value)"></td>
-                    <td><input type="number" class="nota-input" value="${as.i}" onchange="db.ref('alumnos/${al.id}/asistencia/'+document.getElementById('sel-per-ref-${al.id}').value+'/i').set(this.value)"></td>
-                    <td><input type="text" style="width:100%" value="${obs}" onchange="db.ref('alumnos/${al.id}/observaciones/'+document.getElementById('sel-per-ref-${al.id}').value).set(this.value)"></td></tr>`;
+                    <td><select onchange="trimestreRefAsistencia=this.value; dibujar()">
+                        <option ${trimestreRefAsistencia==='Primer Trimestre'?'selected':''}>Primer Trimestre</option>
+                        <option ${trimestreRefAsistencia==='Segundo Trimestre'?'selected':''}>Segundo Trimestre</option>
+                        <option ${trimestreRefAsistencia==='Tercer Trimestre'?'selected':''}>Tercer Trimestre</option>
+                    </select></td>
+                    <td><select onchange="db.ref('alumnos/${al.id}/conducta/'+trimestreRefAsistencia).set(this.value)"><option ${cond==='B'?'selected':''}>B</option><option ${cond==='MB'?'selected':''}>MB</option><option ${cond==='E'?'selected':''}>E</option></select></td>
+                    <td><input type="number" class="nota-input" value="${as.t}" onchange="db.ref('alumnos/${al.id}/asistencia/'+trimestreRefAsistencia+'/t').set(this.value)"></td>
+                    <td><input type="number" class="nota-input" value="${as.i}" onchange="db.ref('alumnos/${al.id}/asistencia/'+trimestreRefAsistencia+'/i').set(this.value)"></td>
+                    <td><input type="text" style="width:100%" value="${obs}" onchange="db.ref('alumnos/${al.id}/observaciones/'+trimestreRefAsistencia).set(this.value)"></td></tr>`;
             } else if(esPromedio) {
                 let p1, p2, p3, notaInt = 0;
                 if(esBachillerato) {
@@ -307,8 +311,8 @@
         </style></head><body>`;
 
         alumnos.forEach((al, idx) => {
-            const mesesAsis = tNum=="1"?"Abril":tNum=="2"?"Julio":"Octubre";
-            const as = al.asistencia?.[mesesAsis] || { t:0, i:0 }, cond = al.conducta?.[mesesAsis] || "MB";
+            const trmLabel = tNum=="1"?"Primer Trimestre":tNum=="2"?"Segundo Trimestre":"Tercer Trimestre";
+            const as = al.asistencia?.[trmLabel] || { t:0, i:0 }, cond = al.conducta?.[trmLabel] || "MB";
             h += `<div class="boleta">
                 <div class="header"><img src="https://i.ibb.co/Mkf051St/Logo-CAI.png" height="40"> <div style="margin-left:20px;"><h2 style="margin:0; color:#1a5276; font-size:14px;">CAI - COLEGIO AMIGOS DE ISRAEL</h2><small style="color:#e67e22; font-weight:bold;">${labelBoleta}</small></div></div>
                 <div class="info"><div>ALUMNO: ${al.ape} ${al.nom}</div><div>GRADO: ${gTxt}</div><div>CÓDIGO: ${al.nie}</div></div>
