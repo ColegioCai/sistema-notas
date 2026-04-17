@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SISTEMA CAI 2026 - FINAL PROFESIONAL</title>
+    <title>SISTEMA CAI 2026 - GESTIÓN INTEGRAL</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
@@ -13,23 +13,24 @@
         .tabs { display: flex; background: #1c2833; padding: 10px 10px 0; gap: 4px; overflow-x: auto; }
         .tab { padding: 10px 15px; color: #bdc3c7; cursor: pointer; border-radius: 6px 6px 0 0; background: rgba(255,255,255,0.05); border: none; font-size: 10px; white-space: nowrap; }
         .tab.active { background: var(--bg); color: var(--p); font-weight: bold; }
-        .tab.promedio-tab { border-bottom: 3px solid #3498db; color: #3498db; font-weight: bold; }
-        .tab.asistencia-tab { border-bottom: 3px solid var(--green); color: var(--green); }
+        .tab.asis-btn { background: var(--orange); color: white; margin-left: auto; border-radius: 6px 6px 0 0; }
         .container { max-width: 1400px; margin: 15px auto; padding: 0 15px; }
-        .table-card { background: white; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); overflow-x: auto; padding: 10px; }
+        .table-card { background: white; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); overflow-x: auto; padding: 15px; }
         table { width: 100%; border-collapse: collapse; min-width: 1200px; }
         th { background: #f8f9fa; padding: 12px 5px; border-bottom: 2px solid #dee2e6; color: var(--p); font-size: 9px; text-transform: uppercase; }
         td { padding: 8px 5px; border-bottom: 1px solid #eee; text-align: center; }
-        .nota-input { width: 38px; padding: 5px; text-align: center; border: 1.5px solid #dcdde1; border-radius: 6px; font-weight: bold; }
+        .nota-input { width: 45px; padding: 5px; text-align: center; border: 1.5px solid #dcdde1; border-radius: 6px; font-weight: bold; color: var(--dark); background: white; }
+        .n-roja { color: var(--red); background: #fdedec; border: 1px solid var(--red); border-radius: 4px; padding: 4px; }
+        .n-amarilla { color: #d4ac0d; background: #fef9e7; border: 1px solid #f1c40f; border-radius: 4px; padding: 4px; }
+        .n-verde { color: var(--green); background: #e9f7ef; border: 1px solid var(--green); border-radius: 4px; padding: 4px; }
         .btn { padding: 8px 15px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 10px; }
-        .btn-add { background: var(--p); color: white; }
-        .btn-print { background: var(--green); color: white; }
-        .btn-del { background: var(--red); color: white; padding: 5px 8px; border-radius: 4px; }
+        .btn-save { background: var(--green); color: white; }
+        .btn-print { background: #2e86c1; color: white; }
+        .btn-del { background: var(--red); color: white; }
         .hidden { display: none !important; }
+        .admin-panel { background: #ebf5fb; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #aed6f1; display: flex; gap: 10px; align-items: flex-end; }
         .login-box { background: white; padding: 40px; border-radius: 20px; width: 320px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
-        input, select { padding: 10px; border-radius: 8px; border: 1px solid #ccc; width: 100%; box-sizing: border-box; margin-bottom: 10px; }
-        
-        @media print { @page { margin: 0; } body { margin: 0; } }
+        input, select, textarea { padding: 8px; border-radius: 8px; border: 1px solid #ccc; width: 100%; box-sizing: border-box; }
     </style>
 </head>
 <body>
@@ -41,7 +42,6 @@
             <input type="text" id="user" placeholder="Usuario">
             <input type="password" id="pass" placeholder="Contraseña">
             <button onclick="login()" style="width:100%; padding:12px; background:var(--orange); color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold;">INGRESAR</button>
-            <p id="error" style="color:red; font-size:10px; margin-top:10px;"></p>
         </div>
     </div>
 
@@ -50,13 +50,12 @@
             <div style="display:flex; align-items:center; gap:12px;">
                 <img src="https://i.ibb.co/Mkf051St/Logo-CAI.png" height="50">
                 <div>
-                    <b style="font-size:16px; color:var(--p);">CAI - Colegio Amigos de Israel (10398)</b><br>
-                    <span id="txt-grado" style="font-weight:bold; color:var(--dark)">---</span> | 
-                    <span id="txt-rol" style="color:var(--orange); font-weight:700; font-size:10px;">ROL: ---</span>
+                    <b style="font-size:16px; color:var(--p);">CAI - Colegio Amigos de Israel</b><br>
+                    <span id="txt-grado" style="font-weight:bold; color:var(--dark)">---</span> | <span id="txt-rol" style="color:var(--orange); font-size:10px;">ROL: ---</span>
                 </div>
             </div>
-            <div style="display:flex; gap:10px; align-items:center;">
-                <select id="sel-grado" onchange="cambiarGrado()" style="margin-bottom:0; width:180px;"></select>
+            <div style="display:flex; gap:10px;">
+                <select id="sel-grado" onchange="cambiarGrado()" style="margin:0; width:180px;"></select>
                 <button id="btn-boletas" onclick="generarBoletas()" class="btn btn-print hidden">📑 IMPRIMIR BOLETAS</button>
                 <button onclick="location.reload()" class="btn" style="background:var(--red); color:white;">SALIR</button>
             </div>
@@ -65,16 +64,17 @@
         <nav id="nav-tabs" class="tabs"></nav>
 
         <div class="container">
-            <div id="panel-admin" class="panel-registro hidden" style="background:white; padding:15px; border-radius:10px; margin-bottom:15px; border-left: 5px solid var(--p);">
-                <b style="color:var(--p)">REGISTRO DE MATRÍCULA:</b>
-                <div style="display:flex; gap:10px; margin-top:10px;">
-                    <input type="text" id="reg-ape" placeholder="Apellidos" style="margin:0">
-                    <input type="text" id="reg-nom" placeholder="Nombres" style="margin:0">
-                    <input type="text" id="reg-nie" placeholder="NIE / Código" style="margin:0">
-                    <button onclick="matricular()" class="btn btn-add">MATRICULAR</button>
+            <div id="panel-admin" class="admin-panel hidden">
+                <div style="flex:1">
+                    <label>Apellidos Alumno:</label>
+                    <input type="text" id="new-ape" placeholder="Ej: Perez Garcia">
                 </div>
+                <div style="flex:1">
+                    <label>Nombres Alumno:</label>
+                    <input type="text" id="new-nom" placeholder="Ej: Juan Alberto">
+                </div>
+                <button onclick="agregarAlumno()" class="btn btn-save" style="height:35px;">+ AGREGAR ALUMNO</button>
             </div>
-
             <div class="table-card">
                 <table><thead><tr id="table-head"></tr></thead><tbody id="table-body"></tbody></table>
             </div>
@@ -94,18 +94,14 @@
     const MATERIAS = {
         "K4": ["Inglés", "Biblia", "Informática", "Taller globalizador", "Taller de matemática", "Taller de expresión gráfica", "Taller de lectoescritura", "Taller de deporte"],
         "K5": ["Inglés", "Biblia", "Informática", "Taller globalizador", "Taller de expresión gráfica", "Taller de matemática", "Taller de lectoescritura", "Taller de deporte"],
-        "K6": ["Inglés", "Biblia", "Informática", "Taller de conversación", "Taller de lectoescritura", "Taller de matemáticas", "Taller de desarrollo", "Educación emocional", "Taller de deporte", "Taller de arte", "Taller de expresión gráfica"],
+        "K6": ["Inglés", "Biblia", "Informática", "Taller Globalizador", "Taller de lectoescritura", "Taller de matemáticas", "Taller de deporte", "Taller de expresión gráfica"],
         "1G": ["Taller de Ingles", "Taller Lenguaje", "Taller de Numeros", "Taller de Biblia", "Taller de cuerpo movimiento y bienestar", "Taller de Lectoescritura", "Taller de Finanzas", "Caligrafia", "Relaciones Sociales", "Exploracion y Experimentacion", "Estetica y Efectividad", "Taller de informatica"],
         "C1": ["Inglés", "Biblia", "Informática", "Finanzas", "Comunicación", "Números y formas", "Ciencia y tecnología", "Ciudadanía y valores", "Artes", "Desarrollo corporal"],
         "C2": ["Inglés", "Biblia", "Informática", "Finanzas", "Comunicación y literatura", "Aritmética y Finanzas", "Ciencia y tecnología", "Ciudadanía y valores", "Artes", "Desarrollo corporal"],
         "C3": ["Inglés", "Biblia", "Informática", "Finanzas", "Lengua y Literatura", "Matemática y datos", "Ciencia y tecnología", "Ciudadanía y valores", "Educación física"],
-        "1B": ["Inglés", "Biblia", "Lenguaje y literatura", "Precalculo", "Ciencia y tecnología", "Ciudadanía y valores", "Educación física", "Proyecto de vida", "Finanzas y economia", "Ciencias de la computación"],
-        "2B": ["Inglés", "Biblia", "Lenguaje y literatura", "Precalculo", "Ciencia y tecnología", "Ciudadanía y valores", "Educación física", "Orientacion para la vida", "Finanzas y economia", "Ciencias de la computación", "Seminario", "Curso de habilitacion laboral"]
+        "1B": ["Inglés", "Biblia", "Lengua y literatura", "Precalculo", "Ciencia y tecnología", "Ciudadanía y valores", "Educación física", "Proyecto de vida y carrera", "Finanzas y economia", "Ciencias de la computación"],
+        "2B": ["Inglés", "Biblia", "Lengua y literatura", "Precalculo", "Ciencia y tecnología", "Ciudadanía y valores", "Educación física", "Orientacion para la vida", "Finanzas y economia", "Ciencias de la computación", "Seminario", "Curso de habilitacion laboral"]
     };
-
-    const MESES_BASICA = ["Febrero", "Marzo", "Abril", "Primer Trimestre", "Mayo", "Junio", "Julio", "Segundo Trimestre", "Agosto", "Septiembre", "Octubre", "Tercer Trimestre"];
-    const MESES_INFANCIA = ["Febrero", "Marzo", "Abril", "Trimestre 1", "Mayo", "Junio", "Julio", "Trimestre 2", "Agosto", "Septiembre", "Octubre", "Trimestre 3"];
-    const MESES_B = ["Periodo 1 - Eval 1", "Periodo 1 - Eval 2", "RESUMEN T1", "Periodo 2 - Eval 1", "Periodo 2 - Eval 2", "RESUMEN T2", "Periodo 3 - Eval 1", "Periodo 3 - Eval 2", "RESUMEN T3"];
 
     const GRADOS_DATA = [
         {val:"K4", t:"Kinder 4 Años", cat:"infancia"}, {val:"K5", t:"Kinder 5 Años", cat:"infancia"}, {val:"K6", t:"Kinder 6 Años", cat:"infancia"}, {val:"1G", t:"1° Grado", cat:"infancia"},
@@ -115,8 +111,7 @@
         {val:"1B", t:"1° Bachillerato", cat:"bachillerato"}, {val:"2B", t:"2° Bachillerato", cat:"bachillerato"}
     ];
 
-    let currentRol = "", dataAlumnos = [], periodoActual = "", materiaVisualizada = "";
-    let trimestreRefAsistencia = "Primer Trimestre"; 
+    let currentRol = "", dataAlumnos = [], periodoActual = "", materiaVisualizada = "", vistaActual = "NOTAS";
 
     function login() {
         const u = document.getElementById('user').value.toLowerCase(), p = document.getElementById('pass').value;
@@ -128,7 +123,7 @@
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('app').classList.remove('hidden');
             document.getElementById('txt-rol').innerText = "ROL: " + currentRol.toUpperCase();
-            if(currentRol==='admin') document.getElementById('panel-admin').classList.remove('hidden');
+            if(currentRol === 'admin') document.getElementById('panel-admin').classList.remove('hidden');
             cargarSelect();
         }
     }
@@ -148,198 +143,185 @@
         return g;
     }
 
-    function cambiarGrado() {
-        const g = document.getElementById('sel-grado').value, ciclo = getCiclo(g);
-        let lista;
-        if(ciclo.includes("B")) lista = [...MESES_B];
-        else if(["K4","K5","K6","1G"].includes(ciclo)) lista = [...MESES_INFANCIA];
-        else lista = [...MESES_BASICA];
-        lista.push("Conducta y Asistencia");
-        periodoActual = lista[0]; 
-        materiaVisualizada = MATERIAS[ciclo][0];
-        document.getElementById('txt-grado').innerText = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text;
-        document.getElementById('nav-tabs').innerHTML = lista.map(p => {
-            let cl = "tab";
-            if(p.includes('Trimestre') || p.includes('RESUMEN')) cl += " promedio-tab";
-            if(p === "Conducta y Asistencia") cl += " asistencia-tab";
-            if(p === periodoActual) cl += " active";
-            return `<button class="${cl}" onclick="setPeriodo('${p}', this)">${p}</button>`;
-        }).join('');
-        dibujar();
+    function agregarAlumno() {
+        const nom = document.getElementById('new-nom').value.trim(), ape = document.getElementById('new-ape').value.trim();
+        const gTxt = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text;
+        if(!nom || !ape) return alert("Complete los datos.");
+        let ultimoNie = 0;
+        dataAlumnos.forEach(a => { if(parseInt(a.nie) > ultimoNie) ultimoNie = parseInt(a.nie); });
+        const nuevoNie = (ultimoNie + 1).toString().padStart(4, '0');
+        db.ref('alumnos').push({ nie: nuevoNie, nom: nom.toUpperCase(), ape: ape.toUpperCase(), grado: gTxt });
     }
 
-    function setPeriodo(p, btn) { periodoActual = p; dibujar(); document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); btn.classList.add('active'); }
+    function cambiarGrado() {
+        const g = document.getElementById('sel-grado').value, ciclo = getCiclo(g);
+        let lista = ["K4","K5","K6","1G"].includes(ciclo) ? ["Trimestre 1", "Trimestre 2", "Trimestre 3"] : 
+                    ciclo.includes("B") ? ["Periodo 1 - Eval 1", "Periodo 1 - Eval 2", "Periodo 1", "Periodo 2 - Eval 1", "Periodo 2 - Eval 2", "Periodo 2", "Periodo 3 - Eval 1", "Periodo 3 - Eval 2", "Periodo 3", "Periodo 4 - Eval 1", "Periodo 4 - Eval 2", "Periodo 4"] : 
+                    ["Febrero", "Marzo", "Abril", "Primer Trimestre", "Mayo", "Junio", "Julio", "Segundo Trimestre", "Agosto", "Septiembre", "Octubre", "Tercer Trimestre"];
+        periodoActual = lista[0]; materiaVisualizada = MATERIAS[ciclo][0];
+        document.getElementById('txt-grado').innerText = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text;
+        renderTabs(lista); vistaActual = "NOTAS"; dibujar();
+    }
+
+    function renderTabs(lista) {
+        let html = lista.map(p => `<button class="tab ${p===periodoActual && vistaActual==='NOTAS'?'active':''}" onclick="setPeriodo('${p}', this)">${p}</button>`).join('');
+        const esConsolidado = periodoActual.includes("Trimestre") || (periodoActual.startsWith("Periodo") && !periodoActual.includes("Eval"));
+        if(esConsolidado){
+            html += `<button id="btn-tab-asis" class="tab asis-btn ${vistaActual==='ASISTENCIA'?'active':''}" onclick="setVistaAsistencia()">📊 ASISTENCIA (${periodoActual})</button>`;
+        }
+        document.getElementById('nav-tabs').innerHTML = html;
+    }
+
+    function setPeriodo(p, btn) { 
+        periodoActual = p; vistaActual = "NOTAS"; dibujar(); 
+        document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); btn.classList.add('active');
+        renderTabs(document.getElementById('nav-tabs').innerText.split('\n').filter(x => x && !x.includes("📊")));
+    }
+
+    function setVistaAsistencia() { vistaActual = "ASISTENCIA"; dibujarAsistencia(); document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); document.getElementById('btn-tab-asis').classList.add('active'); }
+
+    function getColorClass(nota) {
+        if(nota < 5) return "n-roja";
+        if(nota <= 6.9) return "n-amarilla";
+        return "n-verde";
+    }
 
     function calcular(n, p, g) {
         const v = { t:parseFloat(n.t)||0, l:parseFloat(n.l)||0, lc:parseFloat(n.lc)||0, int:parseFloat(n.int)||0, ex:parseFloat(n.ex)||0 };
         const c = getCiclo(g);
-        if(["K4","K5","K6","1G"].includes(c)) return parseFloat((v.t*0.5 + v.ex*0.5).toFixed(1));
+        if(["K4","K5","K6","1G"].includes(c)) return (p === "Trimestre 2") ? parseFloat((v.t*0.35 + v.int*0.3 + v.ex*0.35).toFixed(1)) : parseFloat((v.t*0.5 + v.ex*0.5).toFixed(1));
         if(c.includes("B")) {
             if(p.includes("Eval 1")) return parseFloat(((v.t*0.25) + (v.l*0.20) + (v.lc*0.15) + (v.ex*0.40)).toFixed(1));
             return parseFloat(((v.t*0.10) + (v.l*0.05) + (v.lc*0.10) + (v.int*0.35) + (v.ex*0.40)).toFixed(1));
         }
-        const esMesIntegrador = ["Abril", "Julio", "Octubre"].includes(p);
-        if(esMesIntegrador) return parseFloat((v.t*0.1 + v.l*0.05 + v.lc*0.1 + v.int*0.35 + v.ex*0.4).toFixed(1));
-        return parseFloat((v.t*0.25 + v.l*0.2 + v.lc*0.15 + v.ex*0.4).toFixed(1));
+        const esInt = ["Abril", "Julio", "Octubre"].includes(p);
+        return esInt ? parseFloat((v.t*0.1 + v.l*0.05 + v.lc*0.1 + v.int*0.35 + v.ex*0.4).toFixed(1)) : parseFloat((v.t*0.25 + v.l*0.2 + v.lc*0.15 + v.ex*0.4).toFixed(1));
+    }
+
+    function actualizarPromedioVivo(id, esInfancia, showInt) {
+        const row = document.getElementById(`row-${id}`);
+        const g = document.getElementById('sel-grado').value;
+        const notasTemp = { t: row.querySelector('.inp-t').value, ex: row.querySelector('.inp-ex').value };
+        if(!esInfancia) { notasTemp.l = row.querySelector('.inp-l').value; notasTemp.lc = row.querySelector('.inp-lc').value; }
+        if(showInt) notasTemp.int = row.querySelector('.inp-int').value;
+        const prom = calcular(notasTemp, periodoActual, g);
+        const cellProm = row.querySelector('.cell-prom-valor');
+        cellProm.innerText = prom;
+        cellProm.className = `cell-prom-valor ${getColorClass(prom)}`;
     }
 
     function dibujar() {
         const g = document.getElementById('sel-grado').value, ciclo = getCiclo(g), gTxt = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text;
-        const isAdmin = currentRol === 'admin', esPromedio = periodoActual.includes("Trimestre") || periodoActual.includes("RESUMEN"), esAsistencia = periodoActual === "Conducta y Asistencia";
-        const esInfancia = ["K4","K5","K6","1G"].includes(ciclo);
-        const esBachillerato = ciclo.includes("B");
+        const isAdmin = currentRol === 'admin', esInfancia = ["K4","K5","K6","1G"].includes(ciclo), esBachi = ciclo.includes("B");
+        const mostrarPrint = (isAdmin && (periodoActual.includes("Trimestre") || (esBachi && periodoActual.startsWith("Periodo") && !periodoActual.includes("Eval"))));
+        document.getElementById('btn-boletas').className = mostrarPrint ? "btn btn-print" : "hidden";
+        const esConsolidadoBasica = ["Primer Trimestre", "Segundo Trimestre", "Tercer Trimestre"].includes(periodoActual);
 
-        if(esPromedio || esInfancia) document.getElementById('btn-boletas').classList.remove('hidden');
-        else document.getElementById('btn-boletas').classList.add('hidden');
-
-        let h = `${isAdmin?'<th>Elim</th>':''}<th>CÓDIGO</th><th>Apellidos</th><th>Nombres</th>`;
-        if(esAsistencia) h += `<th>Seleccionar Trimestre</th><th>Conducta</th><th>Tardes</th><th>Inasistencias</th><th>Observaciones</th>`;
+        let h = `<th>NIE</th><th>Apellidos</th><th>Nombres</th><th style="width:150px">Materia</th>`;
+        const showInt = (esInfancia && periodoActual === "Trimestre 2") || (!esInfancia && ["Abril", "Julio", "Octubre"].includes(periodoActual)) || (esBachi && periodoActual.includes("Eval 2"));
+        
+        if(esConsolidadoBasica){ h += `<th>MES 1</th><th>MES 2</th><th>MES 3</th>`; }
         else {
-            h += `<th style="width:150px">Materia</th>`;
-            if(esPromedio) {
-                if(esBachillerato) h += `<th>PERIOD 1</th><th>PERIOD 2</th><th>INT</th><th>PROM FINAL</th>`;
-                else {
-                    let meses = [];
-                    if(periodoActual.includes("1")) meses = ["FEB","MARZ","ABRIL"];
-                    else if(periodoActual.includes("2")) meses = ["MAYO","JUN","JUL"];
-                    else meses = ["AGOS","SEPT","OCT"];
-                    h += `<th>${meses[0]}</th><th>${meses[1]}</th><th>${meses[2]} (INT)</th><th>PROM FINAL</th>`;
-                }
-            } else {
-                const showInt = (esInfancia && periodoActual === "Julio") || (!esInfancia && !esBachillerato && ["Abril", "Julio", "Octubre"].includes(periodoActual)) || (esBachillerato && periodoActual.includes("Eval 2"));
-                if(esInfancia) h += `<th>T</th>${showInt?'<th>INT</th>':''}<th>E</th><th>PROM</th>`;
-                else h += `<th>Tareas</th><th>Laboratorio</th><th>Libro/Cuaderno</th>${showInt?'<th>INT</th>':''}<th>Examen</th><th>PROM</th>`;
-            }
+            if(esInfancia) h += `<th>Tarea</th>${showInt?'<th>INT</th>':''}<th>Examen</th>`;
+            else h += `<th>Tarea</th><th>Lab</th><th>Libro</th>${showInt?'<th>INT</th>':''}<th>Examen</th>`;
         }
+        h += `<th>PROM</th><th>Acción</th>`;
         document.getElementById('table-head').innerHTML = h;
 
         let fil = dataAlumnos.filter(a => a.grado === gTxt).sort((a,b) => a.ape.localeCompare(b.ape));
         let b = "";
         fil.forEach(al => {
-            if(esAsistencia) {
-                const cond = al.conducta?.[trimestreRefAsistencia] || "MB", as = al.asistencia?.[trimestreRefAsistencia] || { t:0, i:0 }, obs = al.observaciones?.[trimestreRefAsistencia] || "";
-                b += `<tr>${isAdmin?`<td>-</td>`:''}<td>${al.nie}</td><td style="text-align:left">${al.ape}</td><td style="text-align:left">${al.nom}</td>
-                    <td><select onchange="trimestreRefAsistencia=this.value; dibujar()">
-                        <option ${trimestreRefAsistencia==='Primer Trimestre'?'selected':''}>Primer Trimestre</option>
-                        <option ${trimestreRefAsistencia==='Segundo Trimestre'?'selected':''}>Segundo Trimestre</option>
-                        <option ${trimestreRefAsistencia==='Tercer Trimestre'?'selected':''}>Tercer Trimestre</option>
-                    </select></td>
-                    <td><select onchange="db.ref('alumnos/${al.id}/conducta/'+trimestreRefAsistencia).set(this.value)"><option ${cond==='B'?'selected':''}>B</option><option ${cond==='MB'?'selected':''}>MB</option><option ${cond==='E'?'selected':''}>E</option></select></td>
-                    <td><input type="number" class="nota-input" value="${as.t}" onchange="db.ref('alumnos/${al.id}/asistencia/'+trimestreRefAsistencia+'/t').set(this.value)"></td>
-                    <td><input type="number" class="nota-input" value="${as.i}" onchange="db.ref('alumnos/${al.id}/asistencia/'+trimestreRefAsistencia+'/i').set(this.value)"></td>
-                    <td><input type="text" style="width:100%" value="${obs}" onchange="db.ref('alumnos/${al.id}/observaciones/'+trimestreRefAsistencia).set(this.value)"></td></tr>`;
-            } else if(esPromedio) {
-                let p1, p2, p3, notaInt = 0;
-                if(esBachillerato) {
-                    const base = periodoActual.replace("RESUMEN T", "Periodo ");
-                    const n1 = al.notas?.[`${base} - Eval 1`]?.[materiaVisualizada] || {}, n2 = al.notas?.[`${base} - Eval 2`]?.[materiaVisualizada] || {};
-                    p1 = calcular(n1, `${base} - Eval 1`, g); p2 = calcular(n2, `${base} - Eval 2`, g); notaInt = n2.int || 0;
-                    p3 = ((p1 + p2) / 2).toFixed(1);
-                } else {
-                    let meses = [];
-                    if(periodoActual.includes("1")) meses = ["Febrero","Marzo","Abril"];
-                    else if(periodoActual.includes("2")) meses = ["Mayo","Junio","Julio"];
-                    else meses = ["Agosto","Septiembre","Octubre"];
-                    p1 = calcular(al.notas?.[meses[0]]?.[materiaVisualizada] || {}, meses[0], g);
-                    p2 = calcular(al.notas?.[meses[1]]?.[materiaVisualizada] || {}, meses[1], g);
-                    const n3 = al.notas?.[meses[2]]?.[materiaVisualizada] || {};
-                    p3 = calcular(n3, meses[2], g); notaInt = n3.int || 0;
-                    p3 = ((p1 + p2 + p3) / 3).toFixed(1);
-                }
-                b += `<tr>${isAdmin?`<td>-</td>`:''}<td>${al.nie}</td><td style="text-align:left">${al.ape}</td><td style="text-align:left">${al.nom}</td>
+            const esBachiAuto = (esBachi && ["Periodo 1", "Periodo 2", "Periodo 3", "Periodo 4"].includes(periodoActual));
+            let prom = 0;
+            if (esConsolidadoBasica) {
+                const meses = periodoActual === "Primer Trimestre" ? ["Febrero", "Marzo", "Abril"] : periodoActual === "Segundo Trimestre" ? ["Mayo", "Junio", "Julio"] : ["Agosto", "Septiembre", "Octubre"];
+                const p1 = calcular(al.notas?.[meses[0]]?.[materiaVisualizada] || {}, meses[0], g);
+                const p2 = calcular(al.notas?.[meses[1]]?.[materiaVisualizada] || {}, meses[1], g);
+                const p3 = calcular(al.notas?.[meses[2]]?.[materiaVisualizada] || {}, meses[2], g);
+                prom = parseFloat(((p1 + p2 + p3) / 3).toFixed(1));
+                b += `<tr><td>${al.nie}</td><td style="text-align:left">${al.ape}</td><td style="text-align:left">${al.nom}</td>
                     <td><select onchange="materiaVisualizada=this.value; dibujar()">${MATERIAS[ciclo].map(m=>`<option ${m===materiaVisualizada?'selected':''}>${m}</option>`).join('')}</select></td>
-                    <td>${p1}</td><td>${p2}</td><td>${notaInt}</td><td style="font-weight:bold; background:#e8f4f8">${p3}</td></tr>`;
+                    <td>${p1}</td><td>${p2}</td><td>${p3}</td><td style="font-weight:bold"><span class="${getColorClass(prom)}">${prom}</span></td><td>-</td></tr>`;
             } else {
-                const n = al.notas?.[periodoActual]?.[materiaVisualizada] || {}, prom = calcular(n, periodoActual, g);
-                const showInt = (esInfancia && periodoActual === "Julio") || (!esInfancia && !esBachillerato && ["Abril", "Julio", "Octubre"].includes(periodoActual)) || (esBachillerato && periodoActual.includes("Eval 2"));
-                b += `<tr>${isAdmin?`<td><button onclick="eliminarAlumno('${al.id}')" class="btn btn-del">✖</button></td>`:''}
-                    <td>${al.nie}</td><td style="text-align:left">${al.ape}</td><td style="text-align:left">${al.nom}</td>
+                let n = (al.notas?.[periodoActual]?.[materiaVisualizada] || {});
+                if (esBachiAuto) {
+                    const n1 = al.notas?.[periodoActual + " - Eval 1"]?.[materiaVisualizada] || {};
+                    const n2 = al.notas?.[periodoActual + " - Eval 2"]?.[materiaVisualizada] || {};
+                    prom = parseFloat(((calcular(n1, periodoActual + " - Eval 1", g) + calcular(n2, periodoActual + " - Eval 2", g)) / 2).toFixed(1));
+                } else { prom = calcular(n, periodoActual, g); }
+                const yaGuardado = (n.guardado && !isAdmin) || esBachiAuto;
+                b += `<tr id="row-${al.id}"><td>${al.nie}</td><td style="text-align:left">${al.ape}</td><td style="text-align:left">${al.nom}</td>
                     <td><select onchange="materiaVisualizada=this.value; dibujar()">${MATERIAS[ciclo].map(m=>`<option ${m===materiaVisualizada?'selected':''}>${m}</option>`).join('')}</select></td>
-                    <td><input type="text" class="nota-input" value="${n.t||0}" onchange="save('${al.id}','t',this.value)"></td>`;
+                    <td><input type="text" class="nota-input inp-t" value="${n.t||0}" ${yaGuardado?'disabled':''} oninput="actualizarPromedioVivo('${al.id}', ${esInfancia}, ${showInt})"></td>`;
                 if(!esInfancia) {
-                    b += `<td><input type="text" class="nota-input" value="${n.l||0}" onchange="save('${al.id}','l',this.value)"></td>
-                          <td><input type="text" class="nota-input" value="${n.lc||0}" onchange="save('${al.id}','lc',this.value)"></td>`;
+                    b += `<td><input type="text" class="nota-input inp-l" value="${n.l||0}" ${yaGuardado?'disabled':''} oninput="actualizarPromedioVivo('${al.id}', ${esInfancia}, ${showInt})"></td>
+                          <td><input type="text" class="nota-input inp-lc" value="${n.lc||0}" ${yaGuardado?'disabled':''} oninput="actualizarPromedioVivo('${al.id}', ${esInfancia}, ${showInt})"></td>`;
                 }
-                if(showInt) b += `<td><input type="text" class="nota-input" value="${n.int||0}" onchange="save('${al.id}','int',this.value)"></td>`;
-                b += `<td><input type="text" class="nota-input" value="${n.ex||0}" onchange="save('${al.id}','ex',this.value)"></td><td style="font-weight:bold">${prom}</td></tr>`;
+                if(showInt) b += `<td><input type="text" class="nota-input inp-int" value="${n.int||0}" ${yaGuardado?'disabled':''} oninput="actualizarPromedioVivo('${al.id}', ${esInfancia}, ${showInt})"></td>`;
+                b += `<td><input type="text" class="nota-input inp-ex" value="${n.ex||0}" ${yaGuardado?'disabled':''} oninput="actualizarPromedioVivo('${al.id}', ${esInfancia}, ${showInt})"></td>
+                    <td style="font-weight:bold"><span class="cell-prom-valor ${getColorClass(prom)}">${prom}</span></td>
+                    <td><button class="btn btn-save" onclick="guardarNotas('${al.id}', ${esInfancia}, ${showInt})" ${yaGuardado?'disabled':''}>💾</button>
+                    ${isAdmin ? `<button class="btn btn-del" onclick="borrarAlumno('${al.id}')">🗑️</button>` : ''}</td></tr>`;
             }
         });
         document.getElementById('table-body').innerHTML = b;
     }
 
-    function save(id, c, v) { db.ref(`alumnos/${id}/notas/${periodoActual}/${materiaVisualizada}/${c}`).set(parseFloat(v) || 0); }
-    function matricular() {
-        const n = { nie: document.getElementById('reg-nie').value, ape: document.getElementById('reg-ape').value.toUpperCase(), nom: document.getElementById('reg-nom').value.toUpperCase(), grado: document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text };
-        db.ref('alumnos').push(n).then(()=>alert("Matriculado"));
+    function dibujarAsistencia() {
+        const gTxt = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text;
+        document.getElementById('table-head').innerHTML = `<th>NIE</th><th>Alumno</th><th>Conducta</th><th>Permiso</th><th>Sin Permiso</th><th>Observaciones</th><th>Acción</th>`;
+        let fil = dataAlumnos.filter(a => a.grado === gTxt).sort((a,b) => a.ape.localeCompare(b.ape)), b = "";
+        fil.forEach(al => {
+            const asis = al.asistencia?.[periodoActual] || { c:'MUY BUENA', ap:0, asp:0, obs:'' };
+            b += `<tr id="asis-${al.id}"><td>${al.nie}</td><td style="text-align:left">${al.ape}, ${al.nom}</td>
+                <td><select class="inp-c"><option ${asis.c==='EXCELENTE'?'selected':''}>EXCELENTE</option><option ${asis.c==='MUY BUENA'?'selected':''}>MUY BUENA</option><option ${asis.c==='BUENA'?'selected':''}>BUENA</option></select></td>
+                <td><input type="number" class="nota-input inp-ap" value="${asis.ap||0}"></td><td><input type="number" class="nota-input inp-asp" value="${asis.asp||0}"></td>
+                <td><textarea class="inp-obs" style="height:30px;">${asis.obs||''}</textarea></td>
+                <td><button class="btn btn-save" onclick="guardarAsis('${al.id}')">💾</button></td></tr>`;
+        });
+        document.getElementById('table-body').innerHTML = b;
     }
-    function eliminarAlumno(id) { if(confirm("¿Eliminar?")) db.ref('alumnos/'+id).remove(); }
-    function escucharDB() { db.ref('alumnos').on('value', snap => { const v = snap.val(); dataAlumnos = v ? Object.keys(v).map(k=>({id:k, ...v[k]})) : []; dibujar(); }); }
+
+    function guardarAsis(id) { const r = document.getElementById(`asis-${id}`); const d = { c: r.querySelector('.inp-c').value, ap: r.querySelector('.inp-ap').value, asp: r.querySelector('.inp-asp').value, obs: r.querySelector('.inp-obs').value }; db.ref(`alumnos/${id}/asistencia/${periodoActual}`).set(d).then(() => alert(`Asistencia Guardada.`)); }
+    function guardarNotas(id, esInfancia, showInt) { 
+        const r = document.getElementById(`row-${id}`); 
+        const d = { t: parseFloat(r.querySelector('.inp-t').value) || 0, ex: parseFloat(r.querySelector('.inp-ex').value) || 0, guardado: true }; 
+        if(!esInfancia) { d.l = parseFloat(r.querySelector('.inp-l').value) || 0; d.lc = parseFloat(r.querySelector('.inp-lc').value) || 0; } 
+        if(showInt) d.int = parseFloat(r.querySelector('.inp-int').value) || 0; 
+        db.ref(`alumnos/${id}/notas/${periodoActual}/${materiaVisualizada}`).set(d).then(() => { alert("Nota Guardada."); dibujar(); }); 
+    }
+
+    function borrarAlumno(id) { if(confirm("¿Borrar alumno permanentemente?")) db.ref(`alumnos/${id}`).remove(); }
+    function escucharDB() { db.ref('alumnos').on('value', snap => { const v = snap.val(); dataAlumnos = v ? Object.keys(v).map(k=>({id:k, ...v[k]})) : []; if(vistaActual==="NOTAS") dibujar(); else dibujarAsistencia(); }); }
 
     function generarBoletas() {
-        const val = document.getElementById('sel-grado').value, ciclo = getCiclo(val), gTxt = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text;
-        const alumnos = dataAlumnos.filter(a => a.grado === gTxt).sort((a,b) => a.ape.localeCompare(b.ape));
-        let tNum = periodoActual.includes("1") ? "1" : periodoActual.includes("2") ? "2" : "3";
-        const labelBoleta = "TRIMESTRE " + tNum;
+        const g = document.getElementById('sel-grado').value, gTxt = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text, ciclo = getCiclo(g), esInfancia = ["K4","K5","K6","1G"].includes(ciclo), esBachi = ciclo.includes("B");
+        let printWin = window.open('', '_blank');
+        printWin.document.write(`<html><head><title>Boletas - ${gTxt}</title><style>@page { size: letter; margin: 0; } body { font-family: Arial, sans-serif; padding: 0; margin: 0; } .boleta { height: 50vh; box-sizing: border-box; padding: 10px 30px; border-bottom: 1px dashed #777; display: flex; flex-direction: column; overflow: hidden; } .header { display: flex; align-items: flex-start; border-bottom: 2px solid #e67e22; padding-bottom: 3px; margin-bottom: 5px; } .logo { width: 45px; margin-right: 12px; } .inst-name { font-size: 13px; color: #1a5276; font-weight: bold; } .periodo-name { font-size: 11px; font-weight: bold; color: #e67e22; text-transform: uppercase; } .al-data { text-align: right; font-size: 9px; min-width: 180px; } .al-main-info { background: #1a5276; color: white; padding: 3px 8px; font-weight: bold; margin-bottom: 5px; font-size: 10px; text-transform: uppercase; } table { width: 100%; border-collapse: collapse; } th { background: #f2f2f2; color: #1a5276; padding: 3px; font-size: 8px; border: 1px solid #ccc; } td { border: 1px solid #ccc; padding: 3px; text-align: center; font-size: 8.5px; } .m-name { text-align: left; padding-left: 8px; font-weight: bold; width: 40%; } .f-firma-container { margin-top: auto; padding-bottom: 15px; display: flex; justify-content: space-between; text-align: center; } .firma-box { flex: 1; display: flex; flex-direction: column; align-items: center; } .line { border-top: 1px solid #000; width: 80%; margin-bottom: 3px; } .f-name { font-size: 8px; font-weight: bold; }</style></head><body>`);
 
-        let win = window.open('', '_blank');
-        let h = `<html><head><style>
-            @media print { @page { margin: 0; } body { margin: 1cm; } }
-            body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; }
-            .boleta { min-height: 48vh; padding: 10mm; border-bottom: 2px dashed #1a5276; box-sizing: border-box; page-break-inside: avoid; }
-            .header { display: flex; align-items: center; border-bottom: 3px solid #e67e22; margin-bottom: 5px; padding-bottom: 5px; }
-            .info { display: grid; grid-template-columns: 2fr 1fr 1fr; background: #1a5276; color: white; padding: 8px; font-weight: bold; font-size: 10px; border-radius: 5px; }
-            table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-            th { background: #f2f4f4; color: #1a5276; padding: 6px; border: 1px solid #ccc; font-size: 9px; }
-            td { border: 1px solid #ccc; padding: 5px; text-align: center; font-size: 10px; }
-            .prom-cell { background: #ebf5fb; font-weight: bold; color: #1a5276; }
-            .firma-box { display: flex; justify-content: space-between; margin-top: 30px; }
-            .firma { border-top: 1px solid #000; width: 220px; text-align: center; padding-top: 5px; font-weight: bold; font-size: 9px; }
-        </style></head><body>`;
+        dataAlumnos.filter(a => a.grado === gTxt).forEach(al => {
+            const asis = al.asistencia?.[periodoActual] || { c:'MUY BUENA', ap:0, asp:0, obs:'' };
+            const esBachiAuto = (esBachi && ["Periodo 1", "Periodo 2", "Periodo 3", "Periodo 4"].includes(periodoActual));
+            const esConsolidadoBasica = ["Primer Trimestre", "Segundo Trimestre", "Tercer Trimestre"].includes(periodoActual);
 
-        alumnos.forEach((al, idx) => {
-            const trmLabel = tNum=="1"?"Primer Trimestre":tNum=="2"?"Segundo Trimestre":"Tercer Trimestre";
-            const as = al.asistencia?.[trmLabel] || { t:0, i:0 }, cond = al.conducta?.[trmLabel] || "MB";
-            h += `<div class="boleta">
-                <div class="header"><img src="https://i.ibb.co/Mkf051St/Logo-CAI.png" height="40"> <div style="margin-left:20px;"><h2 style="margin:0; color:#1a5276; font-size:14px;">CAI - COLEGIO AMIGOS DE ISRAEL</h2><small style="color:#e67e22; font-weight:bold;">${labelBoleta}</small></div></div>
-                <div class="info"><div>ALUMNO: ${al.ape} ${al.nom}</div><div>GRADO: ${gTxt}</div><div>CÓDIGO: ${al.nie}</div></div>
-                <table><thead><tr><th style="text-align:left">MATERIA</th>`;
+            printWin.document.write(`<div class="boleta"><div class="header"><img src="https://i.ibb.co/Mkf051St/Logo-CAI.png" class="logo"><div style="flex-grow:1;"><div class="inst-name">CAI - COLEGIO AMIGOS DE ISRAEL</div><div class="periodo-name">${periodoActual}</div></div><div class="al-data"><div>GRADO: ${gTxt}</div><div>CODIGO/NIE: ${al.nie}</div></div></div><div class="al-main-info">ALUMNO: ${al.ape}, ${al.nom}</div><table><thead><tr><th class="m-name">MATERIA</th><th>TAREA</th>${!esInfancia ? '<th>LAB</th><th>LIBRO</th>' : ''}<th>INT</th><th>EXAMEN</th><th>PROMEDIO</th></tr></thead><tbody>`);
             
-            let mesesLabel = [];
-            if(tNum=="1") mesesLabel = ["FEB","MARZ","ABRIL"];
-            else if(tNum=="2") mesesLabel = ["MAYO","JUN","JUL"];
-            else mesesLabel = ["AGOS","SEPT","OCT"];
-
-            h += `<th>${mesesLabel[0]}</th><th>${mesesLabel[1]}</th><th>${mesesLabel[2]} (INT)</th><th>PROM FINAL</th></tr></thead><tbody>`;
-
             MATERIAS[ciclo].forEach(m => {
-                let p1, p2, p3, notaInt = 0;
-                if(ciclo.includes("B")) {
-                    const base = "Periodo " + tNum;
-                    const n1 = al.notas?.[`${base} - Eval 1`]?.[m] || {}, n2 = al.notas?.[`${base} - Eval 2`]?.[m] || {};
-                    p1 = calcular(n1, `${base} - Eval 1`, val); p2 = calcular(n2, `${base} - Eval 2`, val); notaInt = n2.int || 0;
-                    p3 = ((p1 + p2) / 2).toFixed(1);
-                } else {
-                    let meses = [];
-                    if(tNum=="1") meses = ["Febrero","Marzo","Abril"];
-                    else if(tNum=="2") meses = ["Mayo","Junio","Julio"];
-                    else meses = ["Agosto","Septiembre","Octubre"];
-                    p1 = calcular(al.notas?.[meses[0]]?.[m] || {}, meses[0], val);
-                    p2 = calcular(al.notas?.[meses[1]]?.[m] || {}, meses[1], val);
-                    const n3 = al.notas?.[meses[2]]?.[m] || {};
-                    p3 = calcular(n3, meses[2], val); notaInt = n3.int || 0;
-                    p3 = ((p1 + p2 + p3) / 3).toFixed(1);
-                }
-                h += `<tr><td style="text-align:left; font-weight:bold;">${m}</td><td>${p1}</td><td>${p2}</td><td>${notaInt}</td><td class="prom-cell">${p3}</td></tr>`;
+                let p = 0; let nDisp = {};
+                if (esConsolidadoBasica) {
+                    const meses = periodoActual === "Primer Trimestre" ? ["Febrero", "Marzo", "Abril"] : periodoActual === "Segundo Trimestre" ? ["Mayo", "Junio", "Julio"] : ["Agosto", "Septiembre", "Octubre"];
+                    const m1 = al.notas?.[meses[0]]?.[m] || {}, m2 = al.notas?.[meses[1]]?.[m] || {}, m3 = al.notas?.[meses[2]]?.[m] || {};
+                    nDisp = m3; p = parseFloat(((calcular(m1, meses[0], g) + calcular(m2, meses[1], g) + calcular(m3, meses[2], g)) / 3).toFixed(1));
+                } else if (esBachiAuto) {
+                    const n1 = al.notas?.[periodoActual + " - Eval 1"]?.[m] || {}, n2 = al.notas?.[periodoActual + " - Eval 2"]?.[m] || {};
+                    p = parseFloat(((calcular(n1, periodoActual + " - Eval 1", g) + calcular(n2, periodoActual + " - Eval 2", g)) / 2).toFixed(1));
+                    nDisp = n2;
+                } else { nDisp = al.notas?.[periodoActual]?.[m] || {}; p = calcular(nDisp, periodoActual, g); }
+                printWin.document.write(`<tr><td class="m-name">${m}</td><td>${nDisp.t||0}</td>${!esInfancia ? `<td>${nDisp.l||0}</td><td>${nDisp.lc||0}</td>` : ''}<td>${nDisp.int||0}</td><td>${nDisp.ex||0}</td><td style="font-weight:bold">${p}</td></tr>`);
             });
-
-            h += `</tbody></table>
-                <div style="font-size:9px; margin-top:8px;"><b>CONDUCTA:</b> ${cond} | <b>TARDES:</b> ${as.t} | <b>INASISTENCIAS:</b> ${as.i}</div>
-                <div class="firma-box"><div class="firma">FIRMA DOCENTE</div><div class="firma">Rhina Elena Linares de Barahona<br>DIRECTORA</div></div>
-            </div>`;
-            if((idx+1)%2===0) h += `<div style="page-break-after:always;"></div>`;
+            printWin.document.write(`</tbody></table><div style="font-size:8px; margin-top:5px;"><b>CONDUCTA:</b> ${asis.c} | <b>ASIST. CON PERMISO:</b> ${asis.ap} | <b>ASIST. SIN PERMISO:</b> ${asis.asp}</div><div style="border:1px solid #ccc; padding:3px; min-height:20px; font-size:8px; margin-top:2px;"><b>OBSERVACIONES:</b> ${asis.obs || 'Ninguna.'}</div><div class="f-firma-container"><div class="firma-box"><div class="line"></div><div class="f-name">F. DOCENTE ENCARGADO</div></div><div class="firma-box"><div class="line"></div><div class="f-name">F. REGISTRO ACADÉMICO</div></div><div class="firma-box"><div class="line"></div><div class="f-name">Rhina Linares de Barahona<br>DIRECTORA</div></div></div></div>`);
         });
-        win.document.write(h + "</body></html>"); win.document.close();
-        win.onload = function() { win.print(); };
+        printWin.document.close(); printWin.print();
     }
 </script>
 </body>
