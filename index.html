@@ -223,7 +223,8 @@
         if(esConsolidadoBasica){ h += `<th>MES 1</th><th>MES 2</th><th>MES 3</th>`; }
         else {
             if(esInfancia) h += `<th>Tarea</th>${showInt?'<th>INT</th>':''}<th>Examen</th>`;
-            else h += `<th>Tarea</th><th>Lab</th><th>Libro</th>${showInt?'<th>INT</th>':''}<th>Examen</th>`;
+            // CAMBIO DE POSICIÓN: Libro y Cuaderno antes que Lab
+            else h += `<th>Tarea</th><th>Libro y Cuaderno</th><th>Laboratorio</th>${showInt?'<th>INT</th>':''}<th>Examen</th>`;
         }
         h += `<th>PROM</th><th>Acción</th>`;
         document.getElementById('table-head').innerHTML = h;
@@ -254,8 +255,9 @@
                     <td><select onchange="materiaVisualizada=this.value; dibujar()">${MATERIAS[ciclo].map(m=>`<option ${m===materiaVisualizada?'selected':''}>${m}</option>`).join('')}</select></td>
                     <td><input type="text" class="nota-input inp-t" value="${n.t||0}" ${yaGuardado?'disabled':''} oninput="actualizarPromedioVivo('${al.id}', ${esInfancia}, ${showInt})"></td>`;
                 if(!esInfancia) {
-                    b += `<td><input type="text" class="nota-input inp-l" value="${n.l||0}" ${yaGuardado?'disabled':''} oninput="actualizarPromedioVivo('${al.id}', ${esInfancia}, ${showInt})"></td>
-                          <td><input type="text" class="nota-input inp-lc" value="${n.lc||0}" ${yaGuardado?'disabled':''} oninput="actualizarPromedioVivo('${al.id}', ${esInfancia}, ${showInt})"></td>`;
+                    // CAMBIO DE POSICIÓN: Inputs lc (libro) antes que l (lab)
+                    b += `<td><input type="text" class="nota-input inp-lc" value="${n.lc||0}" ${yaGuardado?'disabled':''} oninput="actualizarPromedioVivo('${al.id}', ${esInfancia}, ${showInt})"></td>
+                          <td><input type="text" class="nota-input inp-l" value="${n.l||0}" ${yaGuardado?'disabled':''} oninput="actualizarPromedioVivo('${al.id}', ${esInfancia}, ${showInt})"></td>`;
                 }
                 if(showInt) b += `<td><input type="text" class="nota-input inp-int" value="${n.int||0}" ${yaGuardado?'disabled':''} oninput="actualizarPromedioVivo('${al.id}', ${esInfancia}, ${showInt})"></td>`;
                 b += `<td><input type="text" class="nota-input inp-ex" value="${n.ex||0}" ${yaGuardado?'disabled':''} oninput="actualizarPromedioVivo('${al.id}', ${esInfancia}, ${showInt})"></td>
@@ -304,7 +306,8 @@
             const esBachiAuto = (esBachi && ["Periodo 1", "Periodo 2", "Periodo 3", "Periodo 4"].includes(periodoActual));
             const esConsolidadoBasica = ["Primer Trimestre", "Segundo Trimestre", "Tercer Trimestre"].includes(periodoActual);
 
-            printWin.document.write(`<div class="boleta"><div class="header"><img src="https://i.ibb.co/Mkf051St/Logo-CAI.png" class="logo"><div style="flex-grow:1;"><div class="inst-name">CAI - COLEGIO AMIGOS DE ISRAEL</div><div class="periodo-name">${periodoActual}</div></div><div class="al-data"><div>GRADO: ${gTxt}</div><div>CODIGO/NIE: ${al.nie}</div></div></div><div class="al-main-info">ALUMNO: ${al.ape}, ${al.nom}</div><table><thead><tr><th class="m-name">MATERIA</th><th>TAREA</th>${!esInfancia ? '<th>LAB</th><th>LIBRO</th>' : ''}<th>INT</th><th>EXAMEN</th><th>PROMEDIO</th></tr></thead><tbody>`);
+            // CAMBIO DE POSICIÓN EN BOLETA: Libro antes que Lab
+            printWin.document.write(`<div class="boleta"><div class="header"><img src="https://i.ibb.co/Mkf051St/Logo-CAI.png" class="logo"><div style="flex-grow:1;"><div class="inst-name">CAI - COLEGIO AMIGOS DE ISRAEL</div><div class="periodo-name">${periodoActual}</div></div><div class="al-data"><div>GRADO: ${gTxt}</div><div>CODIGO/NIE: ${al.nie}</div></div></div><div class="al-main-info">ALUMNO: ${al.ape}, ${al.nom}</div><table><thead><tr><th class="m-name">MATERIA</th><th>TAREA</th>${!esInfancia ? '<th>LIBRO</th><th>LAB</th>' : ''}<th>INT</th><th>EXAMEN</th><th>PROMEDIO</th></tr></thead><tbody>`);
             
             MATERIAS[ciclo].forEach(m => {
                 let p = 0; let nDisp = {};
@@ -317,7 +320,9 @@
                     p = parseFloat(((calcular(n1, periodoActual + " - Eval 1", g) + calcular(n2, periodoActual + " - Eval 2", g)) / 2).toFixed(1));
                     nDisp = n2;
                 } else { nDisp = al.notas?.[periodoActual]?.[m] || {}; p = calcular(nDisp, periodoActual, g); }
-                printWin.document.write(`<tr><td class="m-name">${m}</td><td>${nDisp.t||0}</td>${!esInfancia ? `<td>${nDisp.l||0}</td><td>${nDisp.lc||0}</td>` : ''}<td>${nDisp.int||0}</td><td>${nDisp.ex||0}</td><td style="font-weight:bold">${p}</td></tr>`);
+                
+                // CAMBIO DE POSICIÓN EN FILA BOLETA: lc (libro) antes que l (lab)
+                printWin.document.write(`<tr><td class="m-name">${m}</td><td>${nDisp.t||0}</td>${!esInfancia ? `<td>${nDisp.lc||0}</td><td>${nDisp.l||0}</td>` : ''}<td>${nDisp.int||0}</td><td>${nDisp.ex||0}</td><td style="font-weight:bold">${p}</td></tr>`);
             });
             printWin.document.write(`</tbody></table><div style="font-size:8px; margin-top:5px;"><b>CONDUCTA:</b> ${asis.c} | <b>ASIST. CON PERMISO:</b> ${asis.ap} | <b>ASIST. SIN PERMISO:</b> ${asis.asp}</div><div style="border:1px solid #ccc; padding:3px; min-height:20px; font-size:8px; margin-top:2px;"><b>OBSERVACIONES:</b> ${asis.obs || 'Ninguna.'}</div><div class="f-firma-container"><div class="firma-box"><div class="line"></div><div class="f-name">F. DOCENTE ENCARGADO</div></div><div class="firma-box"><div class="line"></div><div class="f-name">F. REGISTRO ACADÉMICO</div></div><div class="firma-box"><div class="line"></div><div class="f-name">Rhina Linares de Barahona<br>DIRECTORA</div></div></div></div>`);
         });
