@@ -21,7 +21,7 @@
         td { padding: 8px 5px; border-bottom: 1px solid #eee; text-align: center; }
         .nota-input { width: 45px; padding: 5px; text-align: center; border: 1.5px solid #dcdde1; border-radius: 6px; font-weight: bold; color: var(--dark); background: white; }
         .n-roja { color: var(--red); background: #fdedec; border: 1px solid var(--red); border-radius: 4px; padding: 4px; }
-        .n-amarilla { color: #d4ac0d; background: #fef9e7; border: 1px solid #f1c40f; border-radius: 4px; padding: 4px; }
+        .n-amarilla { color: #d4ac0d; background: #fef9e7; border: 1px solid var(--f1c40f); border: 1px solid #f1c40f; border-radius: 4px; padding: 4px; }
         .n-verde { color: var(--green); background: #e9f7ef; border: 1px solid var(--green); border-radius: 4px; padding: 4px; }
         .btn { padding: 8px 15px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 10px; }
         .btn-save { background: var(--green); color: white; }
@@ -189,14 +189,25 @@
     function calcular(n, p, g) {
         const v = { t:parseFloat(n.t)||0, l:parseFloat(n.l)||0, lc:parseFloat(n.lc)||0, int:parseFloat(n.int)||0, ex:parseFloat(n.ex)||0 };
         const c = getCiclo(g);
+        
+        // --- INFANCIA (NO SE TOCA) ---
         if(["K4","K5","K6","1G"].includes(c)) return (p === "Trimestre 2") ? parseFloat((v.t*0.35 + v.int*0.3 + v.ex*0.35).toFixed(1)) : parseFloat((v.t*0.5 + v.ex*0.5).toFixed(1));
+        
+        // --- BACHILLERATO (NO SE TOCA) ---
         if(c.includes("B")) {
-            // AJUSTE DE PORCENTAJES PEDIDOS: Eval 1 (LC: 20%, L: 15%) / Eval 2 (LC: 5%, L: 10%)
             if(p.includes("Eval 1")) return parseFloat(((v.t*0.25) + (v.l*0.15) + (v.lc*0.20) + (v.ex*0.40)).toFixed(1));
             return parseFloat(((v.t*0.10) + (v.l*0.10) + (v.lc*0.05) + (v.int*0.35) + (v.ex*0.40)).toFixed(1));
         }
+
+        // --- BASICA (2° A 9°) - MODIFICACIÓN DE PORCENTAJES ---
         const esInt = ["Abril", "Julio", "Octubre"].includes(p);
-        return esInt ? parseFloat((v.t*0.1 + v.l*0.05 + v.lc*0.1 + v.int*0.35 + v.ex*0.4).toFixed(1)) : parseFloat((v.t*0.25 + v.l*0.2 + v.lc*0.15 + v.ex*0.4).toFixed(1));
+        if(esInt) {
+            // Caso Abril, Julio, Octubre: LC (5%), L (10%)
+            return parseFloat((v.t*0.1 + v.l*0.10 + v.lc*0.05 + v.int*0.35 + v.ex*0.4).toFixed(1));
+        } else {
+            // Caso Feb, Mar, May, Jun, Ago, Sep: LC (20%), L (15%)
+            return parseFloat((v.t*0.25 + v.l*0.15 + v.lc*0.20 + v.ex*0.4).toFixed(1));
+        }
     }
 
     function actualizarPromedioVivo(id, esInfancia, showInt) {
