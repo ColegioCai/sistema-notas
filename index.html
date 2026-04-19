@@ -21,7 +21,7 @@
         td { padding: 8px 5px; border-bottom: 1px solid #eee; text-align: center; }
         .nota-input { width: 45px; padding: 5px; text-align: center; border: 1.5px solid #dcdde1; border-radius: 6px; font-weight: bold; color: var(--dark); background: white; }
         .n-roja { color: var(--red); background: #fdedec; border: 1px solid var(--red); border-radius: 4px; padding: 4px; }
-        .n-amarilla { color: #d4ac0d; background: #fef9e7; border: 1px solid #f1c40f; border-radius: 4px; padding: 4px; }
+        .n-amarilla { color: #d4ac0d; background: #fef9e7; border: 1px solid var(--f1c40f); border-radius: 4px; padding: 4px; }
         .n-verde { color: var(--green); background: #e9f7ef; border: 1px solid var(--green); border-radius: 4px; padding: 4px; }
         .btn { padding: 8px 15px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 10px; }
         .btn-save { background: var(--green); color: white; }
@@ -331,13 +331,13 @@
                     promFinal = calcular(nDisp, periodoActual, g); 
                 }
                 
-                // AJUSTE SOLICITADO: Solo mostrar integradora en T2 para Infancia (K4 a 1G)
-                let valInt = nDisp.int || 0;
-                if (esInfancia && esTrimestreInfancia && periodoActual !== "Trimestre 2") {
-                    valInt = 0; 
+                // AJUSTE: Ocultar integradora en Trimestre 1 y 3 para Infancia
+                let displayInt = nDisp.int || 0;
+                if(esInfancia && esTrimestreInfancia && (periodoActual === "Trimestre 1" || periodoActual === "Trimestre 3")) {
+                    displayInt = ""; // Se quita el valor al imprimir
                 }
                 
-                printWin.document.write(`<tr><td class="m-name">${m}</td><td>${nDisp.t||0}</td>${!esInfancia ? `<td>${nDisp.lc||0}</td><td>${nDisp.l||0}</td>` : ''}<td>${valInt}</td><td>${nDisp.ex||0}</td><td style="font-weight:bold">${promFinal}</td></tr>`);
+                printWin.document.write(`<tr><td class="m-name">${m}</td><td>${nDisp.t||0}</td>${!esInfancia ? `<td>${nDisp.lc||0}</td><td>${nDisp.l||0}</td>` : ''}<td>${displayInt}</td><td>${nDisp.ex||0}</td><td style="font-weight:bold">${promFinal}</td></tr>`);
             });
             printWin.document.write(`</tbody></table><div style="font-size:8px; margin-top:5px;"><b>CONDUCTA:</b> ${asis.c} | <b>ASIST. CON PERMISO:</b> ${asis.ap} | <b>ASIST. SIN PERMISO:</b> ${asis.asp}</div><div style="border:1px solid #ccc; padding:3px; min-height:20px; font-size:8px; margin-top:2px;"><b>OBSERVACIONES:</b> ${asis.obs || 'Ninguna.'}</div><div class="f-firma-container"><div class="firma-box"><div class="line"></div><div class="f-name">F. DOCENTE ENCARGADO</div></div><div class="firma-box"><div class="line"></div><div class="f-name">F. REGISTRO ACADÉMICO</div></div><div class="firma-box"><div class="line"></div><div class="f-name">Rhina Linares de Barahona<br>DIRECTORA</div></div></div></div>`);
         });
