@@ -304,24 +304,22 @@
             const asis = al.asistencia?.[periodoActual] || { c:'MUY BUENA', ap:0, asp:0, obs:'' };
             const esBachiAuto = (esBachi && ["Periodo 1", "Periodo 2", "Periodo 3", "Periodo 4"].includes(periodoActual));
             const esConsolidadoBasica = ["Primer Trimestre", "Segundo Trimestre", "Tercer Trimestre"].includes(periodoActual);
+            const esTrimestreInfancia = ["Trimestre 1", "Trimestre 2", "Trimestre 3"].includes(periodoActual);
 
             printWin.document.write(`<div class="boleta"><div class="header"><img src="https://i.ibb.co/Mkf051St/Logo-CAI.png" class="logo"><div style="flex-grow:1;"><div class="inst-name">CAI - COLEGIO AMIGOS DE ISRAEL</div><div class="periodo-name">${periodoActual}</div></div><div class="al-data"><div>GRADO: ${gTxt}</div><div>CODIGO/NIE: ${al.nie}</div></div></div><div class="al-main-info">ALUMNO: ${al.ape}, ${al.nom}</div><table><thead><tr><th class="m-name">MATERIA</th><th>TAREA</th>${!esInfancia ? '<th>LIBRO</th><th>LAB</th>' : ''}<th>INT</th><th>EXAMEN</th><th>PROMEDIO</th></tr></thead><tbody>`);
             
             MATERIAS[ciclo].forEach(m => {
                 let promFinal = 0; 
-                let nDisp = { t:0, lc:0, l:0, int:0, ex:0 }; // Promedios de rubros para consolidado
+                let nDisp = { t:0, lc:0, l:0, int:0, ex:0 }; 
 
                 if (esConsolidadoBasica) {
                     const meses = periodoActual === "Primer Trimestre" ? ["Febrero", "Marzo", "Abril"] : periodoActual === "Segundo Trimestre" ? ["Mayo", "Junio", "Julio"] : ["Agosto", "Septiembre", "Octubre"];
                     const m1 = al.notas?.[meses[0]]?.[m] || {}, m2 = al.notas?.[meses[1]]?.[m] || {}, m3 = al.notas?.[meses[2]]?.[m] || {};
-                    
-                    // Calculamos promedio de cada columna
                     nDisp.t = parseFloat((( (m1.t||0) + (m2.t||0) + (m3.t||0) ) / 3).toFixed(1));
                     nDisp.lc = parseFloat((( (m1.lc||0) + (m2.lc||0) + (m3.lc||0) ) / 3).toFixed(1));
                     nDisp.l = parseFloat((( (m1.l||0) + (m2.l||0) + (m3.l||0) ) / 3).toFixed(1));
                     nDisp.int = parseFloat((( (m1.int||0) + (m2.int||0) + (m3.int||0) ) / 3).toFixed(1));
                     nDisp.ex = parseFloat((( (m1.ex||0) + (m2.ex||0) + (m3.ex||0) ) / 3).toFixed(1));
-                    
                     const p1 = calcular(m1, meses[0], g), p2 = calcular(m2, meses[1], g), p3 = calcular(m3, meses[2], g);
                     promFinal = parseFloat(((p1 + p2 + p3) / 3).toFixed(1));
                 } else if (esBachiAuto) {
@@ -333,7 +331,13 @@
                     promFinal = calcular(nDisp, periodoActual, g); 
                 }
                 
-                printWin.document.write(`<tr><td class="m-name">${m}</td><td>${nDisp.t||0}</td>${!esInfancia ? `<td>${nDisp.lc||0}</td><td>${nDisp.l||0}</td>` : ''}<td>${nDisp.int||0}</td><td>${nDisp.ex||0}</td><td style="font-weight:bold">${promFinal}</td></tr>`);
+                // AJUSTE SOLICITADO: Solo mostrar integradora en T2 para Infancia (K4 a 1G)
+                let valInt = nDisp.int || 0;
+                if (esInfancia && esTrimestreInfancia && periodoActual !== "Trimestre 2") {
+                    valInt = 0; 
+                }
+                
+                printWin.document.write(`<tr><td class="m-name">${m}</td><td>${nDisp.t||0}</td>${!esInfancia ? `<td>${nDisp.lc||0}</td><td>${nDisp.l||0}</td>` : ''}<td>${valInt}</td><td>${nDisp.ex||0}</td><td style="font-weight:bold">${promFinal}</td></tr>`);
             });
             printWin.document.write(`</tbody></table><div style="font-size:8px; margin-top:5px;"><b>CONDUCTA:</b> ${asis.c} | <b>ASIST. CON PERMISO:</b> ${asis.ap} | <b>ASIST. SIN PERMISO:</b> ${asis.asp}</div><div style="border:1px solid #ccc; padding:3px; min-height:20px; font-size:8px; margin-top:2px;"><b>OBSERVACIONES:</b> ${asis.obs || 'Ninguna.'}</div><div class="f-firma-container"><div class="firma-box"><div class="line"></div><div class="f-name">F. DOCENTE ENCARGADO</div></div><div class="firma-box"><div class="line"></div><div class="f-name">F. REGISTRO ACADÉMICO</div></div><div class="firma-box"><div class="line"></div><div class="f-name">Rhina Linares de Barahona<br>DIRECTORA</div></div></div></div>`);
         });
