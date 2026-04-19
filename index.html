@@ -21,7 +21,7 @@
         td { padding: 8px 5px; border-bottom: 1px solid #eee; text-align: center; }
         .nota-input { width: 45px; padding: 5px; text-align: center; border: 1.5px solid #dcdde1; border-radius: 6px; font-weight: bold; color: var(--dark); background: white; }
         .n-roja { color: var(--red); background: #fdedec; border: 1px solid var(--red); border-radius: 4px; padding: 4px; }
-        .n-amarilla { color: #d4ac0d; background: #fef9e7; border: 1px solid var(--f1c40f); border-radius: 4px; padding: 4px; }
+        .n-amarilla { color: #d4ac0d; background: #fef9e7; border: 1px solid #f1c40f; border-radius: 4px; padding: 4px; }
         .n-verde { color: var(--green); background: #e9f7ef; border: 1px solid var(--green); border-radius: 4px; padding: 4px; }
         .btn { padding: 8px 15px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 10px; }
         .btn-save { background: var(--green); color: white; }
@@ -298,7 +298,26 @@
     function generarBoletas() {
         const g = document.getElementById('sel-grado').value, gTxt = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text, ciclo = getCiclo(g), esInfancia = ["K4","K5","K6","1G"].includes(ciclo), esBachi = ciclo.includes("B");
         let printWin = window.open('', '_blank');
-        printWin.document.write(`<html><head><title>Boletas - ${gTxt}</title><style>@page { size: letter; margin: 0; } body { font-family: Arial, sans-serif; padding: 0; margin: 0; } .boleta { height: 50vh; box-sizing: border-box; padding: 10px 30px; border-bottom: 1px dashed #777; display: flex; flex-direction: column; overflow: hidden; } .header { display: flex; align-items: flex-start; border-bottom: 2px solid #e67e22; padding-bottom: 3px; margin-bottom: 5px; } .logo { width: 45px; margin-right: 12px; } .inst-name { font-size: 13px; color: #1a5276; font-weight: bold; } .periodo-name { font-size: 11px; font-weight: bold; color: #e67e22; text-transform: uppercase; } .al-data { text-align: right; font-size: 9px; min-width: 180px; } .al-main-info { background: #1a5276; color: white; padding: 3px 8px; font-weight: bold; margin-bottom: 5px; font-size: 10px; text-transform: uppercase; } table { width: 100%; border-collapse: collapse; } th { background: #f2f2f2; color: #1a5276; padding: 3px; font-size: 8px; border: 1px solid #ccc; } td { border: 1px solid #ccc; padding: 3px; text-align: center; font-size: 8.5px; } .m-name { text-align: left; padding-left: 8px; font-weight: bold; width: 40%; } .f-firma-container { margin-top: auto; padding-bottom: 15px; display: flex; justify-content: space-between; text-align: center; } .firma-box { flex: 1; display: flex; flex-direction: column; align-items: center; } .line { border-top: 1px solid #000; width: 80%; margin-bottom: 3px; } .f-name { font-size: 8px; font-weight: bold; }</style></head><body>`);
+        printWin.document.write(`<html><head><title>Boletas - ${gTxt}</title><style>
+            @page { size: letter; margin: 5mm; } 
+            body { font-family: Arial, sans-serif; padding: 0; margin: 0; background: white; } 
+            .boleta { height: 135mm; width: 95%; margin: 0 auto; box-sizing: border-box; padding: 15px; border-bottom: 1px dashed #777; display: flex; flex-direction: column; overflow: hidden; page-break-inside: avoid; } 
+            .header { display: flex; align-items: flex-start; border-bottom: 2px solid #e67e22; padding-bottom: 3px; margin-bottom: 5px; } 
+            .logo { width: 45px; margin-right: 12px; } 
+            .inst-name { font-size: 13px; color: #1a5276; font-weight: bold; } 
+            .periodo-name { font-size: 11px; font-weight: bold; color: #e67e22; text-transform: uppercase; } 
+            .al-data { text-align: right; font-size: 9px; min-width: 180px; } 
+            .al-main-info { background: #1a5276; color: white; padding: 3px 8px; font-weight: bold; margin-bottom: 5px; font-size: 10px; text-transform: uppercase; } 
+            table { width: 100%; border-collapse: collapse; } 
+            th { background: #f2f2f2; color: #1a5276; padding: 3px; font-size: 8px; border: 1px solid #ccc; } 
+            td { border: 1px solid #ccc; padding: 3px; text-align: center; font-size: 8.5px; } 
+            .m-name { text-align: left; padding-left: 8px; font-weight: bold; width: 40%; } 
+            .f-firma-container { margin-top: auto; padding-bottom: 10px; display: flex; justify-content: space-between; text-align: center; } 
+            .firma-box { flex: 1; display: flex; flex-direction: column; align-items: center; } 
+            .line { border-top: 1px solid #000; width: 80%; margin-bottom: 3px; } 
+            .f-name { font-size: 8px; font-weight: bold; }
+            @media print { .boleta { border-bottom: 1px dashed #777; } }
+        </style></head><body>`);
 
         dataAlumnos.filter(a => a.grado === gTxt).forEach(al => {
             const asis = al.asistencia?.[periodoActual] || { c:'MUY BUENA', ap:0, asp:0, obs:'' };
@@ -331,10 +350,9 @@
                     promFinal = calcular(nDisp, periodoActual, g); 
                 }
                 
-                // AJUSTE: Ocultar integradora en Trimestre 1 y 3 para Infancia
                 let displayInt = nDisp.int || 0;
                 if(esInfancia && esTrimestreInfancia && (periodoActual === "Trimestre 1" || periodoActual === "Trimestre 3")) {
-                    displayInt = ""; // Se quita el valor al imprimir
+                    displayInt = ""; 
                 }
                 
                 printWin.document.write(`<tr><td class="m-name">${m}</td><td>${nDisp.t||0}</td>${!esInfancia ? `<td>${nDisp.lc||0}</td><td>${nDisp.l||0}</td>` : ''}<td>${displayInt}</td><td>${nDisp.ex||0}</td><td style="font-weight:bold">${promFinal}</td></tr>`);
