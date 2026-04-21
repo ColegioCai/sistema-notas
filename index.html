@@ -21,7 +21,7 @@
         td { padding: 8px 5px; border-bottom: 1px solid #eee; text-align: center; }
         .nota-input { width: 45px; padding: 5px; text-align: center; border: 1.5px solid #dcdde1; border-radius: 6px; font-weight: bold; color: var(--dark); background: white; }
         .n-roja { color: var(--red); background: #fdedec; border: 1px solid var(--red); border-radius: 4px; padding: 4px; }
-        .n-amarilla { color: #d4ac0d; background: #fef9e7; border: 1px solid var(--f1c40f); border-radius: 4px; padding: 4px; }
+        .n-amarilla { color: #d4ac0d; background: #fef9e7; border: 1px solid #f1c40f; border-radius: 4px; padding: 4px; }
         .n-verde { color: var(--green); background: #e9f7ef; border: 1px solid var(--green); border-radius: 4px; padding: 4px; }
         .btn { padding: 8px 15px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 10px; }
         .btn-save { background: var(--green); color: white; }
@@ -115,16 +115,20 @@
 
     function login() {
         const u = document.getElementById('user').value.toLowerCase(), p = document.getElementById('pass').value;
-        if(u==='admin' && p==='admin2026') currentRol='admin';
+        // NUEVA CLAVE ACTUALIZADA: registro2026
+        if(u==='admin' && p==='registro2026') currentRol='admin';
         else if(u==='infancia' && p==='cai1') currentRol='infancia';
         else if(u==='docente' && p==='cai2') currentRol='docente';
         else if(u==='bachillerato' && p==='cai3') currentRol='bachillerato';
+        
         if(currentRol) {
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('app').classList.remove('hidden');
             document.getElementById('txt-rol').innerText = "ROL: " + currentRol.toUpperCase();
             if(currentRol === 'admin') document.getElementById('panel-admin').classList.remove('hidden');
             cargarSelect();
+        } else {
+            alert("Usuario o contraseña incorrectos");
         }
     }
 
