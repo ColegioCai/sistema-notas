@@ -13,6 +13,7 @@
         .tabs { display: flex; background: #1c2833; padding: 10px 10px 0; gap: 4px; overflow-x: auto; }
         .tab { padding: 10px 15px; color: #bdc3c7; cursor: pointer; border-radius: 6px 6px 0 0; background: rgba(255,255,255,0.05); border: none; font-size: 10px; white-space: nowrap; }
         .tab.active { background: var(--bg); color: var(--p); font-weight: bold; }
+        .tab.cons-btn { background: #8e44ad; color: white; margin-left: 10px; border-radius: 6px 6px 0 0; }
         .tab.asis-btn { background: var(--orange); color: white; margin-left: auto; border-radius: 6px 6px 0 0; }
         .container { max-width: 1400px; margin: 15px auto; padding: 0 15px; }
         .table-card { background: white; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); overflow-x: auto; padding: 15px; }
@@ -115,20 +116,16 @@
 
     function login() {
         const u = document.getElementById('user').value.toLowerCase(), p = document.getElementById('pass').value;
-        // NUEVA CLAVE ACTUALIZADA: registro2026
         if(u==='admin' && p==='registro2026') currentRol='admin';
         else if(u==='infancia' && p==='cai1') currentRol='infancia';
         else if(u==='docente' && p==='cai2') currentRol='docente';
         else if(u==='bachillerato' && p==='cai3') currentRol='bachillerato';
-        
         if(currentRol) {
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('app').classList.remove('hidden');
             document.getElementById('txt-rol').innerText = "ROL: " + currentRol.toUpperCase();
             if(currentRol === 'admin') document.getElementById('panel-admin').classList.remove('hidden');
             cargarSelect();
-        } else {
-            alert("Usuario o contraseña incorrectos");
         }
     }
 
@@ -171,6 +168,7 @@
         let html = lista.map(p => `<button class="tab ${p===periodoActual && vistaActual==='NOTAS'?'active':''}" onclick="setPeriodo('${p}', this)">${p}</button>`).join('');
         const esConsolidado = periodoActual.includes("Trimestre") || (periodoActual.startsWith("Periodo") && !periodoActual.includes("Eval"));
         if(esConsolidado){
+            html += `<button class="tab cons-btn ${vistaActual==='CONSOLIDADO'?'active':''}" onclick="setVistaConsolidado()">📋 CONSOLIDADO</button>`;
             html += `<button id="btn-tab-asis" class="tab asis-btn ${vistaActual==='ASISTENCIA'?'active':''}" onclick="setVistaAsistencia()">📊 ASISTENCIA (${periodoActual})</button>`;
         }
         document.getElementById('nav-tabs').innerHTML = html;
@@ -179,10 +177,11 @@
     function setPeriodo(p, btn) { 
         periodoActual = p; vistaActual = "NOTAS"; dibujar(); 
         document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); btn.classList.add('active');
-        renderTabs(document.getElementById('nav-tabs').innerText.split('\n').filter(x => x && !x.includes("📊")));
+        renderTabs(document.getElementById('nav-tabs').innerText.split('\n').filter(x => x && !x.includes("📊") && !x.includes("📋")));
     }
 
     function setVistaAsistencia() { vistaActual = "ASISTENCIA"; dibujarAsistencia(); document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); document.getElementById('btn-tab-asis').classList.add('active'); }
+    function setVistaConsolidado() { vistaActual = "CONSOLIDADO"; dibujarConsolidado(); }
 
     function getColorClass(nota) {
         if(nota < 5) return "n-roja";
@@ -282,6 +281,40 @@
         document.getElementById('table-body').innerHTML = b;
     }
 
+    function dibujarConsolidado() {
+        const g = document.getElementById('sel-grado').value, ciclo = getCiclo(g), gTxt = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text;
+        const materias = MATERIAS[ciclo];
+        
+        let h = `<th>NIE</th><th>Alumno</th>`;
+        materias.forEach(m => { h += `<th title="${m}">${m.substring(0,4)}.</th>`; });
+        h += `<th>Cond.</th><th>P.</th><th>S.P.</th>`;
+        document.getElementById('table-head').innerHTML = h;
+
+        let fil = dataAlumnos.filter(a => a.grado === gTxt).sort((a,b) => a.ape.localeCompare(b.ape)), b = "";
+        fil.forEach(al => {
+            const asis = al.asistencia?.[periodoActual] || { c:'-', ap:0, asp:0 };
+            b += `<tr><td>${al.nie}</td><td style="text-align:left; font-size:9px;">${al.ape}</td>`;
+            
+            materias.forEach(m => {
+                let pFin = 0;
+                if (periodoActual.includes("Trimestre")) {
+                    const meses = periodoActual === "Primer Trimestre" ? ["Febrero", "Marzo", "Abril"] : periodoActual === "Segundo Trimestre" ? ["Mayo", "Junio", "Julio"] : ["Agosto", "Septiembre", "Octubre"];
+                    const p1 = calcular(al.notas?.[meses[0]]?.[m] || {}, meses[0], g);
+                    const p2 = calcular(al.notas?.[meses[1]]?.[m] || {}, meses[1], g);
+                    const p3 = calcular(al.notas?.[meses[2]]?.[m] || {}, meses[2], g);
+                    pFin = parseFloat(((p1 + p2 + p3) / 3).toFixed(1));
+                } else {
+                    const n1 = al.notas?.[periodoActual + " - Eval 1"]?.[m] || {}, n2 = al.notas?.[periodoActual + " - Eval 2"]?.[m] || {};
+                    pFin = parseFloat(((calcular(n1, periodoActual + " - Eval 1", g) + calcular(n2, periodoActual + " - Eval 2", g)) / 2).toFixed(1));
+                }
+                b += `<td class="${getColorClass(pFin)}">${pFin}</td>`;
+            });
+
+            b += `<td>${asis.c.substring(0,2)}</td><td>${asis.ap}</td><td>${asis.asp}</td></tr>`;
+        });
+        document.getElementById('table-body').innerHTML = b;
+    }
+
     function dibujarAsistencia() {
         const gTxt = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text;
         document.getElementById('table-head').innerHTML = `<th>NIE</th><th>Alumno</th><th>Conducta</th><th>Permiso</th><th>Sin Permiso</th><th>Observaciones</th><th>Acción</th>`;
@@ -307,7 +340,7 @@
     }
 
     function borrarAlumno(id) { if(confirm("¿Borrar alumno permanentemente?")) db.ref(`alumnos/${id}`).remove(); }
-    function escucharDB() { db.ref('alumnos').on('value', snap => { const v = snap.val(); dataAlumnos = v ? Object.keys(v).map(k=>({id:k, ...v[k]})) : []; if(vistaActual==="NOTAS") dibujar(); else dibujarAsistencia(); }); }
+    function escucharDB() { db.ref('alumnos').on('value', snap => { const v = snap.val(); dataAlumnos = v ? Object.keys(v).map(k=>({id:k, ...v[k]})) : []; if(vistaActual==="NOTAS") dibujar(); else if(vistaActual==="CONSOLIDADO") dibujarConsolidado(); else dibujarAsistencia(); }); }
 
     function generarBoletas() {
         const g = document.getElementById('sel-grado').value, gTxt = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text, ciclo = getCiclo(g), esInfancia = ["K4","K5","K6","1G"].includes(ciclo), esBachi = ciclo.includes("B");
@@ -341,9 +374,7 @@
             printWin.document.write(`<div class="boleta"><div class="header"><img src="https://i.ibb.co/Mkf051St/Logo-CAI.png" class="logo"><div style="flex-grow:1;"><div class="inst-name">CAI - COLEGIO AMIGOS DE ISRAEL</div><div class="periodo-name">${periodoActual}</div></div><div class="al-data"><div>GRADO: ${gTxt}</div><div>CODIGO/NIE: ${al.nie}</div></div></div><div class="al-main-info">ALUMNO: ${al.ape}, ${al.nom}</div><table><thead><tr><th class="m-name">MATERIA</th><th>TAREA</th>${!esInfancia ? '<th>LIBRO</th><th>LAB</th>' : ''}<th>INT</th><th>EXAMEN</th><th>PROMEDIO</th></tr></thead><tbody>`);
             
             MATERIAS[ciclo].forEach(m => {
-                let promFinal = 0; 
-                let nDisp = { t:0, lc:0, l:0, int:0, ex:0 }; 
-
+                let promFinal = 0, nDisp = { t:0, lc:0, l:0, int:0, ex:0 }; 
                 if (esConsolidadoBasica) {
                     const meses = periodoActual === "Primer Trimestre" ? ["Febrero", "Marzo", "Abril"] : periodoActual === "Segundo Trimestre" ? ["Mayo", "Junio", "Julio"] : ["Agosto", "Septiembre", "Octubre"];
                     const m1 = al.notas?.[meses[0]]?.[m] || {}, m2 = al.notas?.[meses[1]]?.[m] || {}, m3 = al.notas?.[meses[2]]?.[m] || {};
@@ -352,8 +383,7 @@
                     nDisp.l = parseFloat((( (m1.l||0) + (m2.l||0) + (m3.l||0) ) / 3).toFixed(1));
                     nDisp.int = parseFloat((( (m1.int||0) + (m2.int||0) + (m3.int||0) ) / 3).toFixed(1));
                     nDisp.ex = parseFloat((( (m1.ex||0) + (m2.ex||0) + (m3.ex||0) ) / 3).toFixed(1));
-                    const p1 = calcular(m1, meses[0], g), p2 = calcular(m2, meses[1], g), p3 = calcular(m3, meses[2], g);
-                    promFinal = parseFloat(((p1 + p2 + p3) / 3).toFixed(1));
+                    promFinal = parseFloat(((calcular(m1, meses[0], g) + calcular(m2, meses[1], g) + calcular(m3, meses[2], g)) / 3).toFixed(1));
                 } else if (esBachiCons) {
                     const n1 = al.notas?.[periodoActual + " - Eval 1"]?.[m] || {}, n2 = al.notas?.[periodoActual + " - Eval 2"]?.[m] || {};
                     nDisp.t = parseFloat((( (n1.t||0) + (n2.t||0) ) / 2).toFixed(1));
@@ -363,10 +393,8 @@
                     nDisp.ex = parseFloat((( (n1.ex||0) + (n2.ex||0) ) / 2).toFixed(1));
                     promFinal = parseFloat(((calcular(n1, periodoActual + " - Eval 1", g) + calcular(n2, periodoActual + " - Eval 2", g)) / 2).toFixed(1));
                 } else { 
-                    nDisp = al.notas?.[periodoActual]?.[m] || {}; 
-                    promFinal = calcular(nDisp, periodoActual, g); 
+                    nDisp = al.notas?.[periodoActual]?.[m] || {}; promFinal = calcular(nDisp, periodoActual, g); 
                 }
-                
                 printWin.document.write(`<tr><td class="m-name">${m}</td><td>${nDisp.t||0}</td>${!esInfancia ? `<td>${nDisp.lc||0}</td><td>${nDisp.l||0}</td>` : ''}<td>${nDisp.int||0}</td><td>${nDisp.ex||0}</td><td style="font-weight:bold">${promFinal}</td></tr>`);
             });
             printWin.document.write(`</tbody></table><div style="font-size:8px; margin-top:5px;"><b>CONDUCTA:</b> ${asis.c} | <b>ASIST. CON PERMISO:</b> ${asis.ap} | <b>ASIST. SIN PERMISO:</b> ${asis.asp}</div><div style="border:1px solid #ccc; padding:3px; min-height:20px; font-size:8px; margin-top:2px;"><b>OBSERVACIONES:</b> ${asis.obs || 'Ninguna.'}</div><div class="f-firma-container"><div class="firma-box"><div class="line"></div><div class="f-name">F. DOCENTE ENCARGADO</div></div><div class="firma-box"><div class="line"></div><div class="f-name">F. REGISTRO ACADÉMICO</div></div><div class="firma-box"><div class="line"></div><div class="f-name">Rhina Linares de Barahona<br>DIRECTORA</div></div></div></div>`);
