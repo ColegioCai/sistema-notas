@@ -6,6 +6,7 @@
     <title>SISTEMA CAI 2026 - GESTIÓN INTEGRAL</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         :root { --p: #1a5276; --bg: #f4f6f7; --orange: #e67e22; --dark: #2c3e50; --green: #27ae60; --red: #e74c3c; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; font-size: 11px; }
@@ -32,6 +33,10 @@
         .admin-panel { background: #ebf5fb; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #aed6f1; display: flex; gap: 10px; align-items: flex-end; }
         .login-box { background: white; padding: 40px; border-radius: 20px; width: 320px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
         input, select, textarea { padding: 8px; border-radius: 8px; border: 1px solid #ccc; width: 100%; box-sizing: border-box; }
+        
+        /* Estilo para el PDF */
+        #pdf-content { padding: 20px; background: white; }
+        .pdf-header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid var(--p); padding-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -58,6 +63,7 @@
             <div style="display:flex; gap:10px;">
                 <select id="sel-grado" onchange="cambiarGrado()" style="margin:0; width:180px;"></select>
                 <button id="btn-boletas" onclick="generarBoletas()" class="btn btn-print hidden">📑 IMPRIMIR BOLETAS</button>
+                <button id="btn-pdf-consolidado" onclick="descargarPDFConsolidado()" class="btn hidden" style="background:#8e44ad; color:white;">📥 DESCARGAR PDF</button>
                 <button onclick="location.reload()" class="btn" style="background:var(--red); color:white;">SALIR</button>
             </div>
         </div>
@@ -76,7 +82,13 @@
                 </div>
                 <button onclick="agregarAlumno()" class="btn btn-save" style="height:35px;">+ AGREGAR ALUMNO</button>
             </div>
-            <div class="table-card">
+            
+            <div id="printable-area" class="table-card">
+                <div id="pdf-header-info" class="hidden pdf-header">
+                    <h2 style="margin:0; color:#1a5276;">COLEGIO AMIGOS DE ISRAEL (CAI)</h2>
+                    <h3 id="pdf-titulo-grado" style="margin:5px 0; color:#e67e22;">CONSOLIDADO DE NOTAS</h3>
+                    <p id="pdf-sub-periodo" style="margin:0; font-weight:bold;"></p>
+                </div>
                 <table><thead><tr id="table-head"></tr></thead><tbody id="table-body"></tbody></table>
             </div>
         </div>
@@ -215,6 +227,7 @@
     }
 
     function dibujar() {
+        document.getElementById('btn-pdf-consolidado').classList.add('hidden');
         const g = document.getElementById('sel-grado').value, ciclo = getCiclo(g), gTxt = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text;
         const isAdmin = currentRol === 'admin', esInfancia = ["K4","K5","K6","1G"].includes(ciclo), esBachi = ciclo.includes("B");
         const mostrarPrint = (isAdmin && (periodoActual.includes("Trimestre") || (esBachi && periodoActual.startsWith("Periodo") && !periodoActual.includes("Eval"))));
@@ -251,15 +264,10 @@
             } else if (esConsolidadoBachi) {
                 const n1 = al.notas?.[periodoActual + " - Eval 1"]?.[materiaVisualizada] || {};
                 const n2 = al.notas?.[periodoActual + " - Eval 2"]?.[materiaVisualizada] || {};
-                const t = parseFloat((( (n1.t||0) + (n2.t||0) ) / 2).toFixed(1));
-                const lc = parseFloat((( (n1.lc||0) + (n2.lc||0) ) / 2).toFixed(1));
-                const l = parseFloat((( (n1.l||0) + (n2.l||0) ) / 2).toFixed(1));
-                const int = parseFloat((( (n1.int||0) + (n2.int||0) ) / 2).toFixed(1));
-                const ex = parseFloat((( (n1.ex||0) + (n2.ex||0) ) / 2).toFixed(1));
                 const prom = parseFloat(((calcular(n1, periodoActual + " - Eval 1", g) + calcular(n2, periodoActual + " - Eval 2", g)) / 2).toFixed(1));
                 b += `<tr><td>${al.nie}</td><td style="text-align:left">${al.ape}</td><td style="text-align:left">${al.nom}</td>
                     <td><select onchange="materiaVisualizada=this.value; dibujar()">${MATERIAS[ciclo].map(m=>`<option ${m===materiaVisualizada?'selected':''}>${m}</option>`).join('')}</select></td>
-                    <td>${t}</td><td>${lc}</td><td>${l}</td><td>${int}</td><td>${ex}</td><td style="font-weight:bold"><span class="${getColorClass(prom)}">${prom}</span></td><td>-</td></tr>`;
+                    <td>${n1.t||0}</td><td>${n1.lc||0}</td><td>${n1.l||0}</td><td>${n1.int||0}</td><td>${n1.ex||0}</td><td style="font-weight:bold"><span class="${getColorClass(prom)}">${prom}</span></td><td>-</td></tr>`;
             } else {
                 let n = (al.notas?.[periodoActual]?.[materiaVisualizada] || {});
                 let prom = calcular(n, periodoActual, g);
@@ -282,11 +290,12 @@
     }
 
     function dibujarConsolidado() {
+        document.getElementById('btn-pdf-consolidado').classList.remove('hidden');
         const g = document.getElementById('sel-grado').value, ciclo = getCiclo(g), gTxt = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text;
         const materias = MATERIAS[ciclo];
         
         let h = `<th>NIE</th><th>Alumno</th>`;
-        materias.forEach(m => { h += `<th title="${m}">${m.substring(0,4)}.</th>`; });
+        materias.forEach(m => { h += `<th style="font-size:8px;">${m.substring(0,6)}</th>`; });
         h += `<th>Cond.</th><th>P.</th><th>S.P.</th>`;
         document.getElementById('table-head').innerHTML = h;
 
@@ -309,13 +318,36 @@
                 }
                 b += `<td class="${getColorClass(pFin)}">${pFin}</td>`;
             });
-
             b += `<td>${asis.c.substring(0,2)}</td><td>${asis.ap}</td><td>${asis.asp}</td></tr>`;
         });
         document.getElementById('table-body').innerHTML = b;
     }
 
+    function descargarPDFConsolidado() {
+        const element = document.getElementById('printable-area');
+        const header = document.getElementById('pdf-header-info');
+        const gTxt = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text;
+        
+        document.getElementById('pdf-titulo-grado').innerText = "CONSOLIDADO DE NOTAS - " + gTxt;
+        document.getElementById('pdf-sub-periodo').innerText = "PERIODO: " + periodoActual;
+        
+        header.classList.remove('hidden'); // Mostrar encabezado solo para PDF
+        
+        const opt = {
+            margin: 10,
+            filename: `Consolidado_${gTxt}_${periodoActual}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true },
+            jsPDF: { unit: 'mm', format: 'letter', orientation: 'landscape' }
+        };
+
+        html2pdf().from(element).set(opt).save().then(() => {
+            header.classList.add('hidden'); // Ocultar después de generar
+        });
+    }
+
     function dibujarAsistencia() {
+        document.getElementById('btn-pdf-consolidado').classList.add('hidden');
         const gTxt = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text;
         document.getElementById('table-head').innerHTML = `<th>NIE</th><th>Alumno</th><th>Conducta</th><th>Permiso</th><th>Sin Permiso</th><th>Observaciones</th><th>Acción</th>`;
         let fil = dataAlumnos.filter(a => a.grado === gTxt).sort((a,b) => a.ape.localeCompare(b.ape)), b = "";
@@ -378,20 +410,12 @@
                 if (esConsolidadoBasica) {
                     const meses = periodoActual === "Primer Trimestre" ? ["Febrero", "Marzo", "Abril"] : periodoActual === "Segundo Trimestre" ? ["Mayo", "Junio", "Julio"] : ["Agosto", "Septiembre", "Octubre"];
                     const m1 = al.notas?.[meses[0]]?.[m] || {}, m2 = al.notas?.[meses[1]]?.[m] || {}, m3 = al.notas?.[meses[2]]?.[m] || {};
-                    nDisp.t = parseFloat((( (m1.t||0) + (m2.t||0) + (m3.t||0) ) / 3).toFixed(1));
-                    nDisp.lc = parseFloat((( (m1.lc||0) + (m2.lc||0) + (m3.lc||0) ) / 3).toFixed(1));
-                    nDisp.l = parseFloat((( (m1.l||0) + (m2.l||0) + (m3.l||0) ) / 3).toFixed(1));
-                    nDisp.int = parseFloat((( (m1.int||0) + (m2.int||0) + (m3.int||0) ) / 3).toFixed(1));
-                    nDisp.ex = parseFloat((( (m1.ex||0) + (m2.ex||0) + (m3.ex||0) ) / 3).toFixed(1));
                     promFinal = parseFloat(((calcular(m1, meses[0], g) + calcular(m2, meses[1], g) + calcular(m3, meses[2], g)) / 3).toFixed(1));
+                    nDisp.ex = parseFloat((( (m1.ex||0) + (m2.ex||0) + (m3.ex||0) ) / 3).toFixed(1));
                 } else if (esBachiCons) {
                     const n1 = al.notas?.[periodoActual + " - Eval 1"]?.[m] || {}, n2 = al.notas?.[periodoActual + " - Eval 2"]?.[m] || {};
-                    nDisp.t = parseFloat((( (n1.t||0) + (n2.t||0) ) / 2).toFixed(1));
-                    nDisp.lc = parseFloat((( (n1.lc||0) + (n2.lc||0) ) / 2).toFixed(1));
-                    nDisp.l = parseFloat((( (n1.l||0) + (n2.l||0) ) / 2).toFixed(1));
-                    nDisp.int = parseFloat((( (n1.int||0) + (n2.int||0) ) / 2).toFixed(1));
-                    nDisp.ex = parseFloat((( (n1.ex||0) + (n2.ex||0) ) / 2).toFixed(1));
                     promFinal = parseFloat(((calcular(n1, periodoActual + " - Eval 1", g) + calcular(n2, periodoActual + " - Eval 2", g)) / 2).toFixed(1));
+                    nDisp.ex = parseFloat((( (n1.ex||0) + (n2.ex||0) ) / 2).toFixed(1));
                 } else { 
                     nDisp = al.notas?.[periodoActual]?.[m] || {}; promFinal = calcular(nDisp, periodoActual, g); 
                 }
