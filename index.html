@@ -23,7 +23,7 @@
         td { padding: 8px 5px; border-bottom: 1px solid #eee; text-align: center; }
         .nota-input { width: 45px; padding: 5px; text-align: center; border: 1.5px solid #dcdde1; border-radius: 6px; font-weight: bold; color: var(--dark); background: white; }
         .n-roja { color: var(--red); background: #fdedec; border: 1px solid var(--red); border-radius: 4px; padding: 4px; }
-        .n-amarilla { color: #d4ac0d; background: #fef9e7; border: 1px solid var(--f1c40f); border-radius: 4px; padding: 4px; }
+        .n-amarilla { color: #d4ac0d; background: #fef9e7; border: 1px solid #f1c40f; border-radius: 4px; padding: 4px; }
         .n-verde { color: var(--green); background: #e9f7ef; border: 1px solid var(--green); border-radius: 4px; padding: 4px; }
         .btn { padding: 8px 15px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 10px; }
         .btn-save { background: var(--green); color: white; }
@@ -33,8 +33,6 @@
         .admin-panel { background: #ebf5fb; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #aed6f1; display: flex; gap: 10px; align-items: flex-end; }
         .login-box { background: white; padding: 40px; border-radius: 20px; width: 320px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
         input, select, textarea { padding: 8px; border-radius: 8px; border: 1px solid #ccc; width: 100%; box-sizing: border-box; }
-        
-        /* Estilos específicos para que el PDF se vea bien al forzar una hoja */
         .pdf-header { text-align: center; margin-bottom: 10px; border-bottom: 2px solid var(--p); padding-bottom: 5px; }
         .pdf-table { width: 100% !important; min-width: 100% !important; font-size: 8px !important; }
         .pdf-table th, .pdf-table td { padding: 4px 2px !important; }
@@ -273,18 +271,20 @@
             } else {
                 let n = (al.notas?.[periodoActual]?.[materiaVisualizada] || {});
                 let prom = calcular(n, periodoActual, g);
-                const yaGuardado = (n.guardado && !isAdmin);
+                // LÓGICA DE BLOQUEO: Solo admin puede editar si ya se guardó una vez (ediciones > 0)
+                const estaBloqueado = (!isAdmin && n.ediciones > 0);
+
                 b += `<tr id="row-${al.id}"><td>${al.nie}</td><td style="text-align:left">${al.ape}</td><td style="text-align:left">${al.nom}</td>
                     <td><select onchange="materiaVisualizada=this.value; dibujar()">${MATERIAS[ciclo].map(m=>`<option ${m===materiaVisualizada?'selected':''}>${m}</option>`).join('')}</select></td>
-                    <td><input type="text" class="nota-input inp-t" value="${n.t||0}" ${yaGuardado?'disabled':''} oninput="actualizarPromedioVivo('${al.id}', ${esInfancia}, ${showInt})"></td>`;
+                    <td><input type="text" class="nota-input inp-t" value="${n.t||0}" ${estaBloqueado?'disabled':''} oninput="actualizarPromedioVivo('${al.id}', ${esInfancia}, ${showInt})"></td>`;
                 if(!esInfancia) {
-                    b += `<td><input type="text" class="nota-input inp-lc" value="${n.lc||0}" ${yaGuardado?'disabled':''} oninput="actualizarPromedioVivo('${al.id}', ${esInfancia}, ${showInt})"></td>
-                          <td><input type="text" class="nota-input inp-l" value="${n.l||0}" ${yaGuardado?'disabled':''} oninput="actualizarPromedioVivo('${al.id}', ${esInfancia}, ${showInt})"></td>`;
+                    b += `<td><input type="text" class="nota-input inp-lc" value="${n.lc||0}" ${estaBloqueado?'disabled':''} oninput="actualizarPromedioVivo('${al.id}', ${esInfancia}, ${showInt})"></td>
+                          <td><input type="text" class="nota-input inp-l" value="${n.l||0}" ${estaBloqueado?'disabled':''} oninput="actualizarPromedioVivo('${al.id}', ${esInfancia}, ${showInt})"></td>`;
                 }
-                if(showInt) b += `<td><input type="text" class="nota-input inp-int" value="${n.int||0}" ${yaGuardado?'disabled':''} oninput="actualizarPromedioVivo('${al.id}', ${esInfancia}, ${showInt})"></td>`;
-                b += `<td><input type="text" class="nota-input inp-ex" value="${n.ex||0}" ${yaGuardado?'disabled':''} oninput="actualizarPromedioVivo('${al.id}', ${esInfancia}, ${showInt})"></td>
+                if(showInt) b += `<td><input type="text" class="nota-input inp-int" value="${n.int||0}" ${estaBloqueado?'disabled':''} oninput="actualizarPromedioVivo('${al.id}', ${esInfancia}, ${showInt})"></td>`;
+                b += `<td><input type="text" class="nota-input inp-ex" value="${n.ex||0}" ${estaBloqueado?'disabled':''} oninput="actualizarPromedioVivo('${al.id}', ${esInfancia}, ${showInt})"></td>
                     <td style="font-weight:bold"><span class="cell-prom-valor ${getColorClass(prom)}">${prom}</span></td>
-                    <td><button class="btn btn-save" onclick="guardarNotas('${al.id}', ${esInfancia}, ${showInt})" ${yaGuardado?'disabled':''}>💾</button>
+                    <td><button class="btn btn-save" onclick="guardarNotas('${al.id}', ${esInfancia}, ${showInt})" ${estaBloqueado?'disabled':''}>💾</button>
                     ${isAdmin ? `<button class="btn btn-del" onclick="borrarAlumno('${al.id}')">🗑️</button>` : ''}</td></tr>`;
             }
         });
@@ -331,26 +331,12 @@
         const header = document.getElementById('pdf-header-info');
         const table = document.getElementById('main-table');
         const gTxt = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text;
-        
         document.getElementById('pdf-titulo-grado').innerText = "CONSOLIDADO DE NOTAS - " + gTxt;
         document.getElementById('pdf-sub-periodo').innerText = "PERIODO: " + periodoActual;
-        
-        // Ajustes temporales para PDF
         header.classList.remove('hidden');
         table.classList.add('pdf-table');
-        
-        const opt = {
-            margin: [10, 5, 10, 5], // Márgenes mínimos
-            filename: `Consolidado_${gTxt}_${periodoActual}.pdf`,
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 3, useCORS: true, logging: false },
-            jsPDF: { unit: 'mm', format: 'letter', orientation: 'landscape' } // Horizontal para que quepan materias
-        };
-
-        html2pdf().from(element).set(opt).save().then(() => {
-            header.classList.add('hidden');
-            table.classList.remove('pdf-table');
-        });
+        const opt = { margin: [10, 5, 10, 5], filename: `Consolidado_${gTxt}_${periodoActual}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 3, useCORS: true, logging: false }, jsPDF: { unit: 'mm', format: 'letter', orientation: 'landscape' } };
+        html2pdf().from(element).set(opt).save().then(() => { header.classList.add('hidden'); table.classList.remove('pdf-table'); });
     }
 
     function dibujarAsistencia() {
@@ -371,12 +357,35 @@
     }
 
     function guardarAsis(id) { const r = document.getElementById(`asis-${id}`); const d = { c: r.querySelector('.inp-c').value, ap: r.querySelector('.inp-ap').value, asp: r.querySelector('.inp-asp').value, obs: r.querySelector('.inp-obs').value }; db.ref(`alumnos/${id}/asistencia/${periodoActual}`).set(d).then(() => alert(`Asistencia Guardada.`)); }
+    
     function guardarNotas(id, esInfancia, showInt) { 
         const r = document.getElementById(`row-${id}`); 
-        const d = { t: parseFloat(r.querySelector('.inp-t').value) || 0, ex: parseFloat(r.querySelector('.inp-ex').value) || 0, guardado: true }; 
-        if(!esInfancia) { d.l = parseFloat(r.querySelector('.inp-l').value) || 0; d.lc = parseFloat(r.querySelector('.inp-lc').value) || 0; } 
-        if(showInt) d.int = parseFloat(r.querySelector('.inp-int').value) || 0; 
-        db.ref(`alumnos/${id}/notas/${periodoActual}/${materiaVisualizada}`).set(d).then(() => { alert("Nota Guardada."); dibujar(); }); 
+        const alRef = db.ref(`alumnos/${id}/notas/${periodoActual}/${materiaVisualizada}`);
+        
+        alRef.once('value').then(snap => {
+            const nData = snap.val() || { ediciones: 0 };
+            const isAdmin = currentRol === 'admin';
+            
+            // Si ya se editó una vez y no es admin, abortar
+            if (!isAdmin && nData.ediciones > 0) {
+                alert("Ya has realizado la edición permitida. Contacta al administrador para cambios adicionales.");
+                dibujar();
+                return;
+            }
+
+            const d = { 
+                t: parseFloat(r.querySelector('.inp-t').value) || 0, 
+                ex: parseFloat(r.querySelector('.inp-ex').value) || 0, 
+                ediciones: (nData.ediciones || 0) + 1 
+            }; 
+            if(!esInfancia) { d.l = parseFloat(r.querySelector('.inp-l').value) || 0; d.lc = parseFloat(r.querySelector('.inp-lc').value) || 0; } 
+            if(showInt) d.int = parseFloat(r.querySelector('.inp-int').value) || 0; 
+            
+            alRef.set(d).then(() => { 
+                alert(isAdmin ? "Nota actualizada (Admin)" : "Nota guardada. Esta fue su única oportunidad de edición."); 
+                dibujar(); 
+            });
+        });
     }
 
     function borrarAlumno(id) { if(confirm("¿Borrar alumno permanentemente?")) db.ref(`alumnos/${id}`).remove(); }
