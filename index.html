@@ -23,7 +23,7 @@
         td { padding: 8px 5px; border-bottom: 1px solid #eee; text-align: center; }
         .nota-input { width: 45px; padding: 5px; text-align: center; border: 1.5px solid #dcdde1; border-radius: 6px; font-weight: bold; color: var(--dark); background: white; }
         .n-roja { color: var(--red); background: #fdedec; border: 1px solid var(--red); border-radius: 4px; padding: 4px; }
-        .n-amarilla { color: #d4ac0d; background: #fef9e7; border: 1px solid #f1c40f; border-radius: 4px; padding: 4px; }
+        .n-amarilla { color: #d4ac0d; background: #fef9e7; border: 1px solid var(--f1c40f); border-radius: 4px; padding: 4px; }
         .n-verde { color: var(--green); background: #e9f7ef; border: 1px solid var(--green); border-radius: 4px; padding: 4px; }
         .btn { padding: 8px 15px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 10px; }
         .btn-save { background: var(--green); color: white; }
@@ -35,7 +35,6 @@
         input, select, textarea { padding: 8px; border-radius: 8px; border: 1px solid #ccc; width: 100%; box-sizing: border-box; }
         .pdf-header { text-align: center; margin-bottom: 10px; border-bottom: 2px solid var(--p); padding-bottom: 5px; }
         .pdf-table { width: 100% !important; min-width: 100% !important; font-size: 8px !important; }
-        .pdf-table th, .pdf-table td { padding: 4px 2px !important; }
     </style>
 </head>
 <body>
@@ -155,14 +154,17 @@
         return g;
     }
 
-    function agregarAlumno() {
-        const nom = document.getElementById('new-nom').value.trim(), ape = document.getElementById('new-ape').value.trim();
-        const gTxt = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text;
-        if(!nom || !ape) return alert("Complete los datos.");
-        let ultimoNie = 0;
-        dataAlumnos.forEach(a => { if(parseInt(a.nie) > ultimoNie) ultimoNie = parseInt(a.nie); });
-        const nuevoNie = (ultimoNie + 1).toString().padStart(4, '0');
-        db.ref('alumnos').push({ nie: nuevoNie, nom: nom.toUpperCase(), ape: ape.toUpperCase(), grado: gTxt });
+    function calcular(n, p, g) {
+        const v = { t:parseFloat(n.t)||0, l:parseFloat(n.l)||0, lc:parseFloat(n.lc)||0, int:parseFloat(n.int)||0, ex:parseFloat(n.ex)||0 };
+        const c = getCiclo(g);
+        if(["K4","K5","K6","1G"].includes(c)) return (p === "Trimestre 2") ? parseFloat((v.t*0.35 + v.int*0.3 + v.ex*0.35).toFixed(1)) : parseFloat((v.t*0.5 + v.ex*0.5).toFixed(1));
+        if(c.includes("B")) {
+            if(p.includes("Eval 1")) return parseFloat(((v.t*0.25) + (v.l*0.15) + (v.lc*0.20) + (v.ex*0.40)).toFixed(1));
+            return parseFloat(((v.t*0.10) + (v.l*0.10) + (v.lc*0.05) + (v.int*0.35) + (v.ex*0.40)).toFixed(1));
+        }
+        const esInt = ["Abril", "Julio", "Octubre"].includes(p);
+        if(esInt) return parseFloat((v.t*0.1 + v.l*0.10 + v.lc*0.05 + v.int*0.35 + v.ex*0.4).toFixed(1));
+        else return parseFloat((v.t*0.25 + v.l*0.15 + v.lc*0.20 + v.ex*0.4).toFixed(1));
     }
 
     function cambiarGrado() {
@@ -185,49 +187,14 @@
         document.getElementById('nav-tabs').innerHTML = html;
     }
 
-    function setPeriodo(p, btn) { 
-        periodoActual = p; vistaActual = "NOTAS"; dibujar(); 
-        document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); btn.classList.add('active');
-        renderTabs(document.getElementById('nav-tabs').innerText.split('\n').filter(x => x && !x.includes("📊") && !x.includes("📋")));
-    }
-
+    function setPeriodo(p, btn) { periodoActual = p; vistaActual = "NOTAS"; dibujar(); renderTabs(document.getElementById('nav-tabs').innerText.split('\n').filter(x => x && !x.includes("📊") && !x.includes("📋"))); }
     function setVistaAsistencia() { vistaActual = "ASISTENCIA"; dibujarAsistencia(); document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); document.getElementById('btn-tab-asis').classList.add('active'); }
     function setVistaConsolidado() { vistaActual = "CONSOLIDADO"; dibujarConsolidado(); }
 
-    function getColorClass(nota) {
-        if(nota < 5) return "n-roja";
-        if(nota <= 6.9) return "n-amarilla";
-        return "n-verde";
-    }
-
-    function calcular(n, p, g) {
-        const v = { t:parseFloat(n.t)||0, l:parseFloat(n.l)||0, lc:parseFloat(n.lc)||0, int:parseFloat(n.int)||0, ex:parseFloat(n.ex)||0 };
-        const c = getCiclo(g);
-        if(["K4","K5","K6","1G"].includes(c)) return (p === "Trimestre 2") ? parseFloat((v.t*0.35 + v.int*0.3 + v.ex*0.35).toFixed(1)) : parseFloat((v.t*0.5 + v.ex*0.5).toFixed(1));
-        if(c.includes("B")) {
-            if(p.includes("Eval 1")) return parseFloat(((v.t*0.25) + (v.l*0.15) + (v.lc*0.20) + (v.ex*0.40)).toFixed(1));
-            return parseFloat(((v.t*0.10) + (v.l*0.10) + (v.lc*0.05) + (v.int*0.35) + (v.ex*0.40)).toFixed(1));
-        }
-        const esInt = ["Abril", "Julio", "Octubre"].includes(p);
-        if(esInt) return parseFloat((v.t*0.1 + v.l*0.10 + v.lc*0.05 + v.int*0.35 + v.ex*0.4).toFixed(1));
-        else return parseFloat((v.t*0.25 + v.l*0.15 + v.lc*0.20 + v.ex*0.4).toFixed(1));
-    }
-
-    function actualizarPromedioVivo(id, esInfancia, showInt) {
-        const row = document.getElementById(`row-${id}`);
-        const g = document.getElementById('sel-grado').value;
-        const notasTemp = { t: row.querySelector('.inp-t').value, ex: row.querySelector('.inp-ex').value };
-        if(!esInfancia) { notasTemp.l = row.querySelector('.inp-l').value; notasTemp.lc = row.querySelector('.inp-lc').value; }
-        if(showInt) notasTemp.int = row.querySelector('.inp-int').value;
-        const prom = calcular(notasTemp, periodoActual, g);
-        const cellProm = row.querySelector('.cell-prom-valor');
-        cellProm.innerText = prom;
-        cellProm.className = `cell-prom-valor ${getColorClass(prom)}`;
-    }
+    function getColorClass(nota) { if(nota < 5) return "n-roja"; if(nota <= 6.9) return "n-amarilla"; return "n-verde"; }
 
     function dibujar() {
         document.getElementById('btn-pdf-consolidado').classList.add('hidden');
-        document.getElementById('main-table').classList.remove('pdf-table');
         const g = document.getElementById('sel-grado').value, ciclo = getCiclo(g), gTxt = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text;
         const isAdmin = currentRol === 'admin', esInfancia = ["K4","K5","K6","1G"].includes(ciclo), esBachi = ciclo.includes("B");
         const mostrarPrint = (isAdmin && (periodoActual.includes("Trimestre") || (esBachi && periodoActual.startsWith("Periodo") && !periodoActual.includes("Eval"))));
@@ -249,196 +216,119 @@
         h += `<th>PROM</th><th>Acción</th>`;
         document.getElementById('table-head').innerHTML = h;
 
-        let fil = dataAlumnos.filter(a => a.grado === gTxt).sort((a,b) => a.ape.localeCompare(b.ape));
-        let b = "";
+        let fil = dataAlumnos.filter(a => a.grado === gTxt).sort((a,b) => a.ape.localeCompare(b.ape)), b = "";
         fil.forEach(al => {
             if (esConsolidadoBasica) {
                 const meses = periodoActual === "Primer Trimestre" ? ["Febrero", "Marzo", "Abril"] : periodoActual === "Segundo Trimestre" ? ["Mayo", "Junio", "Julio"] : ["Agosto", "Septiembre", "Octubre"];
-                const p1 = calcular(al.notas?.[meses[0]]?.[materiaVisualizada] || {}, meses[0], g);
-                const p2 = calcular(al.notas?.[meses[1]]?.[materiaVisualizada] || {}, meses[1], g);
-                const p3 = calcular(al.notas?.[meses[2]]?.[materiaVisualizada] || {}, meses[2], g);
+                const p1 = calcular(al.notas?.[meses[0]]?.[materiaVisualizada] || {}, meses[0], g), p2 = calcular(al.notas?.[meses[1]]?.[materiaVisualizada] || {}, meses[1], g), p3 = calcular(al.notas?.[meses[2]]?.[materiaVisualizada] || {}, meses[2], g);
                 let prom = parseFloat(((p1 + p2 + p3) / 3).toFixed(1));
-                b += `<tr><td>${al.nie}</td><td style="text-align:left">${al.ape}</td><td style="text-align:left">${al.nom}</td>
-                    <td><select onchange="materiaVisualizada=this.value; dibujar()">${MATERIAS[ciclo].map(m=>`<option ${m===materiaVisualizada?'selected':''}>${m}</option>`).join('')}</select></td>
-                    <td>${p1}</td><td>${p2}</td><td>${p3}</td><td style="font-weight:bold"><span class="${getColorClass(prom)}">${prom}</span></td><td>-</td></tr>`;
+                b += `<tr><td>${al.nie}</td><td style="text-align:left">${al.ape}</td><td style="text-align:left">${al.nom}</td><td><select onchange="materiaVisualizada=this.value; dibujar()">${MATERIAS[ciclo].map(m=>`<option ${m===materiaVisualizada?'selected':''}>${m}</option>`).join('')}</select></td><td>${p1}</td><td>${p2}</td><td>${p3}</td><td style="font-weight:bold"><span class="${getColorClass(prom)}">${prom}</span></td><td>-</td></tr>`;
             } else if (esConsolidadoBachi) {
-                const n1 = al.notas?.[periodoActual + " - Eval 1"]?.[materiaVisualizada] || {};
-                const n2 = al.notas?.[periodoActual + " - Eval 2"]?.[materiaVisualizada] || {};
+                const n1 = al.notas?.[periodoActual + " - Eval 1"]?.[materiaVisualizada] || {}, n2 = al.notas?.[periodoActual + " - Eval 2"]?.[materiaVisualizada] || {};
                 const prom = parseFloat(((calcular(n1, periodoActual + " - Eval 1", g) + calcular(n2, periodoActual + " - Eval 2", g)) / 2).toFixed(1));
-                b += `<tr><td>${al.nie}</td><td style="text-align:left">${al.ape}</td><td style="text-align:left">${al.nom}</td>
-                    <td><select onchange="materiaVisualizada=this.value; dibujar()">${MATERIAS[ciclo].map(m=>`<option ${m===materiaVisualizada?'selected':''}>${m}</option>`).join('')}</select></td>
-                    <td>${n1.t||0}</td><td>${n1.lc||0}</td><td>${n1.l||0}</td><td>${n1.int||0}</td><td>${n1.ex||0}</td><td style="font-weight:bold"><span class="${getColorClass(prom)}">${prom}</span></td><td>-</td></tr>`;
+                b += `<tr><td>${al.nie}</td><td style="text-align:left">${al.ape}</td><td style="text-align:left">${al.nom}</td><td><select onchange="materiaVisualizada=this.value; dibujar()">${MATERIAS[ciclo].map(m=>`<option ${m===materiaVisualizada?'selected':''}>${m}</option>`).join('')}</select></td><td>${n1.t||0}</td><td>${n1.lc||0}</td><td>${n1.l||0}</td><td>${n1.int||0}</td><td>${n1.ex||0}</td><td style="font-weight:bold"><span class="${getColorClass(prom)}">${prom}</span></td><td>-</td></tr>`;
             } else {
-                let n = (al.notas?.[periodoActual]?.[materiaVisualizada] || {});
-                let prom = calcular(n, periodoActual, g);
-                // LÓGICA DE BLOQUEO: Solo admin puede editar si ya se guardó una vez (ediciones > 0)
-                const estaBloqueado = (!isAdmin && n.ediciones > 0);
-
-                b += `<tr id="row-${al.id}"><td>${al.nie}</td><td style="text-align:left">${al.ape}</td><td style="text-align:left">${al.nom}</td>
-                    <td><select onchange="materiaVisualizada=this.value; dibujar()">${MATERIAS[ciclo].map(m=>`<option ${m===materiaVisualizada?'selected':''}>${m}</option>`).join('')}</select></td>
-                    <td><input type="text" class="nota-input inp-t" value="${n.t||0}" ${estaBloqueado?'disabled':''} oninput="actualizarPromedioVivo('${al.id}', ${esInfancia}, ${showInt})"></td>`;
-                if(!esInfancia) {
-                    b += `<td><input type="text" class="nota-input inp-lc" value="${n.lc||0}" ${estaBloqueado?'disabled':''} oninput="actualizarPromedioVivo('${al.id}', ${esInfancia}, ${showInt})"></td>
-                          <td><input type="text" class="nota-input inp-l" value="${n.l||0}" ${estaBloqueado?'disabled':''} oninput="actualizarPromedioVivo('${al.id}', ${esInfancia}, ${showInt})"></td>`;
-                }
+                let n = (al.notas?.[periodoActual]?.[materiaVisualizada] || {}), prom = calcular(n, periodoActual, g), estaBloqueado = (!isAdmin && n.ediciones > 0);
+                b += `<tr id="row-${al.id}"><td>${al.nie}</td><td style="text-align:left">${al.ape}</td><td style="text-align:left">${al.nom}</td><td><select onchange="materiaVisualizada=this.value; dibujar()">${MATERIAS[ciclo].map(m=>`<option ${m===materiaVisualizada?'selected':''}>${m}</option>`).join('')}</select></td><td><input type="text" class="nota-input inp-t" value="${n.t||0}" ${estaBloqueado?'disabled':''} oninput="actualizarPromedioVivo('${al.id}', ${esInfancia}, ${showInt})"></td>`;
+                if(!esInfancia) b += `<td><input type="text" class="nota-input inp-lc" value="${n.lc||0}" ${estaBloqueado?'disabled':''} oninput="actualizarPromedioVivo('${al.id}', ${esInfancia}, ${showInt})"></td><td><input type="text" class="nota-input inp-l" value="${n.l||0}" ${estaBloqueado?'disabled':''} oninput="actualizarPromedioVivo('${al.id}', ${esInfancia}, ${showInt})"></td>`;
                 if(showInt) b += `<td><input type="text" class="nota-input inp-int" value="${n.int||0}" ${estaBloqueado?'disabled':''} oninput="actualizarPromedioVivo('${al.id}', ${esInfancia}, ${showInt})"></td>`;
-                b += `<td><input type="text" class="nota-input inp-ex" value="${n.ex||0}" ${estaBloqueado?'disabled':''} oninput="actualizarPromedioVivo('${al.id}', ${esInfancia}, ${showInt})"></td>
-                    <td style="font-weight:bold"><span class="cell-prom-valor ${getColorClass(prom)}">${prom}</span></td>
-                    <td><button class="btn btn-save" onclick="guardarNotas('${al.id}', ${esInfancia}, ${showInt})" ${estaBloqueado?'disabled':''}>💾</button>
-                    ${isAdmin ? `<button class="btn btn-del" onclick="borrarAlumno('${al.id}')">🗑️</button>` : ''}</td></tr>`;
+                b += `<td><input type="text" class="nota-input inp-ex" value="${n.ex||0}" ${estaBloqueado?'disabled':''} oninput="actualizarPromedioVivo('${al.id}', ${esInfancia}, ${showInt})"></td><td style="font-weight:bold"><span class="cell-prom-valor ${getColorClass(prom)}">${prom}</span></td><td><button class="btn btn-save" onclick="guardarNotas('${al.id}', ${esInfancia}, ${showInt})" ${estaBloqueado?'disabled':''}>💾</button>${isAdmin ? `<button class="btn btn-del" onclick="borrarAlumno('${al.id}')">🗑️</button>` : ''}</td></tr>`;
             }
         });
         document.getElementById('table-body').innerHTML = b;
     }
 
-    function dibujarConsolidado() {
-        document.getElementById('btn-pdf-consolidado').classList.remove('hidden');
-        document.getElementById('main-table').classList.remove('pdf-table');
-        const g = document.getElementById('sel-grado').value, ciclo = getCiclo(g), gTxt = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text;
-        const materias = MATERIAS[ciclo];
-        
-        let h = `<th>NIE</th><th>Alumno</th>`;
-        materias.forEach(m => { h += `<th style="font-size:8px;">${m.substring(0,6)}</th>`; });
-        h += `<th>Cond.</th><th>P.</th><th>S.P.</th>`;
-        document.getElementById('table-head').innerHTML = h;
-
-        let fil = dataAlumnos.filter(a => a.grado === gTxt).sort((a,b) => a.ape.localeCompare(b.ape)), b = "";
-        fil.forEach(al => {
-            const asis = al.asistencia?.[periodoActual] || { c:'-', ap:0, asp:0 };
-            b += `<tr><td>${al.nie}</td><td style="text-align:left; font-size:9px;">${al.ape}</td>`;
-            
-            materias.forEach(m => {
-                let pFin = 0;
-                if (periodoActual.includes("Trimestre")) {
-                    const meses = periodoActual === "Primer Trimestre" ? ["Febrero", "Marzo", "Abril"] : periodoActual === "Segundo Trimestre" ? ["Mayo", "Junio", "Julio"] : ["Agosto", "Septiembre", "Octubre"];
-                    const p1 = calcular(al.notas?.[meses[0]]?.[m] || {}, meses[0], g);
-                    const p2 = calcular(al.notas?.[meses[1]]?.[m] || {}, meses[1], g);
-                    const p3 = calcular(al.notas?.[meses[2]]?.[m] || {}, meses[2], g);
-                    pFin = parseFloat(((p1 + p2 + p3) / 3).toFixed(1));
-                } else {
-                    const n1 = al.notas?.[periodoActual + " - Eval 1"]?.[m] || {}, n2 = al.notas?.[periodoActual + " - Eval 2"]?.[m] || {};
-                    pFin = parseFloat(((calcular(n1, periodoActual + " - Eval 1", g) + calcular(n2, periodoActual + " - Eval 2", g)) / 2).toFixed(1));
-                }
-                b += `<td class="${getColorClass(pFin)}">${pFin}</td>`;
-            });
-            b += `<td>${asis.c.substring(0,2)}</td><td>${asis.ap}</td><td>${asis.asp}</td></tr>`;
-        });
-        document.getElementById('table-body').innerHTML = b;
+    function actualizarPromedioVivo(id, esInfancia, showInt) {
+        const row = document.getElementById(`row-${id}`), g = document.getElementById('sel-grado').value;
+        const nt = { t: row.querySelector('.inp-t').value, ex: row.querySelector('.inp-ex').value };
+        if(!esInfancia) { nt.l = row.querySelector('.inp-l').value; nt.lc = row.querySelector('.inp-lc').value; }
+        if(showInt) nt.int = row.querySelector('.inp-int').value;
+        const prom = calcular(nt, periodoActual, g), cellProm = row.querySelector('.cell-prom-valor');
+        cellProm.innerText = prom; cellProm.className = `cell-prom-valor ${getColorClass(prom)}`;
     }
 
-    function descargarPDFConsolidado() {
-        const element = document.getElementById('printable-area');
-        const header = document.getElementById('pdf-header-info');
-        const table = document.getElementById('main-table');
-        const gTxt = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text;
-        document.getElementById('pdf-titulo-grado').innerText = "CONSOLIDADO DE NOTAS - " + gTxt;
-        document.getElementById('pdf-sub-periodo').innerText = "PERIODO: " + periodoActual;
-        header.classList.remove('hidden');
-        table.classList.add('pdf-table');
-        const opt = { margin: [10, 5, 10, 5], filename: `Consolidado_${gTxt}_${periodoActual}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 3, useCORS: true, logging: false }, jsPDF: { unit: 'mm', format: 'letter', orientation: 'landscape' } };
-        html2pdf().from(element).set(opt).save().then(() => { header.classList.add('hidden'); table.classList.remove('pdf-table'); });
-    }
-
-    function dibujarAsistencia() {
-        document.getElementById('btn-pdf-consolidado').classList.add('hidden');
-        document.getElementById('main-table').classList.remove('pdf-table');
-        const gTxt = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text;
-        document.getElementById('table-head').innerHTML = `<th>NIE</th><th>Alumno</th><th>Conducta</th><th>Permiso</th><th>Sin Permiso</th><th>Observaciones</th><th>Acción</th>`;
-        let fil = dataAlumnos.filter(a => a.grado === gTxt).sort((a,b) => a.ape.localeCompare(b.ape)), b = "";
-        fil.forEach(al => {
-            const asis = al.asistencia?.[periodoActual] || { c:'MUY BUENA', ap:0, asp:0, obs:'' };
-            b += `<tr id="asis-${al.id}"><td>${al.nie}</td><td style="text-align:left">${al.ape}, ${al.nom}</td>
-                <td><select class="inp-c"><option ${asis.c==='EXCELENTE'?'selected':''}>EXCELENTE</option><option ${asis.c==='MUY BUENA'?'selected':''}>MUY BUENA</option><option ${asis.c==='BUENA'?'selected':''}>BUENA</option></select></td>
-                <td><input type="number" class="nota-input inp-ap" value="${asis.ap||0}"></td><td><input type="number" class="nota-input inp-asp" value="${asis.asp||0}"></td>
-                <td><textarea class="inp-obs" style="height:30px;">${asis.obs||''}</textarea></td>
-                <td><button class="btn btn-save" onclick="guardarAsis('${al.id}')">💾</button></td></tr>`;
-        });
-        document.getElementById('table-body').innerHTML = b;
-    }
-
-    function guardarAsis(id) { const r = document.getElementById(`asis-${id}`); const d = { c: r.querySelector('.inp-c').value, ap: r.querySelector('.inp-ap').value, asp: r.querySelector('.inp-asp').value, obs: r.querySelector('.inp-obs').value }; db.ref(`alumnos/${id}/asistencia/${periodoActual}`).set(d).then(() => alert(`Asistencia Guardada.`)); }
-    
     function guardarNotas(id, esInfancia, showInt) { 
-        const r = document.getElementById(`row-${id}`); 
-        const alRef = db.ref(`alumnos/${id}/notas/${periodoActual}/${materiaVisualizada}`);
-        
+        const r = document.getElementById(`row-${id}`), alRef = db.ref(`alumnos/${id}/notas/${periodoActual}/${materiaVisualizada}`);
         alRef.once('value').then(snap => {
-            const nData = snap.val() || { ediciones: 0 };
-            const isAdmin = currentRol === 'admin';
-            
-            // Si ya se editó una vez y no es admin, abortar
-            if (!isAdmin && nData.ediciones > 0) {
-                alert("Ya has realizado la edición permitida. Contacta al administrador para cambios adicionales.");
-                dibujar();
-                return;
-            }
-
-            const d = { 
-                t: parseFloat(r.querySelector('.inp-t').value) || 0, 
-                ex: parseFloat(r.querySelector('.inp-ex').value) || 0, 
-                ediciones: (nData.ediciones || 0) + 1 
-            }; 
+            const nData = snap.val() || { ediciones: 0 }, isAdmin = currentRol === 'admin';
+            if (!isAdmin && nData.ediciones > 0) return alert("Edición bloqueada.");
+            const d = { t: parseFloat(r.querySelector('.inp-t').value) || 0, ex: parseFloat(r.querySelector('.inp-ex').value) || 0, ediciones: (nData.ediciones || 0) + 1 }; 
             if(!esInfancia) { d.l = parseFloat(r.querySelector('.inp-l').value) || 0; d.lc = parseFloat(r.querySelector('.inp-lc').value) || 0; } 
             if(showInt) d.int = parseFloat(r.querySelector('.inp-int').value) || 0; 
-            
-            alRef.set(d).then(() => { 
-                alert(isAdmin ? "Nota actualizada (Admin)" : "Nota guardada. Esta fue su única oportunidad de edición."); 
-                dibujar(); 
-            });
+            alRef.set(d).then(() => { alert("Guardado."); dibujar(); });
         });
     }
 
-    function borrarAlumno(id) { if(confirm("¿Borrar alumno permanentemente?")) db.ref(`alumnos/${id}`).remove(); }
     function escucharDB() { db.ref('alumnos').on('value', snap => { const v = snap.val(); dataAlumnos = v ? Object.keys(v).map(k=>({id:k, ...v[k]})) : []; if(vistaActual==="NOTAS") dibujar(); else if(vistaActual==="CONSOLIDADO") dibujarConsolidado(); else dibujarAsistencia(); }); }
 
     function generarBoletas() {
         const g = document.getElementById('sel-grado').value, gTxt = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text, ciclo = getCiclo(g), esInfancia = ["K4","K5","K6","1G"].includes(ciclo), esBachi = ciclo.includes("B");
         let printWin = window.open('', '_blank');
         printWin.document.write(`<html><head><title>Boletas - ${gTxt}</title><style>
-            @page { size: letter; margin: 0; } 
-            body { font-family: Arial, sans-serif; padding: 0; margin: 0; background: white; } 
-            .boleta { height: 139.7mm; width: 100%; box-sizing: border-box; padding: 10mm 15mm; border-bottom: 1px dashed #777; display: flex; flex-direction: column; overflow: hidden; page-break-inside: avoid; } 
+            @page { size: letter; margin: 0; } body { font-family: Arial, sans-serif; margin: 0; background: white; } 
+            .boleta { height: 139.7mm; width: 100%; box-sizing: border-box; padding: 10mm 15mm; border-bottom: 1px dashed #777; display: flex; flex-direction: column; page-break-inside: avoid; } 
             .header { display: flex; align-items: flex-start; border-bottom: 2px solid #e67e22; padding-bottom: 3px; margin-bottom: 5px; } 
-            .logo { width: 45px; margin-right: 12px; } 
-            .inst-name { font-size: 13px; color: #1a5276; font-weight: bold; } 
-            .periodo-name { font-size: 11px; font-weight: bold; color: #e67e22; text-transform: uppercase; } 
-            .al-data { text-align: right; font-size: 9px; min-width: 180px; } 
+            .logo { width: 45px; margin-right: 12px; } .inst-name { font-size: 13px; color: #1a5276; font-weight: bold; } 
+            .periodo-name { font-size: 11px; font-weight: bold; color: #e67e22; text-transform: uppercase; } .al-data { text-align: right; font-size: 9px; min-width: 180px; } 
             .al-main-info { background: #1a5276; color: white; padding: 3px 8px; font-weight: bold; margin-bottom: 5px; font-size: 10px; text-transform: uppercase; } 
-            table { width: 100%; border-collapse: collapse; } 
-            th { background: #f2f2f2; color: #1a5276; padding: 3px; font-size: 8px; border: 1px solid #ccc; } 
-            td { border: 1px solid #ccc; padding: 3px; text-align: center; font-size: 8.5px; } 
-            .m-name { text-align: left; padding-left: 8px; font-weight: bold; width: 40%; } 
-            .f-firma-container { margin-top: auto; padding-bottom: 5mm; display: flex; justify-content: space-between; text-align: center; } 
-            .firma-box { flex: 1; display: flex; flex-direction: column; align-items: center; } 
-            .line { border-top: 1px solid #000; width: 80%; margin-bottom: 3px; } 
-            .f-name { font-size: 8px; font-weight: bold; }
-            @media print { .boleta:nth-child(even) { border-bottom: none; } }
+            table { width: 100%; border-collapse: collapse; } th { background: #f2f2f2; color: #1a5276; padding: 3px; font-size: 8px; border: 1px solid #ccc; } 
+            td { border: 1px solid #ccc; padding: 3px; text-align: center; font-size: 8.5px; } .m-name { text-align: left; padding-left: 8px; font-weight: bold; width: 40%; } 
+            .f-firma-container { margin-top: auto; padding-bottom: 5mm; display: flex; justify-content: space-between; } .firma-box { flex: 1; text-align: center; font-size: 8px; } .line { border-top: 1px solid #000; width: 80%; margin: 0 auto 3px; }
         </style></head><body>`);
 
         dataAlumnos.filter(a => a.grado === gTxt).forEach(al => {
             const asis = al.asistencia?.[periodoActual] || { c:'MUY BUENA', ap:0, asp:0, obs:'' };
-            const esBachiCons = (esBachi && ["Periodo 1", "Periodo 2", "Periodo 3", "Periodo 4"].includes(periodoActual));
             const esConsolidadoBasica = ["Primer Trimestre", "Segundo Trimestre", "Tercer Trimestre"].includes(periodoActual);
+            const esBachiCons = esBachi && ["Periodo 1", "Periodo 2", "Periodo 3", "Periodo 4"].includes(periodoActual);
 
             printWin.document.write(`<div class="boleta"><div class="header"><img src="https://i.ibb.co/Mkf051St/Logo-CAI.png" class="logo"><div style="flex-grow:1;"><div class="inst-name">CAI - COLEGIO AMIGOS DE ISRAEL</div><div class="periodo-name">${periodoActual}</div></div><div class="al-data"><div>GRADO: ${gTxt}</div><div>CODIGO/NIE: ${al.nie}</div></div></div><div class="al-main-info">ALUMNO: ${al.ape}, ${al.nom}</div><table><thead><tr><th class="m-name">MATERIA</th><th>TAREA</th>${!esInfancia ? '<th>LIBRO</th><th>LAB</th>' : ''}<th>INT</th><th>EXAMEN</th><th>PROMEDIO</th></tr></thead><tbody>`);
             
             MATERIAS[ciclo].forEach(m => {
-                let promFinal = 0, nDisp = { t:0, lc:0, l:0, int:0, ex:0 }; 
+                let pFin = 0, v = { t:0, lc:0, l:0, int:0, ex:0 };
                 if (esConsolidadoBasica) {
                     const meses = periodoActual === "Primer Trimestre" ? ["Febrero", "Marzo", "Abril"] : periodoActual === "Segundo Trimestre" ? ["Mayo", "Junio", "Julio"] : ["Agosto", "Septiembre", "Octubre"];
-                    const m1 = al.notas?.[meses[0]]?.[m] || {}, m2 = al.notas?.[meses[1]]?.[m] || {}, m3 = al.notas?.[meses[2]]?.[m] || {};
-                    promFinal = parseFloat(((calcular(m1, meses[0], g) + calcular(m2, meses[1], g) + calcular(m3, meses[2], g)) / 3).toFixed(1));
+                    let s = { t:0, lc:0, l:0, int:0, ex:0, c:0 };
+                    meses.forEach(mes => { 
+                        const n = al.notas?.[mes]?.[m]; 
+                        if(n) { s.t += n.t||0; s.lc += n.lc||0; s.l += n.l||0; s.int += n.int||0; s.ex += n.ex||0; s.c++; } 
+                    });
+                    if(s.c > 0) { v = { t:(s.t/s.c).toFixed(1), lc:(s.lc/s.c).toFixed(1), l:(s.l/s.c).toFixed(1), int:(s.int/s.c).toFixed(1), ex:(s.ex/s.c).toFixed(1) }; }
+                    const p1 = calcular(al.notas?.[meses[0]]?.[m] || {}, meses[0], g), p2 = calcular(al.notas?.[meses[1]]?.[m] || {}, meses[1], g), p3 = calcular(al.notas?.[meses[2]]?.[m] || {}, meses[2], g);
+                    pFin = parseFloat(((p1 + p2 + p3) / 3).toFixed(1));
                 } else if (esBachiCons) {
                     const n1 = al.notas?.[periodoActual + " - Eval 1"]?.[m] || {}, n2 = al.notas?.[periodoActual + " - Eval 2"]?.[m] || {};
-                    promFinal = parseFloat(((calcular(n1, periodoActual + " - Eval 1", g) + calcular(n2, periodoActual + " - Eval 2", g)) / 2).toFixed(1));
-                } else { 
-                    nDisp = al.notas?.[periodoActual]?.[m] || {}; promFinal = calcular(nDisp, periodoActual, g); 
-                }
-                printWin.document.write(`<tr><td class="m-name">${m}</td><td>${nDisp.t||0}</td>${!esInfancia ? `<td>${nDisp.lc||0}</td><td>${nDisp.l||0}</td>` : ''}<td>${nDisp.int||0}</td><td>${nDisp.ex||0}</td><td style="font-weight:bold">${promFinal}</td></tr>`);
+                    v = { t:(( (n1.t||0)+(n2.t||0) )/2).toFixed(1), lc:(( (n1.lc||0)+(n2.lc||0) )/2).toFixed(1), l:(( (n1.l||0)+(n2.l||0) )/2).toFixed(1), int:(( (n1.int||0)+(n2.int||0) )/2).toFixed(1), ex:(( (n1.ex||0)+(n2.ex||0) )/2).toFixed(1) };
+                    pFin = parseFloat(((calcular(n1, periodoActual + " - Eval 1", g) + calcular(n2, periodoActual + " - Eval 2", g)) / 2).toFixed(1));
+                } else { v = al.notas?.[periodoActual]?.[m] || {}; pFin = calcular(v, periodoActual, g); }
+                
+                printWin.document.write(`<tr><td class="m-name">${m}</td><td>${v.t||0}</td>${!esInfancia ? `<td>${v.lc||0}</td><td>${v.l||0}</td>` : ''}<td>${v.int||0}</td><td>${v.ex||0}</td><td style="font-weight:bold">${pFin}</td></tr>`);
             });
-            printWin.document.write(`</tbody></table><div style="font-size:8px; margin-top:5px;"><b>CONDUCTA:</b> ${asis.c} | <b>ASIST. CON PERMISO:</b> ${asis.ap} | <b>ASIST. SIN PERMISO:</b> ${asis.asp}</div><div style="border:1px solid #ccc; padding:3px; min-height:20px; font-size:8px; margin-top:2px;"><b>OBSERVACIONES:</b> ${asis.obs || 'Ninguna.'}</div><div class="f-firma-container"><div class="firma-box"><div class="line"></div><div class="f-name">F. DOCENTE ENCARGADO</div></div><div class="firma-box"><div class="line"></div><div class="f-name">F. REGISTRO ACADÉMICO</div></div><div class="firma-box"><div class="line"></div><div class="f-name">Rhina Linares de Barahona<br>DIRECTORA</div></div></div></div>`);
+            printWin.document.write(`</tbody></table><div style="font-size:8px; margin-top:5px;"><b>CONDUCTA:</b> ${asis.c} | <b>ASIST. CON PERMISO:</b> ${asis.ap} | <b>ASIST. SIN PERMISO:</b> ${asis.asp}</div><div style="border:1px solid #ccc; padding:3px; font-size:8px; margin-top:2px;"><b>OBSERVACIONES:</b> ${asis.obs || 'Ninguna.'}</div><div class="f-firma-container"><div class="firma-box"><div class="line"></div><b>DOCENTE ENCARGADO</b></div><div class="firma-box"><div class="line"></div><b>REGISTRO ACADÉMICO</b></div><div class="firma-box"><div class="line"></div><b>Rhina Linares de Barahona (DIRECTORA)</b></div></div></div>`);
         });
         printWin.document.close(); printWin.print();
+    }
+    
+    function dibujarConsolidado() {
+        document.getElementById('btn-pdf-consolidado').classList.remove('hidden');
+        const g = document.getElementById('sel-grado').value, ciclo = getCiclo(g), gTxt = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text, materias = MATERIAS[ciclo];
+        let h = `<th>NIE</th><th>Alumno</th>`; materias.forEach(m => { h += `<th style="font-size:8px;">${m.substring(0,6)}</th>`; });
+        h += `<th>Cond.</th><th>P.</th><th>S.P.</th>`; document.getElementById('table-head').innerHTML = h;
+        let fil = dataAlumnos.filter(a => a.grado === gTxt).sort((a,b) => a.ape.localeCompare(b.ape)), b = "";
+        fil.forEach(al => {
+            const asis = al.asistencia?.[periodoActual] || { c:'-', ap:0, asp:0 }; b += `<tr><td>${al.nie}</td><td style="text-align:left; font-size:9px;">${al.ape}</td>`;
+            materias.forEach(m => {
+                let pFin = 0;
+                if (periodoActual.includes("Trimestre")) {
+                    const meses = periodoActual === "Primer Trimestre" ? ["Febrero", "Marzo", "Abril"] : periodoActual === "Segundo Trimestre" ? ["Mayo", "Junio", "Julio"] : ["Agosto", "Septiembre", "Octubre"];
+                    pFin = parseFloat(((calcular(al.notas?.[meses[0]]?.[m]||{},meses[0],g)+calcular(al.notas?.[meses[1]]?.[m]||{},meses[1],g)+calcular(al.notas?.[meses[2]]?.[m]||{},meses[2],g))/3).toFixed(1));
+                } else {
+                    pFin = parseFloat(((calcular(al.notas?.[periodoActual+" - Eval 1"]?.[m]||{},periodoActual+" - Eval 1",g)+calcular(al.notas?.[periodoActual+" - Eval 2"]?.[m]||{},periodoActual+" - Eval 2",g))/2).toFixed(1));
+                }
+                b += `<td class="${getColorClass(pFin)}">${pFin}</td>`;
+            });
+            b += `<td>${asis.c.substring(0,2)}</td><td>${asis.ap}</td><td>${asis.asp}</td></tr>`;
+        });
+        document.getElementById('table-body').innerHTML = b;
     }
 </script>
 </body>
