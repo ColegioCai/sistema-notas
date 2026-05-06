@@ -113,6 +113,23 @@
         "2B": ["Inglés", "Biblia", "Lengua y literatura", "Precalculo", "Ciencia y tecnología", "Ciudadanía y valores", "Educación física", "Orientacion para la vida", "Finanzas y economia", "Ciencias de la computación", "Seminario", "Curso de habilitacion laboral"]
     };
 
+    const DOCENTES_GRADO = {
+        "K4": "JACQUELINNE STEPHANIE VILLAGRÁN DE TOVAR",
+        "K5": "MARÍA TERESA DE VASQUEZ",
+        "K6": "GABRIELA ABIGAIL GRANADOS PÉREZ",
+        "1G": "GLADIS IVONNE DE ALAS",
+        "2G": "ERIKA ABIGAIL DE HERNÁNDEZ",
+        "3G": "MARIANA JEANNETTE DE HERNÁNDEZ",
+        "4G": "JUAN CARLOS MENDOZA",
+        "5G": "MARCO TULIO PINEDA VARGAS",
+        "6G": "IRVING JOSUE GARCIA GARCIA",
+        "7G": "OSCAR ERNESTO PATRIZ JIMÉNEZ",
+        "8G": "MARILYN BARRERA",
+        "9G": "DIANA MARIELA ARGUETA",
+        "1B": "WALTER ALEXANDER RIVERA RAMOS",
+        "2B": "ERICK ANTONIO ALFARO ESTRADA"
+    };
+
     const GRADOS_DATA = [
         {val:"K4", t:"Kinder 4 Años", cat:"infancia"}, {val:"K5", t:"Kinder 5 Años", cat:"infancia"}, {val:"K6", t:"Kinder 6 Años", cat:"infancia"}, {val:"1G", t:"1° Grado", cat:"infancia"},
         {val:"2G", t:"2° Grado", cat:"docente"}, {val:"3G", t:"3° Grado", cat:"docente"}, {val:"4G", t:"4° Grado", cat:"docente"},
@@ -255,10 +272,9 @@
         document.getElementById('pdf-sub-periodo').innerText = "PERIODO: " + periodoActual;
         header.classList.remove('hidden');
         
-        // AJUSTE CRÍTICO: Reducimos el zoom del elemento antes de capturarlo para que quepa todo
         element.style.transform = "scale(0.85)"; 
         element.style.transformOrigin = "top left";
-        element.style.width = "115%"; // Compensamos el ancho para que el escalado no deje bordes vacíos
+        element.style.width = "115%";
 
         const opt = { 
             margin: [5, 5, 5, 5], 
@@ -273,7 +289,6 @@
         };
         
         html2pdf().set(opt).from(element).save().then(() => { 
-            // Restauramos el estilo original en la pantalla después de imprimir
             element.style.transform = "none";
             element.style.width = "auto";
             header.classList.add('hidden'); 
@@ -323,6 +338,7 @@
 
     function generarBoletas() {
         const g = document.getElementById('sel-grado').value, gTxt = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text, ciclo = getCiclo(g), esInfancia = ["K4","K5","K6","1G"].includes(ciclo), esBachi = ciclo.includes("B");
+        const nombreDocente = DOCENTES_GRADO[g] || "DOCENTE ENCARGADO";
         let printWin = window.open('', '_blank');
         printWin.document.write(`<html><head><title>Boletas - ${gTxt}</title><style>
             @page { size: letter; margin: 0; } body { font-family: Arial, sans-serif; margin: 0; background: white; } 
@@ -363,7 +379,7 @@
                 
                 printWin.document.write(`<tr><td class="m-name">${m}</td><td>${v.t||0}</td>${!esInfancia ? `<td>${v.lc||0}</td><td>${v.l||0}</td>` : ''}<td>${v.int||0}</td><td>${v.ex||0}</td><td style="font-weight:bold">${pFin}</td></tr>`);
             });
-            printWin.document.write(`</tbody></table><div style="font-size:8px; margin-top:5px;"><b>CONDUCTA:</b> ${asis.c} | <b>ASIST. CON PERMISO:</b> ${asis.ap} | <b>ASIST. SIN PERMISO:</b> ${asis.asp}</div><div style="border:1px solid #ccc; padding:3px; font-size:8px; margin-top:2px;"><b>OBSERVACIONES:</b> ${asis.obs || 'Ninguna.'}</div><div class="f-firma-container"><div class="firma-box"><div class="line"></div><b>DOCENTE ENCARGADO</b></div><div class="firma-box"><div class="line"></div><b>REGISTRO ACADÉMICO</b></div><div class="firma-box"><div class="line"></div><b>Rhina Linares de Barahona (DIRECTORA)</b></div></div></div>`);
+            printWin.document.write(`</tbody></table><div style="font-size:8px; margin-top:5px;"><b>CONDUCTA:</b> ${asis.c} | <b>ASIST. CON PERMISO:</b> ${asis.ap} | <b>ASIST. SIN PERMISO:</b> ${asis.asp}</div><div style="border:1px solid #ccc; padding:3px; font-size:8px; margin-top:2px;"><b>OBSERVACIONES:</b> ${asis.obs || 'Ninguna.'}</div><div class="f-firma-container"><div class="firma-box"><div class="line"></div><b>${nombreDocente}</b><br>(DOCENTE ENCARGADO)</div><div class="firma-box"><div class="line"></div><b>REGISTRO ACADÉMICO</b></div><div class="firma-box"><div class="line"></div><b>Rhina Linares de Barahona (DIRECTORA)</b></div></div></div>`);
         });
         printWin.document.close(); printWin.print();
     }
