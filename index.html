@@ -23,7 +23,7 @@
         td { padding: 8px 5px; border-bottom: 1px solid #eee; text-align: center; }
         .nota-input { width: 45px; padding: 5px; text-align: center; border: 1.5px solid #dcdde1; border-radius: 6px; font-weight: bold; color: var(--dark); background: white; }
         .n-roja { color: var(--red); background: #fdedec; border: 1px solid var(--red); border-radius: 4px; padding: 4px; }
-        .n-amarilla { color: #d4ac0d; background: #fef9e7; border: 1px solid var(--f1c40f); border-radius: 4px; padding: 4px; }
+        .n-amarilla { color: #d4ac0d; background: #fef9e7; border: 1px solid #f1c40f; border-radius: 4px; padding: 4px; }
         .n-verde { color: var(--green); background: #e9f7ef; border: 1px solid var(--green); border-radius: 4px; padding: 4px; }
         .btn { padding: 8px 15px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 10px; }
         .btn-save { background: var(--green); color: white; }
@@ -187,9 +187,18 @@
         document.getElementById('nav-tabs').innerHTML = html;
     }
 
-    function setPeriodo(p, btn) { periodoActual = p; vistaActual = "NOTAS"; dibujar(); renderTabs(document.getElementById('nav-tabs').innerText.split('\n').filter(x => x && !x.includes("📊") && !x.includes("📋"))); }
-    function setVistaAsistencia() { vistaActual = "ASISTENCIA"; dibujarAsistencia(); document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); document.getElementById('btn-tab-asis').classList.add('active'); }
-    function setVistaConsolidado() { vistaActual = "CONSOLIDADO"; dibujarConsolidado(); }
+    function setPeriodo(p, btn) { periodoActual = p; vistaActual = "NOTAS"; dibujar(); renderTabsObtenerLista(); }
+    
+    function renderTabsObtenerLista() {
+        const g = document.getElementById('sel-grado').value, ciclo = getCiclo(g);
+        let lista = ["K4","K5","K6","1G"].includes(ciclo) ? ["Trimestre 1", "Trimestre 2", "Trimestre 3"] : 
+                    ciclo.includes("B") ? ["Periodo 1 - Eval 1", "Periodo 1 - Eval 2", "Periodo 1", "Periodo 2 - Eval 1", "Periodo 2 - Eval 2", "Periodo 2", "Periodo 3 - Eval 1", "Periodo 3 - Eval 2", "Periodo 3", "Periodo 4 - Eval 1", "Periodo 4 - Eval 2", "Periodo 4"] : 
+                    ["Febrero", "Marzo", "Abril", "Primer Trimestre", "Mayo", "Junio", "Julio", "Segundo Trimestre", "Agosto", "Septiembre", "Octubre", "Tercer Trimestre"];
+        renderTabs(lista);
+    }
+
+    function setVistaAsistencia() { vistaActual = "ASISTENCIA"; dibujarAsistencia(); renderTabsObtenerLista(); }
+    function setVistaConsolidado() { vistaActual = "CONSOLIDADO"; dibujarConsolidado(); renderTabsObtenerLista(); }
 
     function getColorClass(nota) { if(nota < 5) return "n-roja"; if(nota <= 6.9) return "n-amarilla"; return "n-verde"; }
 
@@ -261,6 +270,37 @@
 
     function escucharDB() { db.ref('alumnos').on('value', snap => { const v = snap.val(); dataAlumnos = v ? Object.keys(v).map(k=>({id:k, ...v[k]})) : []; if(vistaActual==="NOTAS") dibujar(); else if(vistaActual==="CONSOLIDADO") dibujarConsolidado(); else dibujarAsistencia(); }); }
 
+    function descargarPDFConsolidado() {
+        const element = document.getElementById('printable-area');
+        const header = document.getElementById('pdf-header-info');
+        const gTxt = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text;
+        document.getElementById('pdf-titulo-grado').innerText = "CONSOLIDADO DE NOTAS - " + gTxt;
+        document.getElementById('pdf-sub-periodo').innerText = "PERIODO: " + periodoActual;
+        header.classList.remove('hidden');
+        
+        const opt = { margin: [10, 5, 10, 5], filename: `Consolidado_${gTxt}_${periodoActual}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 3, useCORS: true }, jsPDF: { unit: 'mm', format: 'letter', orientation: 'landscape' } };
+        
+        html2pdf().from(element).set(opt).save().finally(() => { header.classList.add('hidden'); });
+    }
+
+    function dibujarAsistencia() {
+        document.getElementById('btn-pdf-consolidado').classList.add('hidden');
+        const gTxt = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text;
+        document.getElementById('table-head').innerHTML = `<th>NIE</th><th>Alumno</th><th>Conducta</th><th>Permiso</th><th>Sin Permiso</th><th>Observaciones</th><th>Acción</th>`;
+        let fil = dataAlumnos.filter(a => a.grado === gTxt).sort((a,b) => a.ape.localeCompare(b.ape)), b = "";
+        fil.forEach(al => {
+            const asis = al.asistencia?.[periodoActual] || { c:'MUY BUENA', ap:0, asp:0, obs:'' };
+            b += `<tr id="asis-${al.id}"><td>${al.nie}</td><td style="text-align:left">${al.ape}, ${al.nom}</td>
+                <td><select class="inp-c"><option ${asis.c==='EXCELENTE'?'selected':''}>EXCELENTE</option><option ${asis.c==='MUY BUENA'?'selected':''}>MUY BUENA</option><option ${asis.c==='BUENA'?'selected':''}>BUENA</option></select></td>
+                <td><input type="number" class="nota-input inp-ap" value="${asis.ap||0}"></td><td><input type="number" class="nota-input inp-asp" value="${asis.asp||0}"></td>
+                <td><textarea class="inp-obs" style="height:30px;">${asis.obs||''}</textarea></td>
+                <td><button class="btn btn-save" onclick="guardarAsis('${al.id}')">💾</button></td></tr>`;
+        });
+        document.getElementById('table-body').innerHTML = b;
+    }
+
+    function guardarAsis(id) { const r = document.getElementById(`asis-${id}`); const d = { c: r.querySelector('.inp-c').value, ap: r.querySelector('.inp-ap').value, asp: r.querySelector('.inp-asp').value, obs: r.querySelector('.inp-obs').value }; db.ref(`alumnos/${id}/asistencia/${periodoActual}`).set(d).then(() => alert(`Asistencia Guardada.`)); }
+
     function generarBoletas() {
         const g = document.getElementById('sel-grado').value, gTxt = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text, ciclo = getCiclo(g), esInfancia = ["K4","K5","K6","1G"].includes(ciclo), esBachi = ciclo.includes("B");
         let printWin = window.open('', '_blank');
@@ -330,6 +370,19 @@
         });
         document.getElementById('table-body').innerHTML = b;
     }
+
+    function agregarAlumno() {
+        const nom = document.getElementById('new-nom').value.trim(), ape = document.getElementById('new-ape').value.trim();
+        const gTxt = document.getElementById('sel-grado').options[document.getElementById('sel-grado').selectedIndex].text;
+        if(!nom || !ape) return alert("Complete los datos.");
+        let ultimoNie = 0;
+        dataAlumnos.forEach(a => { if(parseInt(a.nie) > ultimoNie) ultimoNie = parseInt(a.nie); });
+        const nuevoNie = (ultimoNie + 1).toString().padStart(4, '0');
+        db.ref('alumnos').push({ nie: nuevoNie, nom: nom.toUpperCase(), ape: ape.toUpperCase(), grado: gTxt });
+    }
+
+    function borrarAlumno(id) { if(confirm("¿Borrar alumno permanentemente?")) db.ref(`alumnos/${id}`).remove(); }
+
 </script>
 </body>
 </html>
