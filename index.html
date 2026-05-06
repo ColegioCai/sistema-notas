@@ -29,6 +29,7 @@
         .btn-save { background: var(--green); color: white; }
         .btn-print { background: #2e86c1; color: white; }
         .btn-del { background: var(--red); color: white; }
+        .btn-edit { background: #3498db; color: white; }
         .hidden { display: none !important; }
         .admin-panel { background: #ebf5fb; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #aed6f1; display: flex; gap: 10px; align-items: flex-end; }
         .login-box { background: white; padding: 40px; border-radius: 20px; width: 320px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
@@ -257,7 +258,7 @@
                 b += `<tr id="row-${al.id}"><td>${al.nie}</td><td style="text-align:left">${al.ape}</td><td style="text-align:left">${al.nom}</td><td><select onchange="materiaVisualizada=this.value; dibujar()">${MATERIAS[ciclo].map(m=>`<option ${m===materiaVisualizada?'selected':''}>${m}</option>`).join('')}</select></td><td><input type="text" class="nota-input inp-t" value="${n.t||0}" ${estaBloqueado?'disabled':''} oninput="actualizarPromedioVivo('${al.id}', ${esInfancia}, ${showInt})"></td>`;
                 if(!esInfancia) b += `<td><input type="text" class="nota-input inp-lc" value="${n.lc||0}" ${estaBloqueado?'disabled':''} oninput="actualizarPromedioVivo('${al.id}', ${esInfancia}, ${showInt})"></td><td><input type="text" class="nota-input inp-l" value="${n.l||0}" ${estaBloqueado?'disabled':''} oninput="actualizarPromedioVivo('${al.id}', ${esInfancia}, ${showInt})"></td>`;
                 if(showInt) b += `<td><input type="text" class="nota-input inp-int" value="${n.int||0}" ${estaBloqueado?'disabled':''} oninput="actualizarPromedioVivo('${al.id}', ${esInfancia}, ${showInt})"></td>`;
-                b += `<td><input type="text" class="nota-input inp-ex" value="${n.ex||0}" ${estaBloqueado?'disabled':''} oninput="actualizarPromedioVivo('${al.id}', ${esInfancia}, ${showInt})"></td><td style="font-weight:bold"><span class="cell-prom-valor ${getColorClass(prom)}">${prom}</span></td><td><button class="btn btn-save" onclick="guardarNotas('${al.id}', ${esInfancia}, ${showInt})" ${estaBloqueado?'disabled':''}>💾</button>${isAdmin ? `<button class="btn btn-del" onclick="borrarAlumno('${al.id}')">🗑️</button>` : ''}</td></tr>`;
+                b += `<td><input type="text" class="nota-input inp-ex" value="${n.ex||0}" ${estaBloqueado?'disabled':''} oninput="actualizarPromedioVivo('${al.id}', ${esInfancia}, ${showInt})"></td><td style="font-weight:bold"><span class="cell-prom-valor ${getColorClass(prom)}">${prom}</span></td><td><button class="btn btn-save" onclick="guardarNotas('${al.id}', ${esInfancia}, ${showInt})" title="Guardar Notas" ${estaBloqueado?'disabled':''}>💾</button>${isAdmin ? `<button class="btn btn-edit" onclick="editarNombreAlumno('${al.id}', '${al.nom}', '${al.ape}')" title="Editar Nombre">✎</button><button class="btn btn-del" onclick="borrarAlumno('${al.id}')" title="Borrar Alumno">🗑️</button>` : ''}</td></tr>`;
             }
         });
         document.getElementById('table-body').innerHTML = b;
@@ -418,6 +419,24 @@
     }
 
     function borrarAlumno(id) { if(confirm("¿Borrar alumno permanentemente?")) db.ref(`alumnos/${id}`).remove(); }
+
+    function editarNombreAlumno(id, nomActual, apeActual) {
+        const nuevoApe = prompt("Nuevo Apellido:", apeActual);
+        if (nuevoApe === null) return;
+        const nuevoNom = prompt("Nuevo Nombre:", nomActual);
+        if (nuevoNom === null) return;
+        
+        if(nuevoApe.trim() !== "" && nuevoNom.trim() !== "") {
+            db.ref(`alumnos/${id}`).update({
+                ape: nuevoApe.toUpperCase().trim(),
+                nom: nuevoNom.toUpperCase().trim()
+            }).then(() => {
+                alert("Datos actualizados correctamente.");
+            });
+        } else {
+            alert("Los campos no pueden estar vacíos.");
+        }
+    }
 
 </script>
 </body>
