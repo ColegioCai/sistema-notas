@@ -254,11 +254,11 @@
                 const prom = parseFloat(((calcular(n1, periodoActual + " - Eval 1", g) + calcular(n2, periodoActual + " - Eval 2", g)) / 2).toFixed(1));
                 b += `<tr><td>${al.nie}</td><td style="text-align:left">${al.ape}</td><td style="text-align:left">${al.nom}</td><td><select onchange="materiaVisualizada=this.value; dibujar()">${MATERIAS[ciclo].map(m=>`<option ${m===materiaVisualizada?'selected':''}>${m}</option>`).join('')}</select></td><td>${n1.t||0}</td><td>${n1.lc||0}</td><td>${n1.l||0}</td><td>${n1.int||0}</td><td>${n1.ex||0}</td><td style="font-weight:bold"><span class="${getColorClass(prom)}">${prom}</span></td><td>-</td></tr>`;
             } else {
-                let n = (al.notas?.[periodoActual]?.[materiaVisualizada] || {}), prom = calcular(n, periodoActual, g), estaBloqueado = (!isAdmin && n.ediciones > 0);
-                b += `<tr id="row-${al.id}"><td>${al.nie}</td><td style="text-align:left">${al.ape}</td><td style="text-align:left">${al.nom}</td><td><select onchange="materiaVisualizada=this.value; dibujar()">${MATERIAS[ciclo].map(m=>`<option ${m===materiaVisualizada?'selected':''}>${m}</option>`).join('')}</select></td><td><input type="text" class="nota-input inp-t" value="${n.t||0}" ${estaBloqueado?'disabled':''} oninput="actualizarPromedioVivo('${al.id}', ${esInfancia}, ${showInt})"></td>`;
-                if(!esInfancia) b += `<td><input type="text" class="nota-input inp-lc" value="${n.lc||0}" ${estaBloqueado?'disabled':''} oninput="actualizarPromedioVivo('${al.id}', ${esInfancia}, ${showInt})"></td><td><input type="text" class="nota-input inp-l" value="${n.l||0}" ${estaBloqueado?'disabled':''} oninput="actualizarPromedioVivo('${al.id}', ${esInfancia}, ${showInt})"></td>`;
-                if(showInt) b += `<td><input type="text" class="nota-input inp-int" value="${n.int||0}" ${estaBloqueado?'disabled':''} oninput="actualizarPromedioVivo('${al.id}', ${esInfancia}, ${showInt})"></td>`;
-                b += `<td><input type="text" class="nota-input inp-ex" value="${n.ex||0}" ${estaBloqueado?'disabled':''} oninput="actualizarPromedioVivo('${al.id}', ${esInfancia}, ${showInt})"></td><td style="font-weight:bold"><span class="cell-prom-valor ${getColorClass(prom)}">${prom}</span></td><td><button class="btn btn-save" onclick="guardarNotas('${al.id}', ${esInfancia}, ${showInt})" title="Guardar Notas" ${estaBloqueado?'disabled':''}>💾</button>${isAdmin ? `<button class="btn btn-edit" onclick="editarNombreAlumno('${al.id}', '${al.nom}', '${al.ape}')" title="Editar Nombre">✎</button><button class="btn btn-del" onclick="borrarAlumno('${al.id}')" title="Borrar Alumno">🗑️</button>` : ''}</td></tr>`;
+                let n = (al.notas?.[periodoActual]?.[materiaVisualizada] || {}), prom = calcular(n, periodoActual, g);
+                b += `<tr id="row-${al.id}"><td>${al.nie}</td><td style="text-align:left">${al.ape}</td><td style="text-align:left">${al.nom}</td><td><select onchange="materiaVisualizada=this.value; dibujar()">${MATERIAS[ciclo].map(m=>`<option ${m===materiaVisualizada?'selected':''}>${m}</option>`).join('')}</select></td><td><input type="text" class="nota-input inp-t" value="${n.t||0}" oninput="actualizarPromedioVivo('${al.id}', ${esInfancia}, ${showInt})"></td>`;
+                if(!esInfancia) b += `<td><input type="text" class="nota-input inp-lc" value="${n.lc||0}" oninput="actualizarPromedioVivo('${al.id}', ${esInfancia}, ${showInt})"></td><td><input type="text" class="nota-input inp-l" value="${n.l||0}" oninput="actualizarPromedioVivo('${al.id}', ${esInfancia}, ${showInt})"></td>`;
+                if(showInt) b += `<td><input type="text" class="nota-input inp-int" value="${n.int||0}" oninput="actualizarPromedioVivo('${al.id}', ${esInfancia}, ${showInt})"></td>`;
+                b += `<td><input type="text" class="nota-input inp-ex" value="${n.ex||0}" oninput="actualizarPromedioVivo('${al.id}', ${esInfancia}, ${showInt})"></td><td style="font-weight:bold"><span class="cell-prom-valor ${getColorClass(prom)}">${prom}</span></td><td><button class="btn btn-save" onclick="guardarNotas('${al.id}', ${esInfancia}, ${showInt})" title="Guardar Notas">💾</button>${isAdmin ? `<button class="btn btn-edit" onclick="editarNombreAlumno('${al.id}', '${al.nom}', '${al.ape}')" title="Editar Nombre">✎</button><button class="btn btn-del" onclick="borrarAlumno('${al.id}')" title="Borrar Alumno">🗑️</button>` : ''}</td></tr>`;
             }
         });
         document.getElementById('table-body').innerHTML = b;
@@ -307,14 +307,10 @@
 
     function guardarNotas(id, esInfancia, showInt) { 
         const r = document.getElementById(`row-${id}`), alRef = db.ref(`alumnos/${id}/notas/${periodoActual}/${materiaVisualizada}`);
-        alRef.once('value').then(snap => {
-            const nData = snap.val() || { ediciones: 0 }, isAdmin = currentRol === 'admin';
-            if (!isAdmin && nData.ediciones > 0) return alert("Edición bloqueada.");
-            const d = { t: parseFloat(r.querySelector('.inp-t').value) || 0, ex: parseFloat(r.querySelector('.inp-ex').value) || 0, ediciones: (nData.ediciones || 0) + 1 }; 
-            if(!esInfancia) { d.l = parseFloat(r.querySelector('.inp-l').value) || 0; d.lc = parseFloat(r.querySelector('.inp-lc').value) || 0; } 
-            if(showInt) d.int = parseFloat(r.querySelector('.inp-int').value) || 0; 
-            alRef.set(d).then(() => { alert("Guardado."); dibujar(); });
-        });
+        const d = { t: parseFloat(r.querySelector('.inp-t').value) || 0, ex: parseFloat(r.querySelector('.inp-ex').value) || 0 }; 
+        if(!esInfancia) { d.l = parseFloat(r.querySelector('.inp-l').value) || 0; d.lc = parseFloat(r.querySelector('.inp-lc').value) || 0; } 
+        if(showInt) d.int = parseFloat(r.querySelector('.inp-int').value) || 0; 
+        alRef.set(d).then(() => { alert("Guardado."); dibujar(); });
     }
 
     function escucharDB() { db.ref('alumnos').on('value', snap => { const v = snap.val(); dataAlumnos = v ? Object.keys(v).map(k=>({id:k, ...v[k]})) : []; if(vistaActual==="NOTAS") dibujar(); else if(vistaActual==="CONSOLIDADO") dibujarConsolidado(); else dibujarAsistencia(); }); }
