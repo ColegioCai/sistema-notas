@@ -310,10 +310,10 @@
         const d = { t: parseFloat(r.querySelector('.inp-t').value) || 0, ex: parseFloat(r.querySelector('.inp-ex').value) || 0 }; 
         if(!esInfancia) { d.l = parseFloat(r.querySelector('.inp-l').value) || 0; d.lc = parseFloat(r.querySelector('.inp-lc').value) || 0; } 
         if(showInt) d.int = parseFloat(r.querySelector('.inp-int').value) || 0; 
-        alRef.set(d).then(() => { alert("Guardado."); dibujar(); });
+        alRef.set(d).then(() => { alert("Guardado."); });
     }
 
-    function escucharDB() { db.ref('alumnos').on('value', snap => { const v = snap.val(); dataAlumnos = v ? Object.keys(v).map(k=>({id:k, ...v[k]})) : []; if(vistaActual==="NOTAS") dibujar(); else if(vistaActual==="CONSOLIDADO") dibujarConsolidado(); else dibujarAsistencia(); }); }
+    function escucharDB() { db.ref('alumnos').on('value', snap => { const v = snap.val(); dataAlumnos = v ? Object.keys(v).map(k=>({id:k, ...v[k]})) : []; if(vistaActual==="NOTAS") { if(!document.activeElement || document.activeElement.tagName !== 'INPUT') { dibujar(); } } else if(vistaActual==="CONSOLIDADO") dibujarConsolidado(); else dibujarAsistencia(); }); }
 
     function dibujarAsistencia() {
         document.getElementById('btn-pdf-consolidado').classList.add('hidden');
